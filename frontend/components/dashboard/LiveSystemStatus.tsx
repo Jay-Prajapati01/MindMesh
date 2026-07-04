@@ -1,0 +1,120 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { motion } from "framer-motion";
+import {
+  Cpu,
+  Database,
+  HardDrive,
+  Wifi,
+  WifiOff,
+  Brain,
+  Activity,
+  Server,
+} from "lucide-react";
+import { getHealth, Stats, HealthStatus } from "@/lib/api";
+
+interface StatusItem {
+  label: string;
+  value: string;
+  icon: typeof Cpu;
+  color: string;
+  status: "healthy" | "busy" | "offline";
+}
+
+export function LiveSystemStatus({ stats }: { stats?: Stats }) {
+  const { data: health } = useQuery({
+    queryKey: ["health"],
+    queryFn: getHealth,
+    refetchInterval: 30000,
+  });
+
+  const statuses: StatusItem[] = [
+    {
+      label: "AI Model",
+      value: "qwen2.5:3b",
+      icon: Brain,
+      color: "#6E56CF",
+      status: health?.status === "ok" ? "healthy" : "offline",
+    },
+    {
+      label: "Embeddings",
+      value: "nomic-embed",
+      icon: Activity,
+      color: "#22C55E",
+      status: "healthy",
+    },
+    {
+      label: "Vector DB",
+      value: stats?.vector_store || "Qdrant",
+      icon: Database,
+      color: "#0EA5E9",
+      status: "healthy",
+    },
+    {
+      label: "API",
+      value: health?.status === "ok" ? "Connected" : "Offline",
+      icon: Server,
+      color: health?.status === "ok" ? "#22C55E" : "#EF4444",
+      status: health?.status === "ok" ? "healthy" : "offline",
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+      {statuses.map((item, i) => {
+        const Icon = item.icon;
+        return (
+          <motion.div
+            key={item.label}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 * i }}
+            className="rounded-[12px] border border-[rgba(255,255,255,0.04)] bg-[rgba(255,255,255,0.02)] p-3"
+          >
+            <div className="mb-2 flex items-center justify-between">
+              <div
+                className="flex h-6 w-6 items-center justify-center rounded-[6px]"
+                style={{ backgroundColor: `${item.color}15` }}
+              >
+                <Icon className="h-3 w-3" style={{ color: item.color }} />
+              </div>
+              <span
+                className="flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[8px] font-semibold"
+                style={{
+                  backgroundColor:
+                    item.status === "healthy"
+                      ? "rgba(34,197,94,0.1)"
+                      : item.status === "busy"
+                      ? "rgba(245,158,11,0.1)"
+                      : "rgba(239,68,68,0.1)",
+                  color:
+                    item.status === "healthy"
+                      ? "#22C55E"
+                      : item.status === "busy"
+                      ? "#F59E0B"
+                      : "#EF4444",
+                }}
+              >
+                <span
+                  className="h-1 w-1 rounded-full"
+                  style={{
+                    backgroundColor:
+                      item.status === "healthy"
+                        ? "#22C55E"
+                        : item.status === "busy"
+                        ? "#F59E0B"
+                        : "#EF4444",
+                  }}
+                />
+                {item.status}
+              </span>
+            </div>
+            <div className="text-[10px] font-medium text-[#F5F5F5]">{item.label}</div>
+            <div className="text-[9px] text-[#71717A]">{item.value}</div>
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+}

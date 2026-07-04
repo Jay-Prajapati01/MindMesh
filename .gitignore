@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+*.egg-info/
+.pytest_cache/
+
+# Node
+node_modules/
+.next/
+out/
+npm-debug.log*
+yarn-error.log*
+
+# Data / models
+data/
+qdrant_storage/
+ollama_data/
+*.log
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
