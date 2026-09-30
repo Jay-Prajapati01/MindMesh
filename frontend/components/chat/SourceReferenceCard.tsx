@@ -43,8 +43,12 @@ function getSourceColor(type: string) {
 function getSourceUrl(source: SearchHit): string | null {
   if (source.url) {
     if (source.url.startsWith("http")) return source.url;
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    return `${API_URL}${source.url}`;
+    // Absolute API paths like "/api/sources/x/download" are valid;
+    // anything else (channel names etc.) must NOT become a URL.
+    if (source.url.startsWith("/")) {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      return `${API_URL}${source.url}`;
+    }
   }
   return null;
 }

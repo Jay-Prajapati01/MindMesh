@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
+from app.services.chunking import _hard_split
 
 logger = get_logger(__name__)
 
@@ -122,16 +123,26 @@ def _split_by_headings(markdown: str) -> list[dict]:
 
 
 def _split_sentences(text: str, chunk_size: int, overlap: int) -> list[str]:
-    """Split text into overlapping chunks respecting sentence boundaries."""
+    """Split text into overlapping chunks respecting sentence boundaries.
+
+    Guarantees every chunk is <= chunk_size: pieces without sentence
+    punctuation (markdown tables, CSV rows) are hard-split on word
+    boundaries, otherwise one giant line becomes an oversized chunk that
+    the embedding API rejects.
+    """
     text = re.sub(r"\s+", " ", text).strip()
     if not text:
         return []
 
-    sentences = _SENTENCE_RE.split(text)
+    max_piece = max(chunk_size - overlap - 1, chunk_size // 2)
+    pieces: list[str] = []
+    for sentence in _SENTENCE_RE.split(text):
+        pieces.extend(_hard_split(sentence, max_piece))
+
     chunks: list[str] = []
     current = ""
 
-    for sentence in sentences:
+    for sentence in pieces:
         if len(current) + len(sentence) + 1 <= chunk_size:
             current = f"{current} {sentence}".strip()
         else:

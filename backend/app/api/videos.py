@@ -32,13 +32,15 @@ async def process_video(payload: VideoProcessRequest) -> VideoProcessResponse:
     if not transcript:
         raise HTTPException(status_code=422, detail="No transcript available")
 
+    from app.services import ingest
     item = await ingest.ingest_text(
         text=transcript,
         source_id=metadata.video_id,
         source_type="youtube",
         title=metadata.title,
-        channel=f"https://www.youtube.com/watch?v={metadata.video_id}",
+        channel=metadata.channel,
         thumbnail=metadata.thumbnail,
+        url=payload.url,
     )
 
     return VideoProcessResponse(
@@ -142,8 +144,10 @@ async def process_video_stream(payload: VideoProcessRequest):
             for i, chunk in enumerate(chunks):
                 try:
                     vec = await embeddings.embed_text(chunk)
-                except Exception:
-                    vec = [0.0] * 768
+                except Exception as exc:  # noqa: BLE001
+                    # Never index zero-vectors — they poison search results.
+                    yield sse("step_fail", {"step": 6, "error": f"Embedding failed on chunk {i + 1}/{len(chunks)}: {exc}"})
+                    return
                 vectors.append(vec)
                 pct = int(((i + 1) / len(chunks)) * 100)
                 yield sse("step_progress", {"step": 6, "progress": pct, "sub_text": f"Chunk {i + 1}/{len(chunks)}"})
@@ -152,10 +156,16 @@ async def process_video_stream(payload: VideoProcessRequest):
             # ── Step 7: Index & Graph ─────────────────────────────────────
             yield sse("step_start", {"step": 7, "total_steps": 7, "name": "Indexing & Graph", "description": "Storing in Qdrant and extracting knowledge graph..."})
             payloads = [
-                {"text": chunk, "source_id": video_id, "source_type": "youtube", "title": metadata.title, "chunk_index": i, "channel": metadata.channel, "thumbnail": metadata.thumbnail}
+                {"text": chunk, "source_id": video_id, "source_type": "youtube", "title": metadata.title, "chunk_index": i, "channel": metadata.channel, "thumbnail": metadata.thumbnail, "url": payload.url}
                 for i, chunk in enumerate(chunks)
             ]
             vectorstore.ensure_collection()
+            # Remove any previous chunks for this source so re-ingests
+            # never create duplicates.
+            try:
+                vectorstore.delete_by_source_id(video_id)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("delete_by_source_id failed for %s: %s", video_id, exc)
             indexed = vectorstore.upsert_chunks(vectors, payloads)
 
             try:
@@ -172,11 +182,12 @@ async def process_video_stream(payload: VideoProcessRequest):
                 source_id=video_id,
                 source_type="youtube",
                 title=metadata.title,
-                channel=f"https://www.youtube.com/watch?v={video_id}",
+                channel=metadata.channel,
                 thumbnail=metadata.thumbnail,
                 summary=summary,
                 key_topics=topics,
                 chunks_indexed=indexed,
+                url=payload.url,
             )
             store.add_source(item)
 

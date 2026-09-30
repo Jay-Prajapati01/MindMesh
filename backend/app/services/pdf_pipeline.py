@@ -53,16 +53,27 @@ def _get_converter():
 
         pipeline_options = PdfPipelineOptions()
         pipeline_options.do_table_structure = True
+        pipeline_options.do_ocr = True
 
-        # Try PaddleOCR first, fall back to default
-        try:
-            from docling_ocr.paddle import PaddleOcrEngine
-            pipeline_options.ocr_engine = PaddleOcrEngine()
-            pipeline_options.do_ocr = True
-            logger.info("Docling initialized with PaddleOCR backend")
-        except ImportError:
-            logger.warning("PaddleOCR not available, using Docling default OCR")
-            pipeline_options.do_ocr = True
+        # Pick the best OCR backend available in this Docling version.
+        # (PaddleOcrOptions existed in older Docling; newer versions ship
+        # RapidOcrOptions with bundled ONNX models.)
+        ocr_choice = None
+        for opt_name in ("PaddleOcrOptions", "RapidOcrOptions", "EasyOcrOptions"):
+            ocr_options_cls = getattr(
+                __import__("docling.datamodel.pipeline_options", fromlist=[opt_name]),
+                opt_name,
+                None,
+            )
+            if ocr_options_cls is None:
+                continue
+            try:
+                pipeline_options.ocr_options = ocr_options_cls()
+                ocr_choice = opt_name
+                break
+            except Exception as exc:  # backend deps missing/broken
+                logger.warning("%s unavailable: %s", opt_name, exc)
+        logger.info("Docling OCR backend: %s", ocr_choice or "docling default")
 
         _converter = DocumentConverter(
             format_options={
@@ -74,7 +85,8 @@ def _get_converter():
         logger.error("Docling not installed: %s", exc)
         raise ImportError(
             "Docling is required for PDF processing. "
-            "Install with: pip install docling docling-ocr paddleocr paddlepaddle"
+            "Install with: pip install docling"
+            " (optional OCR backends: paddleocr paddlepaddle / rapidocr)"
         ) from exc
 
     return _converter
@@ -149,12 +161,22 @@ def _extract_markdown(dl_doc) -> str:
         return ""
 
 
+PARAGRAPH_LABELS = ("paragraph", "text", "list_item")
+SECTION_LABELS = ("section_header", "title", "subtitle")
+
+
+def _label_of(item) -> str:
+    """Normalize DocItemLabel enum / string labels to a plain string."""
+    label = getattr(item, "label", None)
+    return str(getattr(label, "value", label) or "")
+
+
 def _extract_headings(dl_doc) -> list[str]:
     """Extract heading texts from Docling document."""
     headings: list[str] = []
     try:
         for item in dl_doc.texts:
-            if hasattr(item, "label") and item.label in ("section_header", "title", "subtitle"):
+            if _label_of(item) in SECTION_LABELS:
                 text = getattr(item, "text", "") or ""
                 if text.strip():
                     headings.append(text.strip())
@@ -171,20 +193,20 @@ def _extract_sections(dl_doc) -> list[dict]:
 
     try:
         for item in dl_doc.texts:
-            if hasattr(item, "label"):
-                if item.label in ("section_header", "title"):
-                    # Save previous section
-                    if current_text:
-                        sections.append({
-                            "heading": current_heading,
-                            "text": "\n".join(current_text),
-                        })
-                    current_heading = getattr(item, "text", "") or ""
-                    current_text = []
-                elif item.label == "paragraph":
-                    text = getattr(item, "text", "") or ""
-                    if text.strip():
-                        current_text.append(text.strip())
+            label = _label_of(item)
+            if label in SECTION_LABELS:
+                # Save previous section
+                if current_text:
+                    sections.append({
+                        "heading": current_heading,
+                        "text": "\n".join(current_text),
+                    })
+                current_heading = getattr(item, "text", "") or ""
+                current_text = []
+            elif label in PARAGRAPH_LABELS:
+                text = getattr(item, "text", "") or ""
+                if text.strip():
+                    current_text.append(text.strip())
 
         # Save last section
         if current_text:
@@ -204,9 +226,16 @@ def _extract_tables(dl_doc) -> list[dict]:
     try:
         for table in dl_doc.tables:
             try:
-                md = table.export_to_markdown()
+                try:
+                    md = table.export_to_markdown(doc=dl_doc)
+                except TypeError:
+                    md = table.export_to_markdown()
                 if md and md.strip():
-                    tables.append({"content": md.strip()})
+                    caption = ""
+                    cap_obj = getattr(table, "caption", None)
+                    if cap_obj:
+                        caption = (getattr(cap_obj, "text", "") or "").strip()
+                    tables.append({"content": md.strip(), "caption": caption})
             except Exception:
                 pass
     except Exception:
@@ -233,7 +262,7 @@ def _extract_paragraphs(dl_doc) -> list[str]:
     paragraphs: list[str] = []
     try:
         for item in dl_doc.texts:
-            if hasattr(item, "label") and item.label == "paragraph":
+            if _label_of(item) in PARAGRAPH_LABELS:
                 text = getattr(item, "text", "") or ""
                 if text.strip():
                     paragraphs.append(text.strip())
@@ -247,7 +276,7 @@ def _extract_captions(dl_doc) -> list[str]:
     captions: list[str] = []
     try:
         for item in dl_doc.texts:
-            if hasattr(item, "label") and item.label in ("caption", "table_caption", "figure_caption"):
+            if _label_of(item) in ("caption", "table_caption", "figure_caption"):
                 text = getattr(item, "text", "") or ""
                 if text.strip():
                     captions.append(text.strip())

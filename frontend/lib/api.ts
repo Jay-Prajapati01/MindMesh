@@ -1,6 +1,7 @@
 import axios from "axios";
+import { useAppStore } from "./store";
 
-const API_URL =
+export const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export const api = axios.create({
@@ -46,11 +47,9 @@ export interface SearchHit {
 export interface SearchResponse {
   query: string;
   hits: SearchHit[];
-  total_chunks_searched?: number;
-  total_sources_searched?: number;
-  total_embeddings?: number;
   search_time_ms?: number;
-  coverage?: number;
+  chunks_searched?: number;
+  sources_searched?: number;
 }
 
 export interface Citation {
@@ -62,10 +61,18 @@ export interface Citation {
   thumbnail?: string;
 }
 
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
 export interface ChatResponse {
   question: string;
   answer: string;
   citations: Citation[];
+  search_time_ms?: number;
+  chunks_searched?: number;
+  sources_searched?: number;
 }
 
 export interface SourceItem {
@@ -78,6 +85,12 @@ export interface SourceItem {
   key_topics: string[];
   chunks_indexed: number;
   created_at: string;
+  url?: string;
+  file_path?: string;
+  file_name?: string;
+  file_size?: number;
+  mime_type?: string;
+  page_count?: number;
 }
 
 export interface RecentQuery {
@@ -120,20 +133,33 @@ export const processDocument = (file: File) =>
   uploadFile("/documents/process", file);
 export const processAudio = (file: File) => uploadFile("/audio/process", file);
 
-export const semanticSearch = (query: string, sourceType?: string) =>
+export const semanticSearch = (
+  query: string,
+  sourceType?: string,
+  topK?: number
+) =>
   api
     .post<SearchResponse>("/search", {
       query,
       source_type: sourceType,
+      top_k: topK ?? useAppStore.getState().settings.topK,
     })
     .then((r) => r.data);
 
-export const askChat = (question: string, sourceType?: string, sourceId?: string) =>
+export const askChat = (
+  question: string,
+  sourceType?: string,
+  sourceId?: string,
+  history?: ChatMessage[],
+  topK?: number
+) =>
   api
     .post<ChatResponse>("/chat", {
       question,
       source_type: sourceType || undefined,
       source_id: sourceId || undefined,
+      history: history || [],
+      top_k: topK ?? useAppStore.getState().settings.topK,
     })
     .then((r) => r.data);
 
@@ -154,17 +180,38 @@ export interface HealthStatus {
   version: string;
 }
 
+export interface DetailedHealth {
+  status: string;
+  app: string;
+  environment: string;
+  version: string;
+  llm_model: string;
+  embedding_model: string;
+  collection: string;
+  checks: Record<string, string>;
+}
+
 export const getStats = () =>
   api.get<Stats>("/stats").then((r) => r.data);
 
 export const getHealth = () =>
   api.get<HealthStatus>("/health").then((r) => r.data);
 
-export const listSources = (sourceType?: string) =>
+export const getDetailedHealth = () =>
+  api.get<DetailedHealth>("/health/detailed").then((r) => r.data);
+
+export const listSources = (sourceType?: string, page: number = 1, pageSize: number = 20) =>
   api
-    .get<SourceItem[]>("/sources", {
-      params: sourceType ? { source_type: sourceType } : {},
-    })
+    .get<{ items: SourceItem[]; total: number; page: number; page_size: number; total_pages: number }>(
+      "/sources",
+      {
+        params: {
+          ...(sourceType ? { source_type: sourceType } : {}),
+          page,
+          page_size: pageSize,
+        },
+      }
+    )
     .then((r) => r.data);
 
 export interface GraphNode {
@@ -231,3 +278,16 @@ export const createNote = (title: string, body: string) =>
 
 export const deleteNote = (id: string) =>
   api.delete<{ deleted: string }>(`/notes/${id}`).then((r) => r.data);
+
+export const deleteSource = (sourceId: string) =>
+  api.delete<{ deleted: string; message: string }>(`/sources/${sourceId}`).then((r) => r.data);
+
+export const downloadSource = (sourceId: string, fileName?: string) => {
+  const url = `${API_URL}/api/sources/${sourceId}/download`;
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName || "download";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};

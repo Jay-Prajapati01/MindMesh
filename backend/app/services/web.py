@@ -22,11 +22,16 @@ _IMAGE_RE = re.compile(r"\.(?:jpg|jpeg|png|gif|webp|svg|bmp|tiff)(?:\?|$)", re.I
 
 
 def _normalize_url(url: str) -> str:
-    """Normalize URL for consistent source_id generation."""
+    """Normalize URL for consistent source_id generation.
+
+    The query string is part of the identity: /article?id=1 and /article?id=2
+    are different pages and must not collide.
+    """
     parsed = urlparse(url)
     # Strip trailing slash from path, lowercase scheme and host
     path = parsed.path.rstrip("/") or "/"
-    return f"{parsed.scheme.lower()}://{parsed.netloc.lower()}{path}"
+    base = f"{parsed.scheme.lower()}://{parsed.netloc.lower()}{path}"
+    return f"{base}?{parsed.query}" if parsed.query else base
 
 
 def _is_youtube_video(url: str) -> bool:

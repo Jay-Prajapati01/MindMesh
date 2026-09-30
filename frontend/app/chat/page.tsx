@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { Sparkles, Search as SearchIcon, HelpCircle, MessageSquare } from "lucide-react";
-import { askChat, ChatResponse, getStats, SourceItem } from "@/lib/api";
+import { askChat, ChatResponse, ChatMessage, getStats, SourceItem } from "@/lib/api";
 import { useAppStore } from "@/lib/store";
 import {
   ChatInput,
@@ -19,15 +19,26 @@ import {
 } from "@/components/chat";
 
 export default function ChatPage() {
+  // useSearchParams() requires a Suspense boundary for `next build`
+  return (
+    <Suspense fallback={null}>
+      <ChatPageInner />
+    </Suspense>
+  );
+}
+
+function ChatPageInner() {
   const searchParams = useSearchParams();
   const sourceParam = searchParams.get("source") || "";
   const sourceIdParam = searchParams.get("sourceId") || "";
   const titleParam = searchParams.get("title") || "";
   const summaryParam = searchParams.get("summary") || "";
+  const qParam = searchParams.get("q") || "";
 
   const initialQuerySent = useRef(false);
 
   const [query, setQuery] = useState(() => {
+    if (qParam) return qParam;
     if (titleParam) {
       return `Tell me about "${titleParam}"`;
     }
@@ -36,6 +47,7 @@ export default function ChatPage() {
   const [filter, setFilter] = useState(sourceParam);
   const [sourceId, setSourceId] = useState(sourceIdParam);
   const [history, setHistory] = useState<(ChatResponse & { searchHits?: any[] })[]>([]);
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [error, setError] = useState<string | null>(null);
   const addQuestion = useAppStore((s) => s.addQuestion);
   const queryClient = useQueryClient();
@@ -47,9 +59,15 @@ export default function ChatPage() {
   });
 
   const mutation = useMutation({
-    mutationFn: (q: string) => askChat(q, filter || undefined, sourceId || undefined),
+    mutationFn: (q: string) =>
+      askChat(q, filter || undefined, sourceId || undefined, chatHistory),
     onSuccess: (data) => {
       setHistory((h) => [...h, { ...data, searchHits: [] }]);
+      setChatHistory((h) => [
+        ...h,
+        { role: "user", content: data.question },
+        { role: "assistant", content: data.answer },
+      ]);
       addQuestion(data.question);
       queryClient.invalidateQueries({ queryKey: ["stats"] });
       setError(null);
@@ -75,17 +93,24 @@ export default function ChatPage() {
     }
   }, [query, handleSend]);
 
-  // Auto-send when navigated from another page with context params
+  // Auto-send when navigated from another page with context params.
+  // Depends only on stable values: `mutation` (and therefore `handleSend`)
+  // changes identity every render, which would cancel the timer forever.
   useEffect(() => {
-    if (titleParam && !initialQuerySent.current && query.trim()) {
+    if ((titleParam || qParam) && !initialQuerySent.current && query.trim()) {
       initialQuerySent.current = true;
-      // Small delay to ensure component is mounted
       const timer = setTimeout(() => {
-        handleSend(query);
+        mutation.mutate(query);
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [titleParam, query, handleSend]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [titleParam, qParam, query]);
+
+  const handleClearHistory = useCallback(() => {
+    setHistory([]);
+    setChatHistory([]);
+  }, []);
 
   const isLoading = mutation.isPending;
   const hasHistory = history.length > 0;
@@ -125,6 +150,14 @@ export default function ChatPage() {
             <Sparkles className="h-3 w-3 text-[#71717A]" />
             <span className="text-[11px] font-medium text-[#71717A]">⌘K</span>
           </div>
+          {hasHistory && (
+            <button
+              onClick={handleClearHistory}
+              className="flex items-center gap-2 rounded-[12px] border border-[rgba(255,255,255,0.06)] bg-[#111318] px-4 py-2.5 text-[12px] font-medium text-[#A1A1AA] transition-all hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F5F5F5]"
+            >
+              New Chat
+            </button>
+          )}
           <button className="flex items-center gap-2 rounded-[12px] border border-[rgba(255,255,255,0.06)] bg-[#111318] px-4 py-2.5 text-[12px] font-medium text-[#A1A1AA] transition-all hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F5F5F5]">
             <HelpCircle className="h-4 w-4" />
             Ask Tips
@@ -256,11 +289,10 @@ export default function ChatPage() {
             <ChatSidebar
               stats={stats}
               lastResponse={lastResponse ? {
-                chunksSearched: stats?.indexed_chunks ?? 63,
-                sourcesSearched: stats?.total_sources ?? 7,
-                embeddingsScanned: Math.round((stats?.indexed_chunks ?? 63) * 1.5),
-                searchTimeMs: 1500,
-                confidence: 92,
+                chunksSearched: lastResponse.chunks_searched,
+                sourcesSearched: lastResponse.sources_searched,
+                citations: lastResponse.citations?.length ?? 0,
+                searchTimeMs: lastResponse.search_time_ms,
               } : undefined}
               relatedQuestions={hasHistory ? relatedQuestions : []}
               onQuestionClick={handleSend}

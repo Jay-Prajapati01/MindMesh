@@ -1,6 +1,7 @@
 """Qdrant vector store wrapper."""
 from __future__ import annotations
 
+import time
 import uuid
 from typing import Any
 
@@ -13,18 +14,42 @@ from app.core.logging import get_logger
 logger = get_logger(__name__)
 
 _client: QdrantClient | None = None
+_ready = False
+_MAX_RETRIES = 3
+_RETRY_DELAY = 2.0
 
 
 def get_client() -> QdrantClient:
     global _client
     if _client is None:
         settings = get_settings()
-        _client = QdrantClient(url=settings.qdrant_url)
+        last_error = None
+        for attempt in range(_MAX_RETRIES):
+            try:
+                _client = QdrantClient(url=settings.qdrant_url)
+                # Verify connection
+                _client.get_collections()
+                logger.info("Connected to Qdrant at %s", settings.qdrant_url)
+                return _client
+            except Exception as e:
+                last_error = e
+                logger.warning("Qdrant connection attempt %d/%d failed: %s", attempt + 1, _MAX_RETRIES, e)
+                if attempt < _MAX_RETRIES - 1:
+                    time.sleep(_RETRY_DELAY * (attempt + 1))
+        raise ConnectionError(f"Failed to connect to Qdrant after {_MAX_RETRIES} attempts: {last_error}")
     return _client
 
 
 def ensure_collection() -> None:
-    """Create the collection if it does not already exist."""
+    """Create the collection if it does not already exist.
+
+    Result is cached per process: after the first successful check the RPC
+    is skipped, but a failure (Qdrant down/restarted with a fresh volume)
+    clears the cache so the next call retries.
+    """
+    global _ready
+    if _ready:
+        return
     settings = get_settings()
     client = get_client()
     existing = {c.name for c in client.get_collections().collections}
@@ -32,11 +57,21 @@ def ensure_collection() -> None:
         client.create_collection(
             collection_name=settings.qdrant_collection,
             vectors_config=qmodels.VectorParams(
-                size=settings.embedding_dim,
+                size=settings.embedding_dim_for_model,
                 distance=qmodels.Distance.COSINE,
             ),
         )
-        logger.info("Created Qdrant collection %s", settings.qdrant_collection)
+        logger.info("Created Qdrant collection %s with dim=%d", settings.qdrant_collection, settings.embedding_dim_for_model)
+    _ready = True
+
+
+def _point_id(payload: dict[str, Any]) -> str:
+    """Deterministic point ID so re-ingesting a source overwrites instead of duplicating."""
+    source_id = payload.get("source_id")
+    chunk_index = payload.get("chunk_index")
+    if source_id is None or chunk_index is None:
+        return str(uuid.uuid4())
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, f"mindmesh:{source_id}:{chunk_index}"))
 
 
 def upsert_chunks(
@@ -48,8 +83,13 @@ def upsert_chunks(
         return 0
     settings = get_settings()
     client = get_client()
+    try:
+        ensure_collection()
+    except Exception as e:  # noqa: BLE001
+        logger.warning("ensure_collection before upsert failed: %s", e)
+        raise
     points = [
-        qmodels.PointStruct(id=str(uuid.uuid4()), vector=vec, payload=payload)
+        qmodels.PointStruct(id=_point_id(payload), vector=vec, payload=payload)
         for vec, payload in zip(vectors, payloads)
     ]
     client.upsert(collection_name=settings.qdrant_collection, points=points)
@@ -81,12 +121,25 @@ def search(
             )
         )
     query_filter = qmodels.Filter(must=must_conditions) if must_conditions else None
-    results = client.search(
-        collection_name=settings.qdrant_collection,
-        query_vector=vector,
-        limit=top_k,
-        query_filter=query_filter,
-    )
+    try:
+        results = client.search(
+            collection_name=settings.qdrant_collection,
+            query_vector=vector,
+            limit=top_k,
+            query_filter=query_filter,
+        )
+    except Exception as e:  # noqa: BLE001
+        # Collection missing (fresh Qdrant volume) — recreate and retry once.
+        logger.warning("Search failed (%s), re-ensuring collection and retrying", e)
+        global _ready
+        _ready = False
+        ensure_collection()
+        results = client.search(
+            collection_name=settings.qdrant_collection,
+            query_vector=vector,
+            limit=top_k,
+            query_filter=query_filter,
+        )
     return [{"score": r.score, **(r.payload or {})} for r in results]
 
 
@@ -121,3 +174,35 @@ def get_chunks_by_source(source_id: str, limit: int = 30) -> list[dict[str, Any]
     payloads = [p.payload or {} for p in points]
     payloads.sort(key=lambda p: p.get("chunk_index", 0))
     return payloads
+
+
+def delete_by_source_id(source_id: str) -> int:
+    """Delete all chunks belonging to a source_id. Returns count deleted."""
+    settings = get_settings()
+    client = get_client()
+    flt = qmodels.Filter(
+        must=[
+            qmodels.FieldCondition(
+                key="source_id",
+                match=qmodels.MatchValue(value=source_id),
+            )
+        ]
+    )
+    try:
+        # Scroll to find point IDs matching the filter
+        points, _ = client.scroll(
+            collection_name=settings.qdrant_collection,
+            scroll_filter=flt,
+            limit=10000,
+            with_payload=False,
+        )
+        if points:
+            point_ids = [p.id for p in points]
+            client.delete(
+                collection_name=settings.qdrant_collection,
+                points_selector=qmodels.PointIdsList(points=point_ids),
+            )
+            return len(point_ids)
+    except Exception as e:
+        logger.warning("Failed to delete chunks for source_id %s: %s", source_id, e)
+    return 0

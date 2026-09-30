@@ -7,13 +7,14 @@ qdrant-client==1.12.1
 yt-dlp>=2025.2.19
 youtube-transcript-api>=1.0.0
 faster-whisper==1.1.0
-numpy==2.2.1
+numpy==1.26.4
 python-multipart==0.0.20
 pymupdf==1.25.1
 pytesseract==0.3.13
 Pillow==11.0.0
 docling>=2.0.0
-docling-ocr>=0.1.0
+# On CPU-only hosts preinstall torch first to avoid multi-GB CUDA wheels:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 paddleocr>=2.7.0
 paddlepaddle>=2.6.0
 instaloader==4.14

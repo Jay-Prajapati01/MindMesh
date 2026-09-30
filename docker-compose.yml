@@ -21,6 +21,10 @@ services:
     container_name: mindmesh-frontend
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
+      # Next's file watcher misses change events on the Docker Desktop bind
+      # mount; poll instead so edits are recompiled during development.
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
     ports:
       - "3000:3000"
     depends_on:
@@ -41,4 +45,6 @@ services:
 
 volumes:
   qdrant_storage:
+    driver: local
   backend_data:
+    driver: local

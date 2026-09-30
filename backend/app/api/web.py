@@ -24,6 +24,11 @@ class WebRequest(BaseModel):
 
 @router.post("/process", response_model=SourceItem)
 async def process_web(payload: WebRequest) -> SourceItem:
+    if web._is_youtube_video(payload.url):
+        raise HTTPException(
+            status_code=400,
+            detail="This is a YouTube video — use the YouTube tab to ingest it (real transcripts, better summaries).",
+        )
     try:
         article = await web.fetch_article(payload.url)
     except ValueError as exc:
@@ -34,7 +39,7 @@ async def process_web(payload: WebRequest) -> SourceItem:
         raise HTTPException(status_code=422, detail="No readable content found or content too short")
     source_id = hashlib.sha1(web._normalize_url(payload.url).encode()).hexdigest()[:16]
     from app.services import ingest
-    return await ingest.ingest_text(text=article["text"], source_id=source_id, source_type="web", title=article["title"], channel=payload.url)
+    return await ingest.ingest_text(text=article["text"], source_id=source_id, source_type="web", title=article["title"], channel=payload.url, url=payload.url)
 
 
 @router.post("/process/stream")
@@ -54,6 +59,9 @@ async def process_web_stream(payload: WebRequest):
                 return
             if len(payload.url) > 2048:
                 yield sse("step_fail", {"step": 1, "error": "URL is too long (max 2048 characters)"})
+                return
+            if web._is_youtube_video(payload.url):
+                yield sse("step_fail", {"step": 1, "error": "This is a YouTube video — use the YouTube tab to ingest it (real transcripts, better summaries)."})
                 return
             yield sse("step_complete", {"step": 1, "duration_ms": ms()})
 
@@ -122,8 +130,9 @@ async def process_web_stream(payload: WebRequest):
             for i, chunk in enumerate(chunks):
                 try:
                     vec = await embeddings.embed_text(chunk)
-                except Exception:
-                    vec = [0.0] * 768
+                except Exception as exc:  # noqa: BLE001
+                    yield sse("step_fail", {"step": 4, "error": f"Embedding failed on chunk {i + 1}/{len(chunks)}: {exc}"})
+                    return
                 vectors.append(vec)
                 yield sse("step_progress", {"step": 4, "progress": int(((i+1)/len(chunks))*100), "sub_text": f"Chunk {i+1}/{len(chunks)}"})
             yield sse("step_complete", {"step": 4, "duration_ms": ms(), "vectors_count": len(vectors), "chunk_count": len(chunks)})
@@ -131,15 +140,19 @@ async def process_web_stream(payload: WebRequest):
             # Step 5: Index
             yield sse("step_start", {"step": 5, "total_steps": 5, "name": "Indexing to Vector DB", "description": "Storing in Qdrant..."})
             source_id = hashlib.sha1(web._normalize_url(payload.url).encode()).hexdigest()[:16]
-            payloads = [{"text": c, "source_id": source_id, "source_type": "web", "title": title, "chunk_index": i, "channel": payload.url} for i, c in enumerate(chunks)]
+            payloads = [{"text": c, "source_id": source_id, "source_type": "web", "title": title, "chunk_index": i, "channel": payload.url, "url": payload.url} for i, c in enumerate(chunks)]
             vectorstore.ensure_collection()
+            try:
+                vectorstore.delete_by_source_id(source_id)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("delete_by_source_id failed for %s: %s", source_id, exc)
             indexed = vectorstore.upsert_chunks(vectors, payloads)
             try:
                 triples = await graph.extract_relations(text)
                 graph.add_triples(triples, source_id, "web", title)
             except Exception:
                 pass
-            item = SourceItem(source_id=source_id, source_type="web", title=title, channel=payload.url, summary=summary, key_topics=topics, chunks_indexed=indexed)
+            item = SourceItem(source_id=source_id, source_type="web", title=title, channel=payload.url, summary=summary, key_topics=topics, chunks_indexed=indexed, url=payload.url)
             store.add_source(item)
             yield sse("step_complete", {"step": 5, "duration_ms": ms()})
             yield sse("complete", {"source_id": source_id, "title": title, "summary": summary, "key_topics": topics, "chunks_indexed": indexed})

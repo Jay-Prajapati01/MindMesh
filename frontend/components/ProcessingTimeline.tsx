@@ -240,6 +240,10 @@ export function ProcessingTimeline({
       states[step.id] = { status: "pending" };
     }
 
+    // Backend sends CUMULATIVE ms since the pipeline started; convert to a
+    // per-step duration so each row shows only its own time.
+    let prevCumulativeMs = 0;
+
     for (const evt of events) {
       const d = evt.data;
       const stepIdx = (d.step || 1) - 1;
@@ -265,17 +269,21 @@ export function ProcessingTimeline({
           }
           break;
 
-        case "step_complete":
+        case "step_complete": {
+          const cumulative = typeof d.duration_ms === "number" ? d.duration_ms : 0;
+          const perStep = Math.max(0, cumulative - prevCumulativeMs);
+          prevCumulativeMs = Math.max(prevCumulativeMs, cumulative);
           states[stepId] = {
             ...states[stepId],
             status: "complete",
             progress: 100,
-            durationMs: d.duration_ms,
+            durationMs: perStep,
             preview: Object.fromEntries(
               Object.entries(d).filter(([k]) => k !== "step" && k !== "duration_ms")
             ),
           };
           break;
+        }
 
         case "step_fail":
           states[stepId] = {

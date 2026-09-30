@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, Suspense } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Sparkles, Search as SearchIcon, Command } from "lucide-react";
+import { Sparkles, Search as SearchIcon } from "lucide-react";
 import { semanticSearch, getStats, SearchHit } from "@/lib/api";
 import { useAppStore } from "@/lib/store";
 import { useToast } from "@/components/ui";
@@ -17,9 +18,12 @@ import {
   SearchNoResults,
 } from "@/components/search";
 
-export default function SearchPage() {
+type SortMode = "relevance" | "score" | "date";
+
+function SearchPageInner() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("");
+  const [sort, setSort] = useState<SortMode>("relevance");
   const [hasSearched, setHasSearched] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchHit[]>([]);
   const [searchMeta, setSearchMeta] = useState({
@@ -31,6 +35,8 @@ export default function SearchPage() {
 
   const addSearch = useAppStore((s) => s.addSearch);
   const { notify } = useToast();
+  const searchParams = useSearchParams();
+  const qParam = searchParams.get("q");
 
   const { data: stats } = useQuery({
     queryKey: ["stats"],
@@ -39,15 +45,17 @@ export default function SearchPage() {
   });
 
   const mutation = useMutation({
-    mutationFn: () => semanticSearch(query, filter || undefined),
-    onSuccess: (data) => {
-      addSearch(query);
+    mutationFn: (params: { q: string; filter?: string }) =>
+      semanticSearch(params.q, params.filter),
+    onSuccess: (data, vars) => {
+      addSearch(vars.q);
       setSearchResults(data.hits);
+      // Only real backend metrics — never fabricate numbers.
       setSearchMeta({
-        chunksSearched: data.total_chunks_searched ?? Math.round((stats?.indexed_chunks ?? 63) * 0.8),
-        sourcesSearched: data.total_sources_searched ?? stats?.total_sources ?? 7,
-        embeddingsScanned: data.total_embeddings ?? Math.round((stats?.indexed_chunks ?? 63) * 1.5),
-        searchTimeMs: data.search_time_ms ?? Math.round(80 + Math.random() * 120),
+        chunksSearched: data.chunks_searched ?? 0,
+        sourcesSearched: data.sources_searched ?? 0,
+        embeddingsScanned: data.chunks_searched ?? 0,
+        searchTimeMs: data.search_time_ms ?? 0,
       });
       setHasSearched(true);
     },
@@ -56,24 +64,43 @@ export default function SearchPage() {
     },
   });
 
-  const handleSearch = useCallback(
-    (searchQuery: string) => {
-      setQuery(searchQuery);
-      if (searchQuery.trim()) {
-        mutation.mutate();
-      }
+  const runSearch = useCallback(
+    (q: string, f: string) => {
+      if (q.trim()) mutation.mutate({ q, filter: f || undefined });
     },
     [mutation]
   );
 
-  const handleDirectSearch = useCallback(() => {
-    if (query.trim()) {
-      mutation.mutate();
+  // OPEN-4: honor ?q= from the command palette / deep links
+  useEffect(() => {
+    if (qParam && qParam.trim()) {
+      setQuery(qParam);
+      mutation.mutate({ q: qParam, filter: undefined });
     }
-  }, [query, mutation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qParam]);
+
+  const handleSearch = useCallback(
+    (searchQuery: string) => {
+      setQuery(searchQuery);
+      runSearch(searchQuery, filter);
+    },
+    [runSearch, filter]
+  );
+
+  const handleDirectSearch = useCallback(() => {
+    runSearch(query, filter);
+  }, [query, filter, runSearch]);
 
   const isLoading = mutation.isPending;
-  const hits = searchResults;
+
+  // Client-side sorting (Relevance = backend order, Score = desc, Date = newest title/alpha fallback)
+  const hits = (() => {
+    const arr = [...searchResults];
+    if (sort === "score") arr.sort((a, b) => b.score - a.score);
+    return arr;
+  })();
+
   const hasResults = hits.length > 0;
 
   return (
@@ -117,8 +144,7 @@ export default function SearchPage() {
           setFilter={(f) => {
             setFilter(f);
             if (query.trim()) {
-              // Re-search with new filter
-              setTimeout(() => mutation.mutate(), 50);
+              mutation.mutate({ q: query, filter: f || undefined });
             }
           }}
           stats={stats?.sources_by_type}
@@ -159,10 +185,13 @@ export default function SearchPage() {
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-[11px] text-[#52525B]">Sort by:</span>
-                <select className="rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#111318] px-3 py-1.5 text-[11px] text-[#A1A1AA] outline-none">
-                  <option>Relevance</option>
-                  <option>Date</option>
-                  <option>Score</option>
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value as SortMode)}
+                  className="rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#111318] px-3 py-1.5 text-[11px] text-[#A1A1AA] outline-none"
+                >
+                  <option value="relevance">Relevance</option>
+                  <option value="score">Score</option>
                 </select>
               </div>
             </motion.div>
@@ -211,6 +240,7 @@ export default function SearchPage() {
                   exit={{ opacity: 0 }}
                 >
                   <SearchNoResults
+                    query={query}
                     chunksSearched={searchMeta.chunksSearched}
                     sourcesSearched={searchMeta.sourcesSearched}
                     embeddingsScanned={searchMeta.embeddingsScanned}
@@ -238,11 +268,22 @@ export default function SearchPage() {
           <IntelligenceSidebar
             hits={hits}
             stats={stats}
+            query={query}
+            chunksSearched={searchMeta.chunksSearched}
             searchTimeMs={searchMeta.searchTimeMs}
             loading={isLoading}
           />
         </div>
       </div>
     </div>
+  );
+}
+
+// useSearchParams() requires a Suspense boundary for `next build`
+export default function SearchPage() {
+  return (
+    <Suspense fallback={null}>
+      <SearchPageInner />
+    </Suspense>
   );
 }

@@ -119,6 +119,33 @@ export default function DocumentsPage() {
         <p className="mt-3 text-[12px] text-[#52525B]">
           Perfect for meeting notes, research papers, presentations, spreadsheets, and markdown documentation.
         </p>
+
+        {/* Accepted document types */}
+        <div className="mt-4 rounded-[14px] border border-[rgba(255,255,255,0.05)] bg-[#0C0D12] p-4">
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-[#71717A]">Accepted documents</p>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { ext: "DOCX", desc: "Word reports, resumes, notes — headings & tables preserved" },
+              { ext: "PPTX", desc: "Presentations — slide titles & tables kept as sections" },
+              { ext: "XLSX", desc: "Excel workbooks — one section per sheet, header table" },
+              { ext: "CSV", desc: "Comma-separated data — first row treated as header" },
+              { ext: "TXT", desc: "Plain text notes, transcripts, logs" },
+              { ext: "MD", desc: "Markdown docs — existing headings used for chunking" },
+            ].map((t) => (
+              <div key={t.ext} className="flex items-start gap-2.5 rounded-[10px] bg-[#111318] px-3 py-2.5">
+                <span className="mt-0.5 rounded-md bg-[#7C3AED]/15 px-1.5 py-0.5 text-[10px] font-bold text-[#A78BFA]">
+                  {t.ext}
+                </span>
+                <span className="text-[11px] leading-snug text-[#71717A]">{t.desc}</span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-[11px] text-[#52525B]">
+            Headings, tables and section structure are preserved and fed to the AI for summaries,
+            semantic chunking and grounded answers. PDFs are handled by Docling on the{" "}
+            <a href="/pdf" className="text-[#A78BFA] underline-offset-2 hover:underline">PDF page</a>.
+          </p>
+        </div>
       </div>
 
       {/* Processing header */}

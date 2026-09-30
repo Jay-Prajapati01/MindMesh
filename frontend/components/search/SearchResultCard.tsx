@@ -233,10 +233,32 @@ export function SearchResultCard({ hit, index }: Props) {
           {expanded ? "Less" : "More"}
         </button>
         <div className="flex-1" />
-        <button className="flex items-center gap-1.5 rounded-lg bg-[rgba(255,255,255,0.04)] px-3 py-1.5 text-[11px] text-[#A1A1AA] transition-all hover:bg-[rgba(255,255,255,0.08)] hover:text-[#F5F5F5]">
-          <ExternalLink className="h-3 w-3" />
-          Open source
-        </button>
+        {(() => {
+          const urlStr = hit.url || "";
+          // Only http(s) links and absolute paths ("/api/...") are valid.
+          // Anything else (e.g. a channel name) would produce a garbage URL.
+          const sourceUrl = urlStr.startsWith("http")
+            ? urlStr
+            : urlStr.startsWith("/")
+            ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${urlStr}`
+            : null;
+          return sourceUrl ? (
+            <a
+              href={sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 rounded-lg bg-[rgba(255,255,255,0.04)] px-3 py-1.5 text-[11px] text-[#A1A1AA] transition-all hover:bg-[rgba(255,255,255,0.08)] hover:text-[#F5F5F5]"
+            >
+              <ExternalLink className="h-3 w-3" />
+              Open source
+            </a>
+          ) : (
+            <button className="flex items-center gap-1.5 rounded-lg bg-[rgba(255,255,255,0.04)] px-3 py-1.5 text-[11px] text-[#52525B] cursor-not-allowed">
+              <ExternalLink className="h-3 w-3" />
+              No link
+            </button>
+          );
+        })()}
       </div>
 
       <AnimatePresence>

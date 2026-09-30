@@ -1,25 +1,14 @@
 "use client";
 
-import { useMemo } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Layers,
   Database,
   Network,
   Clock,
-  Cpu,
-  Search,
-  Target,
-  TrendingUp,
-  Zap,
   HelpCircle,
-  MessageSquare,
   ArrowRight,
-  Brain,
-  Sparkles,
-  StickyNote,
-  BookOpen,
-  FileDown,
 } from "lucide-react";
 import { Stats } from "@/lib/api";
 import { AIActions } from "./AIActions";
@@ -27,11 +16,10 @@ import { AIActions } from "./AIActions";
 interface Props {
   stats?: Stats;
   lastResponse?: {
-    chunksSearched: number;
-    sourcesSearched: number;
-    embeddingsScanned: number;
-    searchTimeMs: number;
-    confidence: number;
+    chunksSearched?: number;
+    sourcesSearched?: number;
+    citations?: number;
+    searchTimeMs?: number;
   };
   relatedQuestions: string[];
   onQuestionClick: (q: string) => void;
@@ -39,9 +27,42 @@ interface Props {
 }
 
 export function ChatSidebar({ stats, lastResponse, relatedQuestions, onQuestionClick, onAction }: Props) {
-  const totalChunks = stats?.indexed_chunks ?? 63;
-  const totalSources = stats?.total_sources ?? 7;
-  const embeddings = Math.round(totalChunks * 1.5);
+  const totalChunks = stats?.indexed_chunks ?? 0;
+  const totalSources = stats?.total_sources ?? 0;
+
+  const rows = [
+    {
+      icon: Layers,
+      label: "Chunks Searched",
+      value: lastResponse?.chunksSearched != null ? lastResponse.chunksSearched : "—",
+      color: "#6E56CF",
+    },
+    {
+      icon: Database,
+      label: "Sources Used",
+      value: lastResponse?.sourcesSearched != null ? lastResponse.sourcesSearched : "—",
+      color: "#22C55E",
+    },
+    {
+      icon: Network,
+      label: "Citations",
+      value: lastResponse?.citations != null ? lastResponse.citations : "—",
+      color: "#0EA5E9",
+    },
+    {
+      icon: Clock,
+      label: "Search Time",
+      value:
+        lastResponse?.searchTimeMs != null
+          ? lastResponse.searchTimeMs >= 1000
+            ? `${(lastResponse.searchTimeMs / 1000).toFixed(1)}s`
+            : `${lastResponse.searchTimeMs}ms`
+          : "—",
+      color: "#22C55E",
+    },
+    { icon: Layers, label: "Indexed Chunks", value: totalChunks, color: "#6E56CF" },
+    { icon: Database, label: "Total Sources", value: totalSources, color: "#71717A" },
+  ];
 
   return (
     <div className="space-y-4">
@@ -54,16 +75,7 @@ export function ChatSidebar({ stats, lastResponse, relatedQuestions, onQuestionC
       >
         <h3 className="mb-3 text-[12px] font-semibold text-[#F5F5F5]">Search Summary</h3>
         <div className="space-y-2.5">
-          {[
-            { icon: Layers, label: "Chunks Searched", value: lastResponse?.chunksSearched ?? totalChunks, color: "#6E56CF" },
-            { icon: Database, label: "Sources Used", value: lastResponse?.sourcesSearched ?? totalSources, color: "#22C55E" },
-            { icon: Network, label: "Embeddings Scanned", value: lastResponse?.embeddingsScanned ?? embeddings, color: "#0EA5E9" },
-            { icon: Target, label: "Top Match Score", value: lastResponse ? `${lastResponse.confidence}%` : "—", color: "#F59E0B" },
-            { icon: Clock, label: "Search Time", value: lastResponse ? `${(lastResponse.searchTimeMs / 1000).toFixed(1)}s` : "—", color: "#22C55E" },
-            { icon: Cpu, label: "AI Model", value: "qwen2.5:3b", color: "#6E56CF" },
-            { icon: Database, label: "Collection", value: "mindmesh", color: "#71717A" },
-            { icon: HardDrive, label: "Vector DB", value: "Qdrant", color: "#0EA5E9" },
-          ].map((item) => (
+          {rows.map((item) => (
             <div key={item.label} className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <item.icon className="h-3 w-3" style={{ color: item.color }} />
@@ -150,10 +162,13 @@ export function ChatSidebar({ stats, lastResponse, relatedQuestions, onQuestionC
             <line x1="80" y1="50" x2="80" y2="85" stroke="#6E56CF" strokeWidth="1" opacity="0.3" />
           </svg>
         </div>
-        <button className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-[10px] bg-[#6E56CF]/10 py-2 text-[11px] font-medium text-[#6E56CF] transition-colors hover:bg-[#6E56CF]/20">
+        <Link
+          href="/graph"
+          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-[10px] bg-[#6E56CF]/10 py-2 text-[11px] font-medium text-[#6E56CF] transition-colors hover:bg-[#6E56CF]/20"
+        >
           Open Knowledge Graph
           <ArrowRight className="h-3 w-3" />
-        </button>
+        </Link>
       </motion.div>
 
       {/* AI Actions */}

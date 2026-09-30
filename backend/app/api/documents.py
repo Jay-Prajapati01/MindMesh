@@ -7,6 +7,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 
 from app.core.logging import get_logger
+from app.core.uploads import read_upload
 from app.models.schemas import SourceItem
 from app.services import chunking, document, embeddings, graph, rag, store, vectorstore
 from app.services.sse import sse
@@ -19,7 +20,7 @@ router = APIRouter(prefix="/documents", tags=["documents"])
 async def process_document(file: UploadFile = File(...)) -> SourceItem:
     if not file.filename:
         raise HTTPException(status_code=400, detail="Missing filename")
-    data = await file.read()
+    data = await read_upload(file)
     if not data:
         raise HTTPException(status_code=400, detail="Empty file")
     try:
@@ -42,7 +43,7 @@ async def process_document(file: UploadFile = File(...)) -> SourceItem:
 async def process_document_stream(file: UploadFile = File(...)):
     if not file.filename:
         raise HTTPException(status_code=400, detail="Missing filename")
-    file_data = await file.read()
+    file_data = await read_upload(file)
     if not file_data:
         raise HTTPException(status_code=400, detail="Empty file")
     file_name = file.filename
@@ -53,6 +54,9 @@ async def process_document_stream(file: UploadFile = File(...)):
 
         summary = ""
         topics: list[str] = []
+        file_path: str | None = None
+        source_id: str | None = None
+        completed = False
 
         try:
             # Step 1: Upload
@@ -118,16 +122,21 @@ async def process_document_stream(file: UploadFile = File(...)):
             for i, chunk in enumerate(chunks):
                 try:
                     vec = await embeddings.embed_text(chunk)
-                except Exception:
-                    vec = [0.0] * 768
+                except Exception as exc:  # noqa: BLE001
+                    yield sse("step_fail", {"step": 5, "error": f"Embedding failed on chunk {i + 1}/{len(chunks)}: {exc}"})
+                    return
                 vectors.append(vec)
                 yield sse("step_progress", {"step": 5, "progress": int(((i+1)/len(chunks))*100), "sub_text": f"Chunk {i+1}/{len(chunks)}"})
             yield sse("step_complete", {"step": 5, "duration_ms": ms(), "vectors_count": len(vectors)})
 
             # Step 6: Index
             yield sse("step_start", {"step": 6, "total_steps": 6, "name": "Indexing to Vector DB", "description": "Storing in Qdrant..."})
-            payloads = [{"text": c, "source_id": source_id, "source_type": "document", "title": parsed.get("title"), "chunk_index": i, "file_path": f"documents/{source_id}{('' if '.' not in file_name else '.' + file_name.rsplit('.', 1)[-1])}", "file_name": file_name} for i, c in enumerate(chunks)]
+            payloads = [{"text": c, "source_id": source_id, "source_type": "document", "title": parsed.get("title"), "chunk_index": i, "file_path": file_path, "file_name": file_name} for i, c in enumerate(chunks)]
             vectorstore.ensure_collection()
+            try:
+                vectorstore.delete_by_source_id(source_id)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("delete_by_source_id failed for %s: %s", source_id, exc)
             indexed = vectorstore.upsert_chunks(vectors, payloads)
             try:
                 triples = await graph.extract_relations(parsed["text"])
@@ -138,11 +147,17 @@ async def process_document_stream(file: UploadFile = File(...)):
 
             ext = file_name.rsplit(".", 1)[-1].lower() if "." in file_name else "bin"
             mime_map = {"docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation", "txt": "text/plain", "md": "text/markdown", "csv": "text/csv", "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
-            item = SourceItem(source_id=source_id, source_type="document", title=parsed.get("title"), summary=summary, key_topics=topics, chunks_indexed=indexed, file_path=f"documents/{source_id}.{ext}", file_name=file_name, file_size=len(data), mime_type=mime_map.get(ext, "application/octet-stream"))
+            item = SourceItem(source_id=source_id, source_type="document", title=parsed.get("title"), summary=summary, key_topics=topics, chunks_indexed=indexed, file_path=file_path, file_name=file_name, file_size=len(data), mime_type=mime_map.get(ext, "application/octet-stream"))
             store.add_source(item)
+            completed = True
             yield sse("complete", {"source_id": source_id, "title": parsed.get("title"), "summary": summary, "key_topics": topics, "chunks_indexed": indexed})
         except Exception as exc:
             logger.exception("Documents stream failed")
             yield sse("step_fail", {"step": 0, "error": str(exc)})
+        finally:
+            if not completed and file_path and source_id:
+                from app.services import file_storage
+                if file_storage.cleanup_if_unreferenced(file_path, source_id):
+                    logger.info("Removed unreferenced upload after failed document pipeline: %s", file_path)
 
     return StreamingResponse(event_generator(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"})

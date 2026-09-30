@@ -1,7 +1,7 @@
 """Pydantic request/response models shared across the API."""
 from datetime import datetime, timezone
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 def _utcnow() -> datetime:
@@ -37,12 +37,27 @@ class VideoProcessResponse(BaseModel):
     processed_at: datetime = Field(default_factory=_utcnow)
 
 
+def _clean_text(value: str, field_name: str, max_len: int) -> str:
+    """Trim user text and reject blank or oversized input (-> 422)."""
+    cleaned = value.strip()
+    if not cleaned:
+        raise ValueError(f"{field_name} must not be empty")
+    if len(cleaned) > max_len:
+        raise ValueError(f"{field_name} must be at most {max_len} characters")
+    return cleaned
+
+
 class SearchRequest(BaseModel):
     query: str
     top_k: int | None = None
     source_type: str | None = Field(
         default=None, description="Optional filter by source type"
     )
+
+    @field_validator("query", mode="after")
+    @classmethod
+    def _validate_query(cls, v: str) -> str:
+        return _clean_text(v, "query", 1000)
 
 
 class SearchHit(BaseModel):
@@ -58,6 +73,14 @@ class SearchHit(BaseModel):
 class SearchResponse(BaseModel):
     query: str
     hits: list[SearchHit]
+    search_time_ms: int = 0
+    chunks_searched: int = 0
+    sources_searched: int = 0
+
+
+class ChatMessage(BaseModel):
+    role: str  # "user" or "assistant"
+    content: str
 
 
 class ChatRequest(BaseModel):
@@ -65,6 +88,12 @@ class ChatRequest(BaseModel):
     top_k: int | None = None
     source_type: str | None = None
     source_id: str | None = None
+    history: list[ChatMessage] = []
+
+    @field_validator("question", mode="after")
+    @classmethod
+    def _validate_question(cls, v: str) -> str:
+        return _clean_text(v, "question", 4000)
 
 
 class Citation(BaseModel):
@@ -80,6 +109,9 @@ class ChatResponse(BaseModel):
     question: str
     answer: str
     citations: list[Citation]
+    search_time_ms: int | None = None
+    chunks_searched: int | None = None
+    sources_searched: int | None = None
 
 
 class SourceItem(BaseModel):
@@ -94,10 +126,12 @@ class SourceItem(BaseModel):
     key_topics: list[str] = []
     chunks_indexed: int = 0
     created_at: datetime = Field(default_factory=_utcnow)
+    url: str | None = None
     file_path: str | None = None
     file_name: str | None = None
     file_size: int | None = None
     mime_type: str | None = None
+    page_count: int | None = None
 
 
 class RecentQuery(BaseModel):

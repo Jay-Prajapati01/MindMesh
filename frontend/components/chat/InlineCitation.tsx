@@ -35,9 +35,13 @@ export function InlineCitation({ index, sourceTitle, sourceType, snippet, url }:
             <span className="rounded-full bg-[#6E56CF]/15 px-1.5 py-0.5 text-[9px] font-semibold text-[#6E56CF] capitalize">
               {sourceType}
             </span>
-            {url && (
+            {url && (url.startsWith("http") || url.startsWith("/")) && (
               <a
-                href={url.startsWith("http") ? url : `http://localhost:8000${url}`}
+                href={
+                  url.startsWith("http")
+                    ? url
+                    : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${url}`
+                }
                 target={url.startsWith("http") ? "_blank" : "_self"}
                 rel="noopener noreferrer"
                 className="ml-auto flex items-center gap-0.5 text-[9px] text-[#0EA5E9] hover:text-[#38BDF8] transition-colors"

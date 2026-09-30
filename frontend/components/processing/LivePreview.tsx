@@ -12,8 +12,8 @@ interface LivePreviewProps {
 
 const STAGE_LABELS: Record<string, Record<number, string>> = {
   youtube: { 2: "Fetching metadata...", 3: "Fetching transcript...", 4: "Generating summary...", 5: "Chunking content...", 6: "Creating embeddings...", 7: "Indexing..." },
-  instagram: { 2: "Fetching post data...", 3: "Generating summary...", 4: "Chunking content...", 5: "Creating embeddings...", 6: "Indexing..." },
-  pdf: { 2: "Extracting text...", 3: "Generating summary...", 4: "Chunking content...", 5: "Creating embeddings...", 6: "Indexing..." },
+  instagram: { 2: "Rendering page...", 3: "Extracting caption...", 4: "Downloading media...", 5: "Running OCR & Whisper...", 6: "Generating summary...", 7: "Indexing..." },
+  pdf: { 2: "Detecting document type...", 3: "Parsing layout...", 4: "Running OCR...", 5: "Extracting tables...", 6: "Extracting images...", 7: "Detecting headings...", 8: "Creating structured content...", 9: "Cleaning document...", 10: "Semantic chunking...", 11: "Creating embeddings...", 12: "Generating summary...", 13: "Indexing to vector DB..." },
   document: { 2: "Extracting text...", 3: "Generating summary...", 4: "Chunking content...", 5: "Creating embeddings...", 6: "Indexing..." },
   audio: { 2: "Transcribing audio...", 3: "Generating summary...", 4: "Chunking content...", 5: "Creating embeddings...", 6: "Indexing..." },
   web: { 1: "Validating URL...", 2: "Fetching & extracting content...", 3: "Generating AI summary...", 4: "Creating embeddings...", 5: "Indexing to vector DB..." },
@@ -211,6 +211,17 @@ export function LivePreview({ events, isStreaming, isIdle, sourceType }: LivePre
             </div>
             <p className="text-[12px] font-medium text-[#A1A1AA]">Content processed</p>
             <p className="mt-1 text-[11px] text-[#71717A]">Indexed and ready for search</p>
+          </div>
+        </div>
+      )}
+
+      {hasFailed && (thumbnail || transcript || displaySummary) && (
+        <div className="flex items-start gap-2.5 rounded-[12px] border border-[#EF4444]/30 bg-[#EF4444]/10 px-3 py-2.5">
+          <svg className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#EF4444]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          </svg>
+          <div className="text-[11px] leading-relaxed text-[#FCA5A5]">
+            Processing failed partway through — what was extracted so far is shown, but this source may be incomplete.
           </div>
         </div>
       )}

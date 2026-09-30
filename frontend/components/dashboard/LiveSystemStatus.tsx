@@ -3,60 +3,59 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
-  Cpu,
   Database,
-  HardDrive,
-  Wifi,
-  WifiOff,
   Brain,
   Activity,
   Server,
 } from "lucide-react";
-import { getHealth, Stats, HealthStatus } from "@/lib/api";
+import { getDetailedHealth } from "@/lib/api";
 
 interface StatusItem {
   label: string;
   value: string;
-  icon: typeof Cpu;
+  icon: typeof Brain;
   color: string;
   status: "healthy" | "busy" | "offline";
 }
 
-export function LiveSystemStatus({ stats }: { stats?: Stats }) {
-  const { data: health } = useQuery({
-    queryKey: ["health"],
-    queryFn: getHealth,
+export function LiveSystemStatus() {
+  const { data: health, isError, isLoading } = useQuery({
+    queryKey: ["health", "detailed"],
+    queryFn: getDetailedHealth,
     refetchInterval: 30000,
+    retry: 1,
   });
+
+  const ok = (check: string) => health?.checks?.[check] === "ok";
 
   const statuses: StatusItem[] = [
     {
-      label: "AI Model",
-      value: "qwen2.5:3b",
+      label: "API",
+      value: isLoading ? "Checking…" : health?.app ?? "Unknown",
+      icon: Server,
+      color: isError ? "#EF4444" : health ? "#22C55E" : "#F59E0B",
+      status: isError ? "offline" : health ? "healthy" : "busy",
+    },
+    {
+      label: "LLM",
+      value: health?.llm_model ?? "Unknown",
       icon: Brain,
       color: "#6E56CF",
-      status: health?.status === "ok" ? "healthy" : "offline",
+      status: ok("ollama") ? "healthy" : "offline",
     },
     {
       label: "Embeddings",
-      value: "nomic-embed",
+      value: health?.embedding_model ?? "Unknown",
       icon: Activity,
       color: "#22C55E",
-      status: "healthy",
+      status: ok("ollama") ? "healthy" : "offline",
     },
     {
       label: "Vector DB",
-      value: stats?.vector_store || "Qdrant",
+      value: health?.collection ?? "Unknown",
       icon: Database,
       color: "#0EA5E9",
-      status: "healthy",
-    },
-    {
-      label: "API",
-      value: health?.status === "ok" ? "Connected" : "Offline",
-      icon: Server,
-      color: health?.status === "ok" ? "#22C55E" : "#EF4444",
-      status: health?.status === "ok" ? "healthy" : "offline",
+      status: ok("qdrant") ? "healthy" : "offline",
     },
   ];
 
@@ -111,7 +110,7 @@ export function LiveSystemStatus({ stats }: { stats?: Stats }) {
               </span>
             </div>
             <div className="text-[10px] font-medium text-[#F5F5F5]">{item.label}</div>
-            <div className="text-[9px] text-[#71717A]">{item.value}</div>
+            <div className="truncate text-[9px] text-[#71717A]">{item.value}</div>
           </motion.div>
         );
       })}

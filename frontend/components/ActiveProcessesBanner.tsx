@@ -10,6 +10,7 @@ const TYPE_CONFIG: Record<string, { icon: any; color: string; label: string; hre
   pdf: { icon: FileText, color: "#DC2626", label: "PDF", href: "/pdf" },
   youtube: { icon: Video, color: "#EF4444", label: "YouTube", href: "/youtube" },
   instagram: { icon: Camera, color: "#E1306C", label: "Instagram", href: "/instagram" },
+  document: { icon: File, color: "#3B82F6", label: "Document", href: "/documents" },
   documents: { icon: File, color: "#3B82F6", label: "Document", href: "/documents" },
   audio: { icon: Music, color: "#8B5CF6", label: "Audio", href: "/audio" },
   web: { icon: Globe, color: "#22C55E", label: "Web", href: "/web" },
@@ -18,15 +19,28 @@ const TYPE_CONFIG: Record<string, { icon: any; color: string; label: string; hre
 };
 
 function getProgress(events: Array<{ event: string; data: Record<string, any> }>): number {
-  let total = 0, done = 0;
+  // Progress must be computed per step, not summed: a step emits many
+  // step_progress events (5%, 10%, ... 100%) and summing them exceeds 100%.
+  const steps = new Map<number, { done: boolean; progress: number }>();
+  let totalSteps = 0;
   for (const evt of events) {
-    if (evt.event === "step_start") total++;
-    if (evt.event === "step_complete") done++;
-    if (evt.event === "step_progress" && evt.data.progress) {
-      done += evt.data.progress / 100;
+    const step = Number(evt.data?.step || 0);
+    if (evt.data?.total_steps) totalSteps = Math.max(totalSteps, Number(evt.data.total_steps));
+    if (!step) continue;
+    const cur = steps.get(step) || { done: false, progress: 0 };
+    if (evt.event === "step_complete") steps.set(step, { done: true, progress: 100 });
+    else if (evt.event === "step_fail") steps.set(step, { done: true, progress: 100 });
+    else if (evt.event === "step_progress") {
+      steps.set(step, { done: false, progress: Math.max(cur.progress, Number(evt.data.progress) || 0) });
+    } else if (!steps.has(step)) {
+      steps.set(step, cur);
     }
   }
-  return total > 0 ? Math.round((done / total) * 100) : 0;
+  if (steps.size === 0) return 0;
+  let done = 0;
+  for (const s of steps.values()) done += s.done ? 1 : s.progress / 100;
+  const denominator = Math.max(totalSteps, steps.size);
+  return Math.min(100, Math.round((done / denominator) * 100));
 }
 
 export function ActiveProcessesBanner() {

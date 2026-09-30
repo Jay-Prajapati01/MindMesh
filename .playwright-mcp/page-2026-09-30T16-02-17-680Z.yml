@@ -1,0 +1,252 @@
+- generic [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - complementary [ref=f1e4]:
+      - generic [ref=f1e5]: MindMesh
+      - navigation [ref=f1e17]:
+        - link "Dashboard" [ref=f1e18] [cursor=pointer]:
+          - /url: /
+        - link "Workspace" [ref=f1e22] [cursor=pointer]:
+          - /url: /workspace
+        - link "YouTube" [ref=f1e28] [cursor=pointer]:
+          - /url: /youtube
+        - link "Instagram" [ref=f1e32] [cursor=pointer]:
+          - /url: /instagram
+        - link "PDF" [ref=f1e36] [cursor=pointer]:
+          - /url: /pdf
+        - link "Documents" [ref=f1e40] [cursor=pointer]:
+          - /url: /documents
+        - link "Audio" [ref=f1e45] [cursor=pointer]:
+          - /url: /audio
+        - link "Web" [ref=f1e49] [cursor=pointer]:
+          - /url: /web
+        - link "Graph" [ref=f1e53] [cursor=pointer]:
+          - /url: /graph
+        - link "Timeline" [ref=f1e59] [cursor=pointer]:
+          - /url: /timeline
+        - link "Compare" [ref=f1e63] [cursor=pointer]:
+          - /url: /compare
+        - link "Search" [ref=f1e69] [cursor=pointer]:
+          - /url: /search
+        - link "Ask AI" [ref=f1e73] [cursor=pointer]:
+          - /url: /chat
+        - link "Stored" [ref=f1e76] [cursor=pointer]:
+          - /url: /stored
+        - link "Settings" [ref=f1e79] [cursor=pointer]:
+          - /url: /settings
+    - main [ref=f1e84]:
+      - generic [ref=f1e85]:
+        - generic [ref=f1e91]:
+          - heading "YouTube Intelligence" [level=1] [ref=f1e92]
+          - paragraph [ref=f1e93]: Transform videos into searchable knowledge. Extract transcripts, generate AI summaries, and build a queryable knowledge graph.
+          - generic [ref=f1e94]:
+            - generic [ref=f1e95]: YouTube
+            - generic [ref=f1e97]: Transcript API
+            - generic [ref=f1e98]: Whisper Fallback
+            - generic [ref=f1e99]: yt-dlp
+        - generic [ref=f1e100]:
+          - generic [ref=f1e101]: Video URL
+          - generic [ref=f1e102]:
+            - generic [ref=f1e103]:
+              - textbox "https://youtube.com/watch?v=..." [ref=f1e107]: https://youtu.be/Sh8DjevUzgI?si=HcRRq0t_wt5BKCi3
+              - button [ref=f1e549] [cursor=pointer]
+            - button "Process Video" [active] [ref=f1e553] [cursor=pointer]
+          - paragraph [ref=f1e111]: Supports public YouTube videos, shorts, and live streams. Transcript will be auto-detected or Whisper will be used as fallback.
+        - generic [ref=f1e292]:
+          - generic [ref=f1e299]:
+            - generic [ref=f1e300]:
+              - heading "Processing Complete Gold Motion App Full Tutorial | All Effects & AI Features..." [level=2] [ref=f1e556]
+              - generic [ref=f1e557]: ✓ DONE
+            - generic [ref=f1e303]:
+              - generic [ref=f1e304]: 8s elapsed
+              - generic [ref=f1e305]: ·
+              - generic [ref=f1e558]: Completed in 8s
+              - generic [ref=f1e307]: ·
+              - generic [ref=f1e308]: All steps done
+          - generic [ref=f1e312]:
+            - generic [ref=f1e313]:
+              - generic [ref=f1e314]: 100%
+              - generic [ref=f1e315]: 7/7 steps
+            - generic [ref=f1e316]: Complete
+        - generic [ref=f1e112]:
+          - generic [ref=f1e114]:
+            - generic [ref=f1e115]:
+              - generic [ref=f1e116]: Pipeline Progress
+              - generic [ref=f1e327]: 7/7
+            - generic [ref=f1e117]:
+              - generic [ref=f1e126]:
+                - generic [ref=f1e127]: 1. Validating URL
+                - generic [ref=f1e129]:
+                  - generic [ref=f1e455]: 0.0s
+                  - generic [ref=f1e456]: ✓ Done
+              - generic [ref=f1e139]:
+                - generic [ref=f1e140]:
+                  - generic [ref=f1e141]: 2. Fetching Metadata
+                  - generic [ref=f1e143]:
+                    - generic [ref=f1e460]: 1.3s
+                    - generic [ref=f1e461]: ✓ Done
+                - button "Preview" [ref=f1e463] [cursor=pointer]
+              - generic [ref=f1e153]:
+                - generic [ref=f1e154]:
+                  - generic [ref=f1e155]: 3. Fetching Transcript
+                  - generic [ref=f1e157]:
+                    - generic [ref=f1e470]: 3.5s
+                    - generic [ref=f1e471]: ✓ Done
+                - button "Preview" [ref=f1e473] [cursor=pointer]
+              - generic [ref=f1e167]:
+                - generic [ref=f1e168]:
+                  - generic [ref=f1e169]: 4. Generating Summary
+                  - generic [ref=f1e171]:
+                    - generic [ref=f1e480]: 5.5s
+                    - generic [ref=f1e481]: ✓ Done
+                - button "Preview" [ref=f1e483] [cursor=pointer]
+              - generic [ref=f1e181]:
+                - generic [ref=f1e182]:
+                  - generic [ref=f1e183]: 5. Chunking Content
+                  - generic [ref=f1e185]:
+                    - generic [ref=f1e490]: 5.5s
+                    - generic [ref=f1e491]: ✓ Done
+                - button "Preview" [ref=f1e493] [cursor=pointer]
+              - generic [ref=f1e196]:
+                - generic [ref=f1e197]: 6. Creating Embeddings
+                - generic [ref=f1e199]:
+                  - generic [ref=f1e500]: 5.5s
+                  - generic [ref=f1e501]: ✓ Done
+              - generic [ref=f1e207]:
+                - generic [ref=f1e208]: 7. Indexing to Vector DB
+                - generic [ref=f1e210]:
+                  - generic [ref=f1e563]: 8.4s
+                  - generic [ref=f1e564]: ✓ Done
+          - generic [ref=f1e214]:
+            - generic [ref=f1e215]: Complete
+            - generic [ref=f1e508]:
+              - generic [ref=f1e509]:
+                - img "Gold Motion App Full Tutorial | All Effects & AI Features Explained" [ref=f1e510]
+                - generic [ref=f1e512]: 12:11
+              - generic [ref=f1e513]:
+                - heading "Gold Motion App Full Tutorial | All Effects & AI Features Explained" [level=3] [ref=f1e514]
+                - paragraph [ref=f1e515]: Abhi Breakdown
+            - generic [ref=f1e516]:
+              - generic [ref=f1e517]:
+                - generic [ref=f1e518]: Transcript
+                - generic [ref=f1e519]: 303 chars
+              - paragraph [ref=f1e521]: "So, if you are also using After Motion Jet, stop using it right now because Gold Motion has arrived in the market, and it comes with so many new features and effects. And here is a bonus point: Gold Motion now includes AI features that will be a huge help in our work. So, you’ll find out wher..."
+            - generic [ref=f1e362]:
+              - generic [ref=f1e363]: AI Summary
+              - paragraph [ref=f1e366]: Gold Motion, a new video editing software, offers enhanced features including AI, advanced effects, and tools for video restoration and audio repair. The software retains familiar controls from After Motion Jet, but introduces new features like AI-powered features, a preview quality option, and advanced shape and light manipulation tools. This comprehensive guide covers key topics such as AI integration, preview quality options, advanced effects, video restoration, and audio repair tools.
+            - generic [ref=f1e367]:
+              - text: Key Topics
+              - generic [ref=f1e368]:
+                - generic [ref=f1e522]: AI integration in video editing
+                - generic [ref=f1e523]: Advanced preview quality options
+                - generic [ref=f1e524]: New effects and features in Gold Motion
+                - generic [ref=f1e525]: Video restoration tools
+                - generic [ref=f1e526]: Audio repair tools
+          - generic [ref=f1e221]:
+            - generic [ref=f1e222]:
+              - generic [ref=f1e223]: System Status
+              - generic [ref=f1e224]: Healthy
+            - generic [ref=f1e227]:
+              - generic [ref=f1e228]:
+                - generic [ref=f1e229]:
+                  - generic [ref=f1e230]: ⚡
+                  - generic [ref=f1e231]: Pipeline
+                - generic [ref=f1e232]: Done
+              - generic [ref=f1e233]:
+                - generic [ref=f1e234]:
+                  - generic [ref=f1e235]: 📋
+                  - generic [ref=f1e236]: Current Task
+                - generic [ref=f1e237]: All steps completed
+              - generic [ref=f1e238]:
+                - generic [ref=f1e239]:
+                  - generic [ref=f1e240]: ⏱️
+                  - generic [ref=f1e241]: Elapsed
+                - generic [ref=f1e242]: 8s
+              - generic [ref=f1e243]:
+                - generic [ref=f1e244]:
+                  - generic [ref=f1e245]: ⏳
+                  - generic [ref=f1e246]: ETA
+                - generic [ref=f1e247]: —
+              - generic [ref=f1e248]:
+                - generic [ref=f1e249]:
+                  - generic [ref=f1e250]: 📊
+                  - generic [ref=f1e251]: Steps
+                - generic [ref=f1e252]: 7/7
+              - generic [ref=f1e253]:
+                - generic [ref=f1e254]:
+                  - generic [ref=f1e255]: 📦
+                  - generic [ref=f1e256]: Chunks
+                - generic [ref=f1e257]: "21"
+              - generic [ref=f1e258]:
+                - generic [ref=f1e259]:
+                  - generic [ref=f1e260]: 🔢
+                  - generic [ref=f1e261]: Vectors
+                - generic [ref=f1e262]: "21"
+              - generic [ref=f1e263]:
+                - generic [ref=f1e264]:
+                  - generic [ref=f1e265]: 🔤
+                  - generic [ref=f1e266]: Tokens
+                - generic [ref=f1e267]: "140"
+              - generic [ref=f1e268]:
+                - generic [ref=f1e269]:
+                  - generic [ref=f1e270]: 🧠
+                  - generic [ref=f1e271]: LLM
+                - generic [ref=f1e272]: qwen2.5:3b
+              - generic [ref=f1e273]:
+                - generic [ref=f1e274]:
+                  - generic [ref=f1e275]: 📐
+                  - generic [ref=f1e276]: Embeddings
+                - generic [ref=f1e277]: nomic-embed-text
+              - generic [ref=f1e278]:
+                - generic [ref=f1e279]:
+                  - generic [ref=f1e280]: 💾
+                  - generic [ref=f1e281]: Vector DB
+                - generic [ref=f1e282]: mindmesh
+            - generic [ref=f1e288]:
+              - generic [ref=f1e289]: 100%
+              - generic [ref=f1e290]: COMPLETE
+        - generic [ref=f1e565]:
+          - generic [ref=f1e571]:
+            - paragraph [ref=f1e572]: All steps completed in 29.7s
+            - paragraph [ref=f1e573]: Content has been successfully processed and indexed.
+          - generic [ref=f1e574]:
+            - generic [ref=f1e575]:
+              - generic [ref=f1e576]:
+                - generic [ref=f1e577]: 📝
+                - generic [ref=f1e578]: Summary
+              - paragraph [ref=f1e579]: Gold Motion, a new video editing software, offers enhanced features including AI, advanced effects, and tools for video restoration and audio repair. The software retains familiar controls from After Motion Jet, but introduces new features like AI-powered features, a preview quality option, and advanced shape and light manipulation tools. This comprehensive guide covers key topics such as AI integration, preview quality options, advanced effects, video restoration, and audio repair tools.
+            - generic [ref=f1e580]:
+              - generic [ref=f1e581]:
+                - generic [ref=f1e582]: 🏷️
+                - generic [ref=f1e583]: Topics
+              - generic [ref=f1e584]:
+                - generic [ref=f1e585]: AI integration in video editing
+                - generic [ref=f1e586]: Advanced preview quality options
+                - generic [ref=f1e587]: New effects and features in Gold Motion
+                - generic [ref=f1e588]: Video restoration tools
+                - generic [ref=f1e589]: Audio repair tools
+            - generic [ref=f1e590]:
+              - generic [ref=f1e591]:
+                - generic [ref=f1e592]: 🕸️
+                - generic [ref=f1e593]: Knowledge
+              - generic [ref=f1e594]:
+                - paragraph [ref=f1e595]: Graph updated
+                - paragraph [ref=f1e596]: Relationships extracted
+            - generic [ref=f1e597]:
+              - generic [ref=f1e598]:
+                - generic [ref=f1e599]: 📊
+                - generic [ref=f1e600]: Stats
+              - generic [ref=f1e601]:
+                - generic [ref=f1e602]:
+                  - generic [ref=f1e603]: Chunks
+                  - generic [ref=f1e604]: "21"
+                - generic [ref=f1e605]:
+                  - generic [ref=f1e606]: Vectors
+                  - generic [ref=f1e607]: "21"
+          - button "Ask AI about this content →" [ref=f1e608] [cursor=pointer]:
+            - text: Ask AI about this content
+            - generic [ref=f1e611]: →
+  - status [ref=f1e424]:
+    - generic [ref=f1e429]:
+      - text: Static route
+      - button "Hide static indicator" [ref=f1e430] [cursor=pointer]
+  - alert [ref=f1e434]

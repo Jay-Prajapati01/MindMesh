@@ -17,9 +17,9 @@ const PDF_STEPS = [
   { id: "headings", name: "7. Detecting Headings", icon: "heading", description: "Building document hierarchy...", weight: 3 },
   { id: "structure", name: "8. Creating Structured Content", icon: "layers", description: "Assembling markdown representation...", weight: 3 },
   { id: "clean", name: "9. Cleaning Document", icon: "sparkles", description: "Normalizing text and fixing artifacts...", weight: 3 },
-  { id: "summary", name: "10. Generating Summary", icon: "brain", description: "AI summarizing content using Ollama...", weight: 20 },
-  { id: "chunking", name: "11. Semantic Chunking", icon: "scissors", description: "Splitting by headings and sentences...", weight: 5 },
-  { id: "embeddings", name: "12. Creating Embeddings", icon: "vector", description: "Generating vector embeddings...", weight: 15 },
+  { id: "chunking", name: "10. Semantic Chunking", icon: "scissors", description: "Splitting by headings and sentences...", weight: 5 },
+  { id: "embeddings", name: "11. Creating Embeddings", icon: "vector", description: "Generating vector embeddings...", weight: 15 },
+  { id: "summary", name: "12. Generating Summary", icon: "brain", description: "AI summarizing content using Ollama...", weight: 20 },
   { id: "indexing", name: "13. Indexing to Vector DB", icon: "database", description: "Storing in Qdrant and building knowledge graph...", weight: 11 },
 ];
 

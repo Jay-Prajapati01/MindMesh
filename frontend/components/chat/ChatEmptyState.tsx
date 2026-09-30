@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
   Brain,
@@ -15,6 +16,7 @@ import {
   Mic,
   Globe,
 } from "lucide-react";
+import { getGraph, getStats } from "@/lib/api";
 
 const SUGGESTED_QUESTIONS = [
   { icon: Brain, label: "What are the key insights from my notes?", color: "#6E56CF" },
@@ -23,24 +25,6 @@ const SUGGESTED_QUESTIONS = [
   { icon: Zap, label: "Find connections between my YouTube videos and PDFs", color: "#F59E0B" },
   { icon: Lightbulb, label: "What are the most important concepts I've learned?", color: "#E1306C" },
   { icon: HelpCircle, label: "Explain the main argument from my latest document", color: "#059669" },
-];
-
-const TRENDING_TOPICS = [
-  "AI Agents",
-  "Machine Learning",
-  "Knowledge Graphs",
-  "RAG Systems",
-  "Prompt Engineering",
-  "Vector Databases",
-];
-
-const RECENT_ENTITIES = [
-  "NotebookLM",
-  "OpenAI",
-  "Cursor",
-  "LangChain",
-  "Ollama",
-  "Qdrant",
 ];
 
 const QUICK_ACTIONS = [
@@ -55,6 +39,26 @@ interface Props {
 }
 
 export function ChatEmptyState({ onQuestionClick }: Props) {
+  const { data: graph } = useQuery({
+    queryKey: ["graph"],
+    queryFn: getGraph,
+    staleTime: 60_000,
+    retry: 1,
+  });
+  const { data: stats } = useQuery({
+    queryKey: ["stats"],
+    queryFn: getStats,
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  const topEntities = (graph?.nodes ?? [])
+    .slice()
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 6);
+  const recentQuestions = (stats?.recent_questions ?? [])
+    .filter((q) => q.text && q.text.trim())
+    .slice(0, 6);
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -101,44 +105,49 @@ export function ChatEmptyState({ onQuestionClick }: Props) {
         </div>
       </div>
 
-      {/* Trending Topics */}
-      <div className="mb-8 w-full max-w-2xl">
-        <h3 className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[#71717A]">
-          <TrendingUp className="h-3.5 w-3.5" />
-          Trending Topics
-        </h3>
-        <div className="flex flex-wrap gap-2">
-          {TRENDING_TOPICS.map((topic) => (
-            <button
-              key={topic}
-              onClick={() => onQuestionClick(`Tell me about ${topic}`)}
-              className="rounded-full bg-[rgba(255,255,255,0.04)] px-3.5 py-1.5 text-[11px] text-[#71717A] transition-all hover:bg-[#6E56CF]/10 hover:text-[#6E56CF]"
-            >
-              {topic}
-            </button>
-          ))}
+      {/* Recent Questions */}
+      {recentQuestions.length > 0 && (
+        <div className="mb-8 w-full max-w-2xl">
+          <h3 className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[#71717A]">
+            <TrendingUp className="h-3.5 w-3.5" />
+            Your Recent Questions
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {recentQuestions.map((q) => (
+              <button
+                key={q.text + q.created_at}
+                onClick={() => onQuestionClick(q.text)}
+                className="rounded-full bg-[rgba(255,255,255,0.04)] px-3.5 py-1.5 text-[11px] text-[#71717A] transition-all hover:bg-[#6E56CF]/10 hover:text-[#6E56CF]"
+              >
+                {q.text}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Recent Entities */}
-      <div className="mb-8 w-full max-w-2xl">
-        <h3 className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[#71717A]">
-          <Zap className="h-3.5 w-3.5" />
-          Recently Indexed Entities
-        </h3>
-        <div className="flex flex-wrap gap-2">
-          {RECENT_ENTITIES.map((entity) => (
-            <button
-              key={entity}
-              onClick={() => onQuestionClick(`What do I know about ${entity}?`)}
-              className="flex items-center gap-1.5 rounded-full border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.03)] px-3.5 py-1.5 text-[11px] text-[#A1A1AA] transition-all hover:border-[#6E56CF]/30 hover:bg-[#6E56CF]/10 hover:text-[#6E56CF]"
-            >
-              <Zap className="h-3 w-3 text-[#F59E0B]" />
-              {entity}
-            </button>
-          ))}
+      {/* Top Entities */}
+      {topEntities.length > 0 && (
+        <div className="mb-8 w-full max-w-2xl">
+          <h3 className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[#71717A]">
+            <Zap className="h-3.5 w-3.5" />
+            Top Entities in Your Knowledge Graph
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {topEntities.map((entity) => (
+              <button
+                key={entity.id}
+                onClick={() => onQuestionClick(`What do I know about ${entity.label}?`)}
+                className="flex items-center gap-1.5 rounded-full border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.03)] px-3.5 py-1.5 text-[11px] text-[#A1A1AA] transition-all hover:border-[#6E56CF]/30 hover:bg-[#6E56CF]/10 hover:text-[#6E56CF]"
+              >
+                <Zap className="h-3 w-3 text-[#F59E0B]" />
+                {entity.label}
+                <span className="text-[10px] text-[#52525B]">{entity.count}</span>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Quick Actions */}
       <div className="w-full max-w-2xl">

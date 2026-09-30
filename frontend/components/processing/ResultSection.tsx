@@ -21,10 +21,13 @@ export function ResultSection({ events, isStreaming, onAskAI }: ResultSectionPro
   const data = completeEvent?.data;
 
   const totalMs = useMemo(() => {
+    // `duration_ms` is CUMULATIVE time since the pipeline started (ms() in the
+    // SSE endpoints), so the total is the last/largest value — summing them
+    // would count the same elapsed time once per step.
     let ms = 0;
     for (const e of events) {
-      if (e.event === "step_complete" && e.data.duration_ms) {
-        ms += e.data.duration_ms;
+      if (e.event === "step_complete" && typeof e.data.duration_ms === "number") {
+        ms = Math.max(ms, e.data.duration_ms);
       }
     }
     return ms;

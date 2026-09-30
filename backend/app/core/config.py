@@ -1,6 +1,8 @@
 """Application configuration loaded from environment variables."""
 from functools import lru_cache
+from typing import Optional
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -12,8 +14,15 @@ class Settings(BaseSettings):
     environment: str = "development"
     log_level: str = "INFO"
     api_prefix: str = "/api"
-    cors_origins: str = "http://localhost:3000"
+    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
     data_dir: str = "/app/data"
+
+    # Security — when set and ENVIRONMENT=production, mutating endpoints
+    # require an X-API-Key header matching this value.
+    api_key: str = ""
+
+    # Uploads
+    max_upload_size: int = 200 * 1024 * 1024  # 200 MB
 
     # Qdrant
     qdrant_url: str = "http://qdrant:6333"
@@ -28,6 +37,9 @@ class Settings(BaseSettings):
     embedding_dim: int = 768
 
     # Instagram (optional - enables authenticated access to posts)
+    # Set ig_username and ig_password to access private posts or posts
+    # that require login. When empty, public posts are accessed without auth.
+    # Required for: private accounts, age-restricted content, stories
     ig_username: str = ""
     ig_password: str = ""
 
@@ -48,6 +60,31 @@ class Settings(BaseSettings):
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+    @property
+    def embedding_dim_for_model(self) -> int:
+        """Return the correct embedding dimension for the configured model."""
+        model_dims = {
+            "nomic-embed-text": 768,
+            "bge-m3": 1024,
+            "mxbai-embed-large": 1024,
+            "all-minilm": 384,
+        }
+        return model_dims.get(self.embedding_model, self.embedding_dim)
+
+    @model_validator(mode="after")
+    def validate_critical_settings(self) -> "Settings":
+        """Validate critical settings at startup."""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        if self.environment == "production":
+            if self.cors_origins == "http://localhost:3000,http://127.0.0.1:3000":
+                logger.warning("CORS origins are set to localhost in production! Set CORS_ORIGINS env var.")
+            if self.data_dir == "/app/data":
+                logger.warning("Using default data_dir in production. Set DATA_DIR env var.")
+        
+        return self
 
 
 @lru_cache

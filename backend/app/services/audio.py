@@ -5,6 +5,7 @@ import tempfile
 from pathlib import Path
 
 from app.core.logging import get_logger
+from app.services.whisper_model import get_model
 
 logger = get_logger(__name__)
 
@@ -18,12 +19,10 @@ def transcribe(data: bytes, filename: str) -> dict:
     if ext not in SUPPORTED:
         raise ValueError(f"Unsupported audio type: {ext or filename}")
 
-    from faster_whisper import WhisperModel
-
     with tempfile.NamedTemporaryFile(suffix=ext, delete=True) as tmp:
         tmp.write(data)
         tmp.flush()
-        model = WhisperModel("base", device="cpu", compute_type="int8")
+        model = get_model()
         segments, _ = model.transcribe(tmp.name)
         text = " ".join(seg.text for seg in segments).strip()
 

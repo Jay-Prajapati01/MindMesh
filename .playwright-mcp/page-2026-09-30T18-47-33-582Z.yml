@@ -1,0 +1,324 @@
+- generic [ref=f29e1]:
+  - generic [ref=f29e2]:
+    - complementary [ref=f29e4]:
+      - generic [ref=f29e5]: MindMesh
+      - navigation [ref=f29e17]:
+        - link "Dashboard" [ref=f29e18] [cursor=pointer]:
+          - /url: /
+        - link "Workspace" [ref=f29e22] [cursor=pointer]:
+          - /url: /workspace
+        - link "YouTube" [ref=f29e28] [cursor=pointer]:
+          - /url: /youtube
+        - link "Instagram" [ref=f29e32] [cursor=pointer]:
+          - /url: /instagram
+        - link "PDF" [ref=f29e36] [cursor=pointer]:
+          - /url: /pdf
+        - link "Documents" [ref=f29e40] [cursor=pointer]:
+          - /url: /documents
+        - link "Audio" [ref=f29e45] [cursor=pointer]:
+          - /url: /audio
+        - link "Web" [ref=f29e49] [cursor=pointer]:
+          - /url: /web
+        - link "Graph" [ref=f29e53] [cursor=pointer]:
+          - /url: /graph
+        - link "Timeline" [ref=f29e59] [cursor=pointer]:
+          - /url: /timeline
+        - link "Compare" [ref=f29e63] [cursor=pointer]:
+          - /url: /compare
+        - link "Search" [ref=f29e69] [cursor=pointer]:
+          - /url: /search
+        - link "Ask AI" [ref=f29e73] [cursor=pointer]:
+          - /url: /chat
+        - link "Stored" [ref=f29e76] [cursor=pointer]:
+          - /url: /stored
+        - link "Settings" [ref=f29e79] [cursor=pointer]:
+          - /url: /settings
+    - main [ref=f29e84]:
+      - generic [ref=f29e85]:
+        - generic [ref=f29e94]:
+          - heading "Cross-Source Intelligence" [level=1] [ref=f29e95]
+          - paragraph [ref=f29e96]: Compare two sources to discover similarities, differences, and contradictions across your knowledge base.
+          - generic [ref=f29e97]:
+            - generic [ref=f29e98]: AI Comparison
+            - generic [ref=f29e101]: Similarities
+            - generic [ref=f29e102]: Differences
+            - generic [ref=f29e103]: Contradictions
+        - generic [ref=f29e104]:
+          - heading "Select Sources to Compare" [level=3] [ref=f29e105]
+          - generic [ref=f29e106]:
+            - generic [ref=f29e107]:
+              - generic [ref=f29e108]: Source A
+              - generic [ref=f29e109]:
+                - button "Select a source..." [ref=f29e110] [cursor=pointer]
+                - generic [ref=f29e139]:
+                  - textbox "Search sources..." [active] [ref=f29e145]
+                  - generic [ref=f29e146]:
+                    - 'button "Instagram robin.aiexplorer Hot take: Your IDE should pay you. 💭 Not selling your data. Not... Robin.aiexplorer · IDE monetization +3 more" [ref=f29e147] [cursor=pointer]':
+                      - generic [ref=f29e152]:
+                        - generic [ref=f29e153]: Instagram
+                        - generic [ref=f29e155]: "robin.aiexplorer Hot take: Your IDE should pay you. 💭 Not selling your data. Not..."
+                        - generic [ref=f29e156]:
+                          - generic [ref=f29e157]: Robin.aiexplorer ·
+                          - generic [ref=f29e158]: IDE monetization
+                          - generic [ref=f29e159]: +3 more
+                    - button "Audio 1f67e32b14a9ed2e Repetition · Word Usage +3 more" [ref=f29e160] [cursor=pointer]:
+                      - generic [ref=f29e165]:
+                        - generic [ref=f29e166]: Audio
+                        - generic [ref=f29e168]: 1f67e32b14a9ed2e
+                        - generic [ref=f29e169]:
+                          - generic [ref=f29e170]: Repetition ·
+                          - generic [ref=f29e171]: Word Usage
+                          - generic [ref=f29e172]: +3 more
+                    - button "Web Knowledge management - Wikipedia Knowledge Management · KM Strategies +3 more" [ref=f29e173] [cursor=pointer]:
+                      - generic [ref=f29e178]:
+                        - generic [ref=f29e179]: Web
+                        - generic [ref=f29e181]: Knowledge management - Wikipedia
+                        - generic [ref=f29e182]:
+                          - generic [ref=f29e183]: Knowledge Management ·
+                          - generic [ref=f29e184]: KM Strategies
+                          - generic [ref=f29e185]: +3 more
+                    - 'button "Document qa_test_doc.md QA Test for MindMesh · Unique Searchable Token: ZORBLAX-9912 +4 more" [ref=f29e186] [cursor=pointer]':
+                      - generic [ref=f29e192]:
+                        - generic [ref=f29e193]: Document
+                        - generic [ref=f29e195]: qa_test_doc.md
+                        - generic [ref=f29e196]:
+                          - generic [ref=f29e197]: QA Test for MindMesh ·
+                          - generic [ref=f29e198]: "Unique Searchable Token: ZORBLAX-9912"
+                          - generic [ref=f29e199]: +4 more
+                    - button "PDF Docling E2E Attention Is All You Need · Transformer Models +4 more" [ref=f29e200] [cursor=pointer]:
+                      - generic [ref=f29e205]:
+                        - generic [ref=f29e206]: PDF
+                        - generic [ref=f29e208]: Docling E2E
+                        - generic [ref=f29e209]:
+                          - generic [ref=f29e210]: Attention Is All You Need ·
+                          - generic [ref=f29e211]: Transformer Models
+                          - generic [ref=f29e212]: +4 more
+                    - button "YouTube Me at the zoo Elephants · Long trunks +3 more" [ref=f29e213] [cursor=pointer]:
+                      - generic [ref=f29e218]:
+                        - generic [ref=f29e219]: YouTube
+                        - generic [ref=f29e221]: Me at the zoo
+                        - generic [ref=f29e222]:
+                          - generic [ref=f29e223]: Elephants ·
+                          - generic [ref=f29e224]: Long trunks
+                          - generic [ref=f29e225]: +3 more
+                    - button "Document Hyryder accessories pricelist 2026.xlsx Urban Cruiser Hyryder Accessory Pricing · Accessories List +3 more" [ref=f29e226] [cursor=pointer]:
+                      - generic [ref=f29e232]:
+                        - generic [ref=f29e233]: Document
+                        - generic [ref=f29e235]: Hyryder accessories pricelist 2026.xlsx
+                        - generic [ref=f29e236]:
+                          - generic [ref=f29e237]: Urban Cruiser Hyryder Accessory Pricing ·
+                          - generic [ref=f29e238]: Accessories List
+                          - generic [ref=f29e239]: +3 more
+                    - button "PDF Jay Prajapati Resume (2) Jay Prajapati · AI/ML & Full-Stack Engineering +3 more" [ref=f29e240] [cursor=pointer]:
+                      - generic [ref=f29e245]:
+                        - generic [ref=f29e246]: PDF
+                        - generic [ref=f29e248]: Jay Prajapati Resume (2)
+                        - generic [ref=f29e249]:
+                          - generic [ref=f29e250]: Jay Prajapati ·
+                          - generic [ref=f29e251]: AI/ML & Full-Stack Engineering
+                          - generic [ref=f29e252]: +3 more
+                    - button "Audio 0527 21-day habit formation · New Year's resolutions +3 more" [ref=f29e253] [cursor=pointer]:
+                      - generic [ref=f29e258]:
+                        - generic [ref=f29e259]: Audio
+                        - generic [ref=f29e261]: "0527"
+                        - generic [ref=f29e262]:
+                          - generic [ref=f29e263]: 21-day habit formation ·
+                          - generic [ref=f29e264]: New Year's resolutions
+                          - generic [ref=f29e265]: +3 more
+                    - 'button "Instagram shrestaiyer29 GRWM for a party tonight ✨🥂 #instagram #grwm #party #reels #trendi... Instagram Reels · Party +3 more" [ref=f29e266] [cursor=pointer]':
+                      - generic [ref=f29e271]:
+                        - generic [ref=f29e272]: Instagram
+                        - generic [ref=f29e274]: "shrestaiyer29 GRWM for a party tonight ✨🥂 #instagram #grwm #party #reels #trendi..."
+                        - generic [ref=f29e275]:
+                          - generic [ref=f29e276]: Instagram Reels ·
+                          - generic [ref=f29e277]: Party
+                          - generic [ref=f29e278]: +3 more
+                    - button "Document 23DCE130_Pract_7.docx.docx Advanced Prompting Architectures · Zero-Shot +4 more" [ref=f29e279] [cursor=pointer]:
+                      - generic [ref=f29e285]:
+                        - generic [ref=f29e286]: Document
+                        - generic [ref=f29e288]: 23DCE130_Pract_7.docx.docx
+                        - generic [ref=f29e289]:
+                          - generic [ref=f29e290]: Advanced Prompting Architectures ·
+                          - generic [ref=f29e291]: Zero-Shot
+                          - generic [ref=f29e292]: +4 more
+                    - button "YouTube Gold Motion App Full Tutorial | All Effects & AI Features Explained Gold Motion features · AI enhancements in Gold Motion +3 more" [ref=f29e293] [cursor=pointer]:
+                      - generic [ref=f29e298]:
+                        - generic [ref=f29e299]: YouTube
+                        - generic [ref=f29e301]: Gold Motion App Full Tutorial | All Effects & AI Features Explained
+                        - generic [ref=f29e302]:
+                          - generic [ref=f29e303]: Gold Motion features ·
+                          - generic [ref=f29e304]: AI enhancements in Gold Motion
+                          - generic [ref=f29e305]: +3 more
+                    - button "YouTube I Opened ₹1 Lakh Amazon Return Parcels" [ref=f29e306] [cursor=pointer]:
+                      - generic [ref=f29e311]:
+                        - generic [ref=f29e312]: YouTube
+                        - generic [ref=f29e314]: I Opened ₹1 Lakh Amazon Return Parcels
+                    - button "Instagram dietcokecode Every photo and video you upload to Instagram goes through much mor... Instagram backend systems · Object Storage +3 more" [ref=f29e315] [cursor=pointer]:
+                      - generic [ref=f29e320]:
+                        - generic [ref=f29e321]: Instagram
+                        - generic [ref=f29e323]: dietcokecode Every photo and video you upload to Instagram goes through much mor...
+                        - generic [ref=f29e324]:
+                          - generic [ref=f29e325]: Instagram backend systems ·
+                          - generic [ref=f29e326]: Object Storage
+                          - generic [ref=f29e327]: +3 more
+                    - 'button "Instagram skythrillvibes How to make professional Thumbnail with help of AI #gaming #gamin... Thumbnail creation · Artificial Intelligence (AI) +3 more" [ref=f29e328] [cursor=pointer]':
+                      - generic [ref=f29e333]:
+                        - generic [ref=f29e334]: Instagram
+                        - generic [ref=f29e336]: "skythrillvibes How to make professional Thumbnail with help of AI #gaming #gamin..."
+                        - generic [ref=f29e337]:
+                          - generic [ref=f29e338]: Thumbnail creation ·
+                          - generic [ref=f29e339]: Artificial Intelligence (AI)
+                          - generic [ref=f29e340]: +3 more
+                    - button "Instagram techie007.dev Make your Old phone a server delta__rush Link Bro link Sleeves los... Tech terminology · Social media sharing +3 more" [ref=f29e341] [cursor=pointer]:
+                      - generic [ref=f29e346]:
+                        - generic [ref=f29e347]: Instagram
+                        - generic [ref=f29e349]: techie007.dev Make your Old phone a server delta__rush Link Bro link Sleeves los...
+                        - generic [ref=f29e350]:
+                          - generic [ref=f29e351]: Tech terminology ·
+                          - generic [ref=f29e352]: Social media sharing
+                          - generic [ref=f29e353]: +3 more
+                    - button "Web YouTube YouTube · Video-sharing platform +3 more" [ref=f29e354] [cursor=pointer]:
+                      - generic [ref=f29e359]:
+                        - generic [ref=f29e360]: Web
+                        - generic [ref=f29e362]: YouTube
+                        - generic [ref=f29e363]:
+                          - generic [ref=f29e364]: YouTube ·
+                          - generic [ref=f29e365]: Video-sharing platform
+                          - generic [ref=f29e366]: +3 more
+                    - button "PDF 7Ce Tt Charotar University of Science and Technology · Faculty of Technology and Engineering +3 more" [ref=f29e367] [cursor=pointer]:
+                      - generic [ref=f29e372]:
+                        - generic [ref=f29e373]: PDF
+                        - generic [ref=f29e375]: 7Ce Tt
+                        - generic [ref=f29e376]:
+                          - generic [ref=f29e377]: Charotar University of Science and Technology ·
+                          - generic [ref=f29e378]: Faculty of Technology and Engineering
+                          - generic [ref=f29e379]: +3 more
+                    - button "PDF Test PDF Processing Validation · Introduction Section +2 more" [ref=f29e380] [cursor=pointer]:
+                      - generic [ref=f29e385]:
+                        - generic [ref=f29e386]: PDF
+                        - generic [ref=f29e388]: Test
+                        - generic [ref=f29e389]:
+                          - generic [ref=f29e390]: PDF Processing Validation ·
+                          - generic [ref=f29e391]: Introduction Section
+                          - generic [ref=f29e392]: +2 more
+                    - button "Web Example Domain Domain Usage · Permission Requirement +3 more" [ref=f29e393] [cursor=pointer]:
+                      - generic [ref=f29e398]:
+                        - generic [ref=f29e399]: Web
+                        - generic [ref=f29e401]: Example Domain
+                        - generic [ref=f29e402]:
+                          - generic [ref=f29e403]: Domain Usage ·
+                          - generic [ref=f29e404]: Permission Requirement
+                          - generic [ref=f29e405]: +3 more
+                    - button "Audio OdooXKSV Wender Bridge ERP Solution · Procurement Streamlining +3 more" [ref=f29e406] [cursor=pointer]:
+                      - generic [ref=f29e411]:
+                        - generic [ref=f29e412]: Audio
+                        - generic [ref=f29e414]: OdooXKSV
+                        - generic [ref=f29e415]:
+                          - generic [ref=f29e416]: Wender Bridge ERP Solution ·
+                          - generic [ref=f29e417]: Procurement Streamlining
+                          - generic [ref=f29e418]: +3 more
+                    - button "Document all content ideas.txt ads blocker app · file sharing methods +4 more" [ref=f29e419] [cursor=pointer]:
+                      - generic [ref=f29e425]:
+                        - generic [ref=f29e426]: Document
+                        - generic [ref=f29e428]: all content ideas.txt
+                        - generic [ref=f29e429]:
+                          - generic [ref=f29e430]: ads blocker app ·
+                          - generic [ref=f29e431]: file sharing methods
+                          - generic [ref=f29e432]: +4 more
+                    - button "PDF Jay_Prajapati (1).pdf Jay Prajapati · Computer Engineering Student +3 more" [ref=f29e433] [cursor=pointer]:
+                      - generic [ref=f29e438]:
+                        - generic [ref=f29e439]: PDF
+                        - generic [ref=f29e441]: Jay_Prajapati (1).pdf
+                        - generic [ref=f29e442]:
+                          - generic [ref=f29e443]: Jay Prajapati ·
+                          - generic [ref=f29e444]: Computer Engineering Student
+                          - generic [ref=f29e445]: +3 more
+                    - button "PDF Attention+Mechanism.pdf" [ref=f29e446] [cursor=pointer]:
+                      - generic [ref=f29e451]:
+                        - generic [ref=f29e452]: PDF
+                        - generic [ref=f29e454]: Attention+Mechanism.pdf
+                    - button "PDF Claude Desktop + Aerolink Setup Guide Claude Desktop · Aerolink Inference Gateway +3 more" [ref=f29e455] [cursor=pointer]:
+                      - generic [ref=f29e460]:
+                        - generic [ref=f29e461]: PDF
+                        - generic [ref=f29e463]: Claude Desktop + Aerolink Setup Guide
+                        - generic [ref=f29e464]:
+                          - generic [ref=f29e465]: Claude Desktop ·
+                          - generic [ref=f29e466]: Aerolink Inference Gateway
+                          - generic [ref=f29e467]: +3 more
+                    - button "YouTube Deco Xp Pentab New Version 2026 🔥 Best Pentab For Online Teaching And writing 📝 Under 3k Samsara product features · Efficient note-taking capabilities +3 more" [ref=f29e468] [cursor=pointer]:
+                      - generic [ref=f29e473]:
+                        - generic [ref=f29e474]: YouTube
+                        - generic [ref=f29e476]: Deco Xp Pentab New Version 2026 🔥 Best Pentab For Online Teaching And writing 📝 Under 3k
+                        - generic [ref=f29e477]:
+                          - generic [ref=f29e478]: Samsara product features ·
+                          - generic [ref=f29e479]: Efficient note-taking capabilities
+                          - generic [ref=f29e480]: +3 more
+                    - button "YouTube Top 10 GitHub Repositories in June 2026 | AI Tools, Containers & Dev Workflows GitHub trending · AI technology in development +3 more" [ref=f29e481] [cursor=pointer]:
+                      - generic [ref=f29e486]:
+                        - generic [ref=f29e487]: YouTube
+                        - generic [ref=f29e489]: Top 10 GitHub Repositories in June 2026 | AI Tools, Containers & Dev Workflows
+                        - generic [ref=f29e490]:
+                          - generic [ref=f29e491]: GitHub trending ·
+                          - generic [ref=f29e492]: AI technology in development
+                          - generic [ref=f29e493]: +3 more
+                    - button "YouTube Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster) Commitment · Love Declaration +3 more" [ref=f29e494] [cursor=pointer]:
+                      - generic [ref=f29e499]:
+                        - generic [ref=f29e500]: YouTube
+                        - generic [ref=f29e502]: Rick Astley - Never Gonna Give You Up (Official Video) (4K Remaster)
+                        - generic [ref=f29e503]:
+                          - generic [ref=f29e504]: Commitment ·
+                          - generic [ref=f29e505]: Love Declaration
+                          - generic [ref=f29e506]: +3 more
+                    - button "YouTube Unlimited Free GLM 5.2 + Claude Code! GLM 5.2 · NVIDIA Cloud Code API +3 more" [ref=f29e507] [cursor=pointer]:
+                      - generic [ref=f29e512]:
+                        - generic [ref=f29e513]: YouTube
+                        - generic [ref=f29e515]: Unlimited Free GLM 5.2 + Claude Code!
+                        - generic [ref=f29e516]:
+                          - generic [ref=f29e517]: GLM 5.2 ·
+                          - generic [ref=f29e518]: NVIDIA Cloud Code API
+                          - generic [ref=f29e519]: +3 more
+                    - button "Instagram swapsays_wtf Figured out a to use vibe coding platforms for free. Escape the vib... Vibe Coding · free platform access +3 more" [ref=f29e520] [cursor=pointer]:
+                      - generic [ref=f29e525]:
+                        - generic [ref=f29e526]: Instagram
+                        - generic [ref=f29e528]: swapsays_wtf Figured out a to use vibe coding platforms for free. Escape the vib...
+                        - generic [ref=f29e529]:
+                          - generic [ref=f29e530]: Vibe Coding ·
+                          - generic [ref=f29e531]: free platform access
+                          - generic [ref=f29e532]: +3 more
+                    - button "YouTube Claude Code Is Now FREE?! Mimo v2.5 Pro + 7M Daily Tokens (No GPU) language model access · token consumption for model usage +3 more" [ref=f29e533] [cursor=pointer]:
+                      - generic [ref=f29e538]:
+                        - generic [ref=f29e539]: YouTube
+                        - generic [ref=f29e541]: Claude Code Is Now FREE?! Mimo v2.5 Pro + 7M Daily Tokens (No GPU)
+                        - generic [ref=f29e542]:
+                          - generic [ref=f29e543]: language model access ·
+                          - generic [ref=f29e544]: token consumption for model usage
+                          - generic [ref=f29e545]: +3 more
+                    - button "YouTube This Is NotebookLM's Biggest Update Yet Notebook LM · Video Overviews +3 more" [ref=f29e546] [cursor=pointer]:
+                      - generic [ref=f29e551]:
+                        - generic [ref=f29e552]: YouTube
+                        - generic [ref=f29e554]: This Is NotebookLM's Biggest Update Yet
+                        - generic [ref=f29e555]:
+                          - generic [ref=f29e556]: Notebook LM ·
+                          - generic [ref=f29e557]: Video Overviews
+                          - generic [ref=f29e558]: +3 more
+                  - generic [ref=f29e560]:
+                    - generic [ref=f29e561]: 32 sources
+                    - generic [ref=f29e562]:
+                      - generic [ref=f29e563]:
+                        - generic [ref=f29e564]: ↑↓
+                        - text: Navigate
+                      - generic [ref=f29e565]:
+                        - generic [ref=f29e566]: ↵
+                        - text: Select
+                      - generic [ref=f29e567]:
+                        - generic [ref=f29e568]: Esc
+                        - text: Close
+            - generic [ref=f29e114]:
+              - generic [ref=f29e115]: Source B
+              - button "Select a source..." [ref=f29e117] [cursor=pointer]
+          - button "Compare Sources" [disabled] [ref=f29e122]
+  - status [ref=f29e128]:
+    - generic [ref=f29e133]:
+      - text: Static route
+      - button "Hide static indicator" [ref=f29e134] [cursor=pointer]
+  - alert [ref=f29e138]

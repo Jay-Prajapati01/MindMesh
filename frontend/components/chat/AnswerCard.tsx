@@ -5,13 +5,8 @@ import { motion } from "framer-motion";
 import {
   Sparkles,
   Clock,
-  Cpu,
   Layers,
-  Database,
-  Search,
-  Shield,
   CheckCircle2,
-  Zap,
 } from "lucide-react";
 import { ChatResponse, Stats } from "@/lib/api";
 import { ConfidenceMeter } from "./ConfidenceMeter";
@@ -114,16 +109,16 @@ function renderWithCitations(text: string, citations: { source_id: string; sourc
   return parts;
 }
 
-export function AnswerCard({ response, stats, searchHits, index }: Props) {
+export function AnswerCard({ response, searchHits, index }: Props) {
   const sections = useMemo(() => parseAnswerWithSections(response.answer), [response.answer]);
   const highlights = useMemo(() => parseHighlights(response.answer), [response.answer]);
 
-  const chunksSearched = stats?.indexed_chunks ?? 63;
-  const sourcesSearched = stats?.total_sources ?? 7;
-  const embeddingsScanned = Math.round(chunksSearched * 6.7);
-  const searchTimeMs = Math.round(800 + Math.random() * 2000);
-  const confidence = Math.min(98, Math.round(70 + response.citations.length * 4 + Math.random() * 10));
-  const model = "qwen2.5:3b";
+  // Only real backend metrics — never fall back to unrelated totals.
+  const chunksSearched = response.chunks_searched;
+  const sourcesSearched = response.sources_searched;
+  const citationsCount = response.citations.length;
+  const searchTimeMs = response.search_time_ms ?? 0;
+  const hasMetrics = chunksSearched != null || sourcesSearched != null;
 
   const sourceHits: SearchHit[] = (() => {
     if (searchHits) return searchHits;
@@ -135,7 +130,7 @@ export function AnswerCard({ response, stats, searchHits, index }: Props) {
         return true;
       })
       .map((c) => ({
-        score: 0.85,
+        score: 0,
         text: c.snippet,
         source_id: c.source_id,
         source_type: c.source_type,
@@ -156,12 +151,10 @@ export function AnswerCard({ response, stats, searchHits, index }: Props) {
       {/* AI Timeline */}
       <AITimeline
         loading={false}
-        chunksSearched={chunksSearched}
-        sourcesSearched={sourcesSearched}
-        embeddingsScanned={embeddingsScanned}
+        chunksSearched={chunksSearched ?? 0}
+        sourcesSearched={sourcesSearched ?? 0}
         searchTimeMs={searchTimeMs}
-        model={model}
-        completedSteps={6}
+        completedSteps={5}
       />
 
       {/* Main Answer Card */}
@@ -178,19 +171,25 @@ export function AnswerCard({ response, stats, searchHits, index }: Props) {
                 <CheckCircle2 className="h-3.5 w-3.5 text-[#22C55E]" />
               </div>
               <div className="text-[11px] text-[#71717A]">
-                Generated using {model} • Searched {chunksSearched} chunks across {sourcesSearched} sources
+                {hasMetrics
+                  ? `Searched ${chunksSearched ?? "—"} chunks across ${sourcesSearched ?? "—"} sources`
+                  : "Grounded answer with citations"}
               </div>
             </div>
           </div>
           <div className="flex items-center gap-3 text-[11px] text-[#71717A]">
             <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {(searchTimeMs / 1000).toFixed(1)}s
+              <Layers className="h-3 w-3" />
+              {citationsCount} citation{citationsCount === 1 ? "" : "s"}
             </span>
-            <span className="flex items-center gap-1">
-              <Shield className="h-3 w-3" style={{ color: confidence >= 85 ? "#22C55E" : "#F59E0B" }} />
-              {confidence}% confidence
-            </span>
+            {searchTimeMs > 0 && (
+              <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {searchTimeMs >= 1000
+                  ? `${(searchTimeMs / 1000).toFixed(1)}s`
+                  : `${searchTimeMs}ms`}
+              </span>
+            )}
           </div>
         </div>
 
@@ -276,12 +275,11 @@ export function AnswerCard({ response, stats, searchHits, index }: Props) {
         </div>
       </div>
 
-      {/* Confidence Meter */}
+      {/* Answer Grounding */}
       <ConfidenceMeter
-        confidence={confidence}
+        citationsCount={citationsCount}
         sourcesCount={sourcesSearched}
         chunksCount={chunksSearched}
-        embeddingsCount={embeddingsScanned}
       />
     </motion.div>
   );

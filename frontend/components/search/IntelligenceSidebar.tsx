@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Brain,
@@ -8,9 +9,7 @@ import {
   ArrowRight,
   Layers,
   Database,
-  Zap,
   Target,
-  Network,
   TrendingUp,
   Clock,
 } from "lucide-react";
@@ -29,19 +28,27 @@ const PIE_COLORS = ["#EF4444", "#E1306C", "#DC2626", "#7C3AED", "#059669", "#0EA
 interface Props {
   hits: SearchHit[];
   stats?: Stats;
+  query?: string;
+  chunksSearched?: number;
   searchTimeMs?: number;
   loading: boolean;
 }
 
-export function IntelligenceSidebar({ hits, stats, searchTimeMs, loading }: Props) {
+export function IntelligenceSidebar({ hits, stats, query = "", chunksSearched = 0, searchTimeMs, loading }: Props) {
+  const router = useRouter();
+  const [showAllTopics, setShowAllTopics] = useState(false);
   const totalChunks = stats?.indexed_chunks ?? 0;
   const totalSources = stats?.total_sources ?? 0;
-  const embeddings = Math.round(totalChunks * 1.5);
-  const coverage = totalSources > 0 ? Math.min(98, Math.round((hits.length / Math.max(totalSources, 1)) * 100)) : 0;
 
   const avgRelevance = useMemo(() => {
     if (hits.length === 0) return 0;
     return hits.reduce((a, h) => a + h.score, 0) / hits.length;
+  }, [hits]);
+
+  const scoreRange = useMemo(() => {
+    if (hits.length === 0) return null;
+    const scores = hits.map((h) => h.score);
+    return { min: Math.min(...scores), max: Math.max(...scores) };
   }, [hits]);
 
   const sourceDistribution = useMemo(() => {
@@ -75,9 +82,9 @@ export function IntelligenceSidebar({ hits, stats, searchTimeMs, loading }: Prop
     combined.forEach((t) => { freq[t] = (freq[t] || 0) + 1; });
     return Object.entries(freq)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
+      .slice(0, showAllTopics ? 60 : 10)
       .map(([tag]) => tag);
-  }, [hits]);
+  }, [hits, showAllTopics]);
 
   const relatedMemories = useMemo(() => {
     const seen = new Set<string>();
@@ -107,10 +114,10 @@ export function IntelligenceSidebar({ hits, stats, searchTimeMs, loading }: Prop
       {/* Top Stats */}
       <div className="grid grid-cols-2 gap-3">
         {[
-          { label: "Chunks", value: totalChunks, icon: Layers, color: "#6E56CF" },
-          { label: "Sources", value: totalSources, icon: Database, color: "#22C55E" },
-          { label: "Embeddings", value: embeddings, icon: Network, color: "#0EA5E9" },
-          { label: "Coverage", value: coverage, suffix: "%", icon: Target, color: "#F59E0B" },
+          { label: "Indexed Chunks", value: totalChunks, icon: Layers, color: "#6E56CF", suffix: "" },
+          { label: "Sources", value: totalSources, icon: Database, color: "#22C55E", suffix: "" },
+          { label: "Results", value: hits.length, icon: Target, color: "#F59E0B", suffix: "" },
+          { label: "Avg Score", value: Math.round(avgRelevance * 100), icon: TrendingUp, color: "#0EA5E9", suffix: "%" },
         ].map((stat) => (
           <div
             key={stat.label}
@@ -139,23 +146,26 @@ export function IntelligenceSidebar({ hits, stats, searchTimeMs, loading }: Prop
         ))}
       </div>
 
-      {/* Relevance Threshold */}
+      {/* Result Scores */}
       <div className="rounded-[14px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-4">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-[11px] font-semibold text-[#F5F5F5]">
-            Relevance Threshold
+            Result Scores
           </span>
-          <span className="text-[13px] font-bold text-[#6E56CF]">0.70</span>
+          <span className="text-[13px] font-bold text-[#6E56CF]">
+            {scoreRange ? scoreRange.max.toFixed(2) : "—"}
+          </span>
         </div>
         <div className="relative h-1.5 overflow-hidden rounded-full bg-[rgba(255,255,255,0.06)]">
-          <div className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[#6E56CF] to-[#7C69E3]" style={{ width: "70%" }} />
           <div
-            className="absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full border-2 border-[#6E56CF] bg-[#111318] shadow-lg"
-            style={{ left: "70%", transform: "translate(-50%, -50%)" }}
+            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[#6E56CF] to-[#7C69E3]"
+            style={{ width: `${Math.max(0, Math.min(100, Math.round(avgRelevance * 100)))}%` }}
           />
         </div>
         <p className="mt-2 text-[10px] text-[#71717A]">
-          Showing results above this threshold
+          {scoreRange
+            ? `Cosine similarity ${scoreRange.min.toFixed(2)}–${scoreRange.max.toFixed(2)} · avg ${avgRelevance.toFixed(2)}`
+            : "Run a search to see similarity scores"}
         </p>
       </div>
 
@@ -230,9 +240,12 @@ export function IntelligenceSidebar({ hits, stats, searchTimeMs, loading }: Prop
         <div className="space-y-2.5">
           {[
             { icon: TrendingUp, label: "Average relevance score", value: avgRelevance.toFixed(2), color: "#6E56CF" },
-            { icon: Clock, label: "Search completed in", value: `${searchTimeMs || 0}ms`, color: "#22C55E" },
-            { icon: Zap, label: "Query expanded to", value: "3 variations", color: "#F59E0B" },
-            { icon: Layers, label: `${totalChunks} chunks scanned`, value: "", color: "#0EA5E9" },
+            ...(searchTimeMs
+              ? [{ icon: Clock, label: "Search completed in", value: `${searchTimeMs}ms`, color: "#22C55E" }]
+              : []),
+            ...(chunksSearched
+              ? [{ icon: Layers, label: `Searched ${chunksSearched} chunks`, value: "", color: "#0EA5E9" }]
+              : []),
             { icon: Target, label: `${hits.length} results matched`, value: "", color: "#EF4444" },
           ].map((item) => (
             <div key={item.label} className="flex items-center gap-2.5">
@@ -271,8 +284,11 @@ export function IntelligenceSidebar({ hits, stats, searchTimeMs, loading }: Prop
               </motion.span>
             ))}
           </div>
-          <button className="mt-2.5 flex items-center gap-1 text-[10px] text-[#6E56CF] hover:text-[#7C69E3] transition-colors">
-            View all topics
+          <button
+            onClick={() => setShowAllTopics((v) => !v)}
+            className="mt-2.5 flex items-center gap-1 text-[10px] text-[#6E56CF] hover:text-[#7C69E3] transition-colors"
+          >
+            {showAllTopics ? "Show fewer topics" : "View all topics"}
             <ArrowRight className="h-3 w-3" />
           </button>
         </div>
@@ -314,6 +330,7 @@ export function IntelligenceSidebar({ hits, stats, searchTimeMs, loading }: Prop
       <motion.button
         whileHover={{ scale: 1.01 }}
         whileTap={{ scale: 0.99 }}
+        onClick={() => router.push(`/chat?q=${encodeURIComponent(query)}`)}
         className="flex w-full items-center justify-center gap-3 rounded-[16px] bg-gradient-to-r from-[#6E56CF] to-[#7C69E3] px-5 py-4 text-[13px] font-semibold text-white shadow-lg shadow-[#6E56CF]/20 transition-all hover:shadow-xl hover:shadow-[#6E56CF]/30"
       >
         <MessageSquare className="h-4 w-4" />

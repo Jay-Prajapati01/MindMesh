@@ -68,6 +68,7 @@ class ProcessManager {
 
   /** Get all processes */
   getAllProcesses(): ProcessState[] {
+    this.restore();
     return Array.from(this.processes.values());
   }
 
@@ -264,22 +265,30 @@ class ProcessManager {
     }, 500);
   }
 
-  /** Restore from localStorage on page load */
+  /** Restore from localStorage on page load (idempotent — safe to call often) */
+  private restored = false;
   restore() {
+    if (this.restored) return;
+    this.restored = true;
     try {
       const raw = localStorage.getItem("mindmesh-processes");
       if (!raw) return;
       const data = JSON.parse(raw);
       for (const [id, state] of data) {
-        // Mark stale processes (>30 min old) as failed
-        if (state.status === "running" && Date.now() - state.startedAt > 30 * 60 * 1000) {
+        if (this.processes.has(id)) continue; // already live in this session
+        // The SSE stream cannot resume after a reload — surface that honestly
+        // instead of showing a spinner that never moves.
+        if (state.status === "running") {
           state.status = "failed";
-          state.error = "Process timed out (page was refreshed or navigated away)";
+          state.error =
+            Date.now() - state.startedAt > 30 * 60 * 1000
+              ? "Process timed out (page was refreshed or navigated away)"
+              : "Interrupted by page refresh";
         }
         this.processes.set(id, state);
       }
     } catch {
-      // corrupted data
+      // corrupted data / SSR (no localStorage)
     }
   }
 }

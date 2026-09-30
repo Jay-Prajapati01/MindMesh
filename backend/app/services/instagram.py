@@ -45,9 +45,9 @@ def _ocr_image(path: Path) -> str:
 
 def _transcribe_audio(path: Path) -> str:
     try:
-        from faster_whisper import WhisperModel
+        from app.services.whisper_model import get_model
 
-        model = WhisperModel("base", device="cpu", compute_type="int8")
+        model = get_model()
         segments, _ = model.transcribe(str(path))
         return " ".join(seg.text for seg in segments).strip()
     except Exception as exc:  # noqa: BLE001

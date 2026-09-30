@@ -1,0 +1,170 @@
+- generic [ref=f1e2]:
+  - complementary [ref=f1e4]:
+    - generic [ref=f1e5]: MindMesh
+    - navigation [ref=f1e17]:
+      - link "Dashboard" [ref=f1e18] [cursor=pointer]:
+        - /url: /
+      - link "Workspace" [ref=f1e22] [cursor=pointer]:
+        - /url: /workspace
+      - link "YouTube" [ref=f1e28] [cursor=pointer]:
+        - /url: /youtube
+      - link "Instagram" [ref=f1e32] [cursor=pointer]:
+        - /url: /instagram
+      - link "PDF" [ref=f1e36] [cursor=pointer]:
+        - /url: /pdf
+      - link "Documents" [ref=f1e40] [cursor=pointer]:
+        - /url: /documents
+      - link "Audio" [ref=f1e45] [cursor=pointer]:
+        - /url: /audio
+      - link "Web" [ref=f1e49] [cursor=pointer]:
+        - /url: /web
+      - link "Graph" [ref=f1e53] [cursor=pointer]:
+        - /url: /graph
+      - link "Timeline" [ref=f1e59] [cursor=pointer]:
+        - /url: /timeline
+      - link "Compare" [ref=f1e63] [cursor=pointer]:
+        - /url: /compare
+      - link "Search" [ref=f1e69] [cursor=pointer]:
+        - /url: /search
+      - link "Ask AI" [ref=f1e73] [cursor=pointer]:
+        - /url: /chat
+      - link "Stored" [ref=f1e76] [cursor=pointer]:
+        - /url: /stored
+      - link "Settings" [ref=f1e79] [cursor=pointer]:
+        - /url: /settings
+  - main [ref=f1e84]:
+    - generic [ref=f1e85]:
+      - generic [ref=f1e91]:
+        - heading "YouTube Intelligence" [level=1] [ref=f1e92]
+        - paragraph [ref=f1e93]: Transform videos into searchable knowledge. Extract transcripts, generate AI summaries, and build a queryable knowledge graph.
+        - generic [ref=f1e94]:
+          - generic [ref=f1e95]: YouTube
+          - generic [ref=f1e97]: Transcript API
+          - generic [ref=f1e98]: Whisper Fallback
+          - generic [ref=f1e99]: yt-dlp
+      - generic [ref=f1e100]:
+        - generic [ref=f1e101]: Video URL
+        - generic [ref=f1e102]:
+          - textbox "https://youtube.com/watch?v=..." [ref=f1e107]
+          - button "Process Video" [disabled] [ref=f1e108]
+        - paragraph [ref=f1e111]: Supports public YouTube videos, shorts, and live streams. Transcript will be auto-detected or Whisper will be used as fallback.
+      - generic [ref=f1e112]:
+        - generic [ref=f1e114]:
+          - generic [ref=f1e115]: Pipeline Progress
+          - generic [ref=f1e117]:
+            - generic [ref=f1e118]:
+              - generic [ref=f1e119]: 🔗
+              - generic [ref=f1e125]:
+                - generic [ref=f1e126]:
+                  - generic [ref=f1e127]: 1. Validating URL
+                  - generic [ref=f1e129]: —
+                - paragraph [ref=f1e131]: Checking if the YouTube URL is valid and accessible...
+            - generic [ref=f1e132]:
+              - generic [ref=f1e133]: 📋
+              - generic [ref=f1e139]:
+                - generic [ref=f1e140]:
+                  - generic [ref=f1e141]: 2. Fetching Metadata
+                  - generic [ref=f1e143]: —
+                - paragraph [ref=f1e145]: Getting title, channel, duration via yt-dlp...
+            - generic [ref=f1e146]:
+              - generic [ref=f1e147]: 💬
+              - generic [ref=f1e153]:
+                - generic [ref=f1e154]:
+                  - generic [ref=f1e155]: 3. Fetching Transcript
+                  - generic [ref=f1e157]: —
+                - paragraph [ref=f1e159]: Trying YouTube Transcript API...
+            - generic [ref=f1e160]:
+              - generic [ref=f1e161]: 🧠
+              - generic [ref=f1e167]:
+                - generic [ref=f1e168]:
+                  - generic [ref=f1e169]: 4. Generating Summary
+                  - generic [ref=f1e171]: —
+                - paragraph [ref=f1e173]: AI summarizing content using Ollama...
+            - generic [ref=f1e174]:
+              - generic [ref=f1e175]: ✂️
+              - generic [ref=f1e181]:
+                - generic [ref=f1e182]:
+                  - generic [ref=f1e183]: 5. Chunking Content
+                  - generic [ref=f1e185]: —
+                - paragraph [ref=f1e187]: Splitting text into indexable chunks...
+            - generic [ref=f1e188]:
+              - generic [ref=f1e189]: 📊
+              - generic [ref=f1e195]:
+                - generic [ref=f1e196]:
+                  - generic [ref=f1e197]: 6. Creating Embeddings
+                  - generic [ref=f1e199]: —
+                - paragraph [ref=f1e201]: Generating vector embeddings...
+            - generic [ref=f1e202]:
+              - generic [ref=f1e203]: 💾
+              - generic [ref=f1e206]:
+                - generic [ref=f1e207]:
+                  - generic [ref=f1e208]: 7. Indexing to Vector DB
+                  - generic [ref=f1e210]: —
+                - paragraph [ref=f1e212]: Creating embeddings and storing in Qdrant...
+        - generic [ref=f1e215]:
+          - generic [ref=f1e216]: 👁️
+          - paragraph [ref=f1e218]: Live Preview
+          - paragraph [ref=f1e219]: Content appears here during processing
+        - generic [ref=f1e221]:
+          - generic [ref=f1e222]:
+            - generic [ref=f1e223]: System Status
+            - generic [ref=f1e224]: Unknown
+          - generic [ref=f1e227]:
+            - generic [ref=f1e228]:
+              - generic [ref=f1e229]:
+                - generic [ref=f1e230]: ⚡
+                - generic [ref=f1e231]: Pipeline
+              - generic [ref=f1e232]: Ready
+            - generic [ref=f1e233]:
+              - generic [ref=f1e234]:
+                - generic [ref=f1e235]: 📋
+                - generic [ref=f1e236]: Current Task
+              - generic [ref=f1e237]: Idle
+            - generic [ref=f1e238]:
+              - generic [ref=f1e239]:
+                - generic [ref=f1e240]: ⏱️
+                - generic [ref=f1e241]: Elapsed
+              - generic [ref=f1e242]: 0s
+            - generic [ref=f1e243]:
+              - generic [ref=f1e244]:
+                - generic [ref=f1e245]: ⏳
+                - generic [ref=f1e246]: ETA
+              - generic [ref=f1e247]: —
+            - generic [ref=f1e248]:
+              - generic [ref=f1e249]:
+                - generic [ref=f1e250]: 📊
+                - generic [ref=f1e251]: Steps
+              - generic [ref=f1e252]: 0/7
+            - generic [ref=f1e253]:
+              - generic [ref=f1e254]:
+                - generic [ref=f1e255]: 📦
+                - generic [ref=f1e256]: Chunks
+              - generic [ref=f1e257]: "0"
+            - generic [ref=f1e258]:
+              - generic [ref=f1e259]:
+                - generic [ref=f1e260]: 🔢
+                - generic [ref=f1e261]: Vectors
+              - generic [ref=f1e262]: "0"
+            - generic [ref=f1e263]:
+              - generic [ref=f1e264]:
+                - generic [ref=f1e265]: 🔤
+                - generic [ref=f1e266]: Tokens
+              - generic [ref=f1e267]: "0"
+            - generic [ref=f1e268]:
+              - generic [ref=f1e269]:
+                - generic [ref=f1e270]: 🧠
+                - generic [ref=f1e271]: LLM
+              - generic [ref=f1e272]: —
+            - generic [ref=f1e273]:
+              - generic [ref=f1e274]:
+                - generic [ref=f1e275]: 📐
+                - generic [ref=f1e276]: Embeddings
+              - generic [ref=f1e277]: —
+            - generic [ref=f1e278]:
+              - generic [ref=f1e279]:
+                - generic [ref=f1e280]: 💾
+                - generic [ref=f1e281]: Vector DB
+              - generic [ref=f1e282]: —
+          - generic [ref=f1e288]:
+            - generic [ref=f1e289]: 0%
+            - generic [ref=f1e290]: COMPLETE

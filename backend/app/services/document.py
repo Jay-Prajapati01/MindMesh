@@ -1,12 +1,16 @@
 """Document ingestion for DOCX, PPTX, TXT, Markdown, CSV, and Excel.
 
-Each format has a dedicated extractor that returns plain text. The public
-`extract_text` dispatches on the file extension.
+Each format has a dedicated extractor that returns structure-aware markdown:
+headings become `##` sections, tables become markdown pipe tables, and slide
+or sheet boundaries become section markers. That structure flows into the AI
+summary, semantic chunking (section metadata) and retrieval, the same way the
+Docling PDF pipeline does for PDFs.
 """
 from __future__ import annotations
 
 import csv
 import io
+import re
 
 from app.core.logging import get_logger
 
@@ -14,55 +18,157 @@ logger = get_logger(__name__)
 
 SUPPORTED = {".docx", ".pptx", ".txt", ".md", ".markdown", ".csv", ".xlsx"}
 
+SUPPORTED_LABELS = "DOCX, PPTX, XLSX, CSV, TXT, Markdown (MD)"
+
+
+def _md_escape(cell: str) -> str:
+    return (cell or "").replace("|", "\\|").replace("\n", " ").strip()
+
+
+def _md_table(rows: list[list[str]]) -> str:
+    """Render rows as a markdown pipe table (first row = header)."""
+    if not rows:
+        return ""
+    width = max(len(r) for r in rows)
+    norm = [list(_md_escape(c) for c in r) for r in rows]
+    norm = [r + [""] * (width - len(r)) for r in norm]
+    header = norm[0]
+    body = norm[1:]
+    lines = [
+        "| " + " | ".join(header) + " |",
+        "| " + " | ".join(["---"] * width) + " |",
+    ]
+    lines += ["| " + " | ".join(r) + " |" for r in body]
+    return "\n".join(lines)
+
+
+def _is_heading(paragraph) -> bool:
+    style = ""
+    try:
+        style = (paragraph.style.name or "") if paragraph.style else ""
+    except Exception:
+        return False
+    return bool(re.match(r"^(Title|Heading\s*[1-9]|subtitle|TOC\s*Heading)", style, re.I))
+
+
+def _heading_level(paragraph) -> int:
+    style = (paragraph.style.name or "") if paragraph.style else ""
+    match = re.search(r"([1-9])", style)
+    if match and re.match(r"^Heading", style, re.I):
+        return min(int(match.group(1)), 6)
+    return 1
+
 
 def _extract_docx(data: bytes) -> str:
+    """DOCX -> markdown: headings stay headings, tables become pipe tables."""
     import docx
+    from docx.table import Table
+    from docx.text.paragraph import Paragraph
 
     doc = docx.Document(io.BytesIO(data))
-    parts = [p.text for p in doc.paragraphs if p.text.strip()]
-    for table in doc.tables:
-        for row in table.rows:
-            cells = [c.text.strip() for c in row.cells if c.text.strip()]
-            if cells:
-                parts.append(" | ".join(cells))
-    return "\n".join(parts).strip()
+    parts: list[str] = []
+    body = doc.element.body
+
+    for child in body.iterchildren():
+        if child.tag.endswith("}p"):
+            paragraph = Paragraph(child, doc)
+            text = paragraph.text.strip()
+            if not text:
+                continue
+            if _is_heading(paragraph):
+                level = _heading_level(paragraph)
+                parts.append(f"{'#' * level} {text}")
+            else:
+                parts.append(text)
+        elif child.tag.endswith("}tbl"):
+            table = Table(child, doc)
+            rows: list[list[str]] = []
+            for row in table.rows:
+                rows.append([cell.text for cell in row.cells])
+            md = _md_table(rows)
+            if md:
+                parts.append(md)
+
+    return "\n\n".join(parts).strip()
 
 
 def _extract_pptx(data: bytes) -> str:
+    """PPTX -> markdown: slide titles as headings, tables as pipe tables."""
     from pptx import Presentation
+    from pptx.util import Emu
 
     prs = Presentation(io.BytesIO(data))
     parts: list[str] = []
     for i, slide in enumerate(prs.slides, start=1):
-        slide_parts = [f"Slide {i}:"]
-        for shape in slide.shapes:
-            if shape.has_text_frame and shape.text_frame.text.strip():
-                slide_parts.append(shape.text_frame.text.strip())
-        if len(slide_parts) > 1:
-            parts.append("\n".join(slide_parts))
+        slide_lines: list[str] = []
+        title = None
+        table_blocks: list[str] = []
+
+        # Preserve top-to-bottom reading order
+        shapes = sorted(
+            slide.shapes,
+            key=lambda s: (s.top if isinstance(s.top, Emu) else 0),
+        )
+        for shape in shapes:
+            if shape.has_table:
+                rows = [[c.text for c in row.cells] for row in shape.table.rows]
+                md = _md_table(rows)
+                if md:
+                    table_blocks.append(md)
+                continue
+            if not shape.has_text_frame:
+                continue
+            text = shape.text_frame.text.strip()
+            if not text:
+                continue
+            if title is None and shape == slide.shapes.title:
+                title = text.split("\n")[0].strip()
+            else:
+                slide_lines.append(text)
+
+        heading = title or f"Slide {i}"
+        slide_lines_md = "\n\n".join(s for s in slide_lines if s)
+        block = f"## {heading} (Slide {i})"
+        if slide_lines_md:
+            block += f"\n\n{slide_lines_md}"
+        for table_md in table_blocks:
+            block += f"\n\n{table_md}"
+        parts.append(block)
+
     return "\n\n".join(parts).strip()
 
 
 def _extract_xlsx(data: bytes) -> str:
+    """XLSX -> markdown: one `## Sheet` section per worksheet, header table."""
     from openpyxl import load_workbook
 
     wb = load_workbook(io.BytesIO(data), read_only=True, data_only=True)
     parts: list[str] = []
     for ws in wb.worksheets:
-        parts.append(f"Sheet: {ws.title}")
+        rows: list[list[str]] = []
         for row in ws.iter_rows(values_only=True):
-            cells = [str(c) for c in row if c is not None]
-            if cells:
-                parts.append(" | ".join(cells))
+            cells = ["" if c is None else str(c) for c in row]
+            if any(c.strip() for c in cells):
+                rows.append(cells)
+        if not rows:
+            continue
+        block = f"## Sheet: {ws.title}"
+        table = _md_table(rows)
+        if table:
+            block += f"\n\n{table}"
+        parts.append(block)
     wb.close()
-    return "\n".join(parts).strip()
+    return "\n\n".join(parts).strip()
 
 
 def _extract_csv(data: bytes) -> str:
+    """CSV -> markdown pipe table with the first row as header."""
     text = data.decode("utf-8", errors="replace")
     reader = csv.reader(io.StringIO(text))
-    rows = [" | ".join(row) for row in reader if any(cell.strip() for cell in row)]
-    return "\n".join(rows).strip()
+    rows = [list(row) for row in reader if any(cell.strip() for cell in row)]
+    if not rows:
+        return ""
+    return _md_table(rows)
 
 
 def _extract_plain(data: bytes) -> str:
@@ -70,11 +176,18 @@ def _extract_plain(data: bytes) -> str:
 
 
 def extract_text(data: bytes, filename: str) -> dict:
-    """Extract text from a supported document. Returns {title, text}."""
+    """Extract structure-aware text from a supported document.
+
+    Returns {title, text} where `text` is markdown preserving headings,
+    tables and section boundaries for the AI pipeline.
+    """
     lower = filename.lower()
     ext = "." + lower.rsplit(".", 1)[-1] if "." in lower else ""
     if ext not in SUPPORTED:
-        raise ValueError(f"Unsupported document type: {ext or filename}")
+        raise ValueError(
+            f"Unsupported document type: {ext or filename}. "
+            f"Supported formats: {SUPPORTED_LABELS}"
+        )
 
     if ext == ".docx":
         text = _extract_docx(data)
@@ -86,5 +199,8 @@ def extract_text(data: bytes, filename: str) -> dict:
         text = _extract_csv(data)
     else:  # .txt, .md, .markdown
         text = _extract_plain(data)
+
+    if not text:
+        raise ValueError(f"No extractable text found in {filename}")
 
     return {"title": filename, "text": text}

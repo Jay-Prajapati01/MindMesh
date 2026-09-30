@@ -6,6 +6,9 @@ from typing import AsyncIterator
 import httpx
 
 from app.core.config import get_settings
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 async def generate(prompt: str, system: str | None = None) -> str:
@@ -48,5 +51,6 @@ async def generate_stream(
                     token = chunk.get("response", "")
                     if token:
                         yield token
-                except Exception:  # noqa: BLE001
+                except Exception as e:
+                    logger.debug("Failed to parse LLM stream chunk: %s", e)
                     continue

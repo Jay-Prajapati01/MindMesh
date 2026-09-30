@@ -356,10 +356,12 @@ function SourcePicker({ label, value, onChange, sources, excludeId }: SourcePick
 }
 
 export default function ComparePage() {
-  const { data: sources } = useQuery({
-    queryKey: ["sources", ""],
-    queryFn: () => listSources(),
+  // listSources() returns a paginated object {items, total, page, ...} — NOT an array.
+  const { data } = useQuery({
+    queryKey: ["sources", "compare"],
+    queryFn: () => listSources(undefined, 1, 100),
   });
+  const sources = data?.items;
   const [a, setA] = useState("");
   const [b, setB] = useState("");
 

@@ -18,16 +18,44 @@ const YOUTUBE_STEPS = [
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+function validateYouTubeUrl(value: string): string | null {
+  const u = value.trim();
+  if (!u) return "Enter a YouTube URL";
+  const isRawId = /^[\w-]{11}$/.test(u);
+  if (!isRawId && !/^https?:\/\//i.test(u)) return "Enter a full URL (https://...) or an 11-character video ID";
+  if (isRawId) return null;
+  let parsed: URL;
+  try {
+    parsed = new URL(u);
+  } catch {
+    return "Invalid URL";
+  }
+  const host = parsed.hostname.replace(/^www\./i, "").toLowerCase();
+  if (!["youtube.com", "m.youtube.com", "youtu.be", "music.youtube.com", "youtube-nocookie.com"].includes(host)) {
+    return "That doesn't look like a YouTube link";
+  }
+  if (/^\/(?:@|channel\/|c\/|user\/)/i.test(parsed.pathname)) {
+    return "That's a channel URL — open a specific video and paste its link";
+  }
+  if (parsed.pathname === "/playlist" || (parsed.searchParams.has("list") && !parsed.searchParams.has("v"))) {
+    return "That's a playlist URL — paste a single video link instead";
+  }
+  return null;
+}
+
 export default function YouTubePage() {
   const router = useRouter();
   const [url, setUrl] = useState("");
+  const [urlError, setUrlError] = useState<string | null>(null);
   const { events, isStreaming, error, result, startStream, cancel, startedAt } = useSSE("youtube");
 
   const isIdle = !isStreaming && events.length === 0 && !error;
 
   const handleProcess = () => {
-    if (!url) return;
-    startStream(`${API_URL}/api/videos/process/stream`, { url });
+    const err = validateYouTubeUrl(url);
+    setUrlError(err);
+    if (err) return;
+    startStream(`${API_URL}/api/videos/process/stream`, { url: url.trim() });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -99,7 +127,7 @@ export default function YouTubePage() {
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#71717A]" />
             <input
               value={url}
-              onChange={(e) => setUrl(e.target.value)}
+              onChange={(e) => { setUrl(e.target.value); if (urlError) setUrlError(null); }}
               onKeyDown={handleKeyDown}
               placeholder="https://youtube.com/watch?v=..."
               disabled={isStreaming}
@@ -130,9 +158,13 @@ export default function YouTubePage() {
             </button>
           )}
         </div>
-        <p className="mt-3 text-[12px] text-[#52525B]">
-          Supports public YouTube videos, shorts, and live streams. Transcript will be auto-detected or Whisper will be used as fallback.
-        </p>
+        {urlError ? (
+          <p className="mt-3 text-[12px] font-medium text-[#F87171]">{urlError}</p>
+        ) : (
+          <p className="mt-3 text-[12px] text-[#52525B]">
+            Supports public YouTube videos, shorts, and live streams. Transcript will be auto-detected or Whisper will be used as fallback.
+          </p>
+        )}
       </div>
 
       {/* Processing header */}

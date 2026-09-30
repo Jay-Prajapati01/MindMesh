@@ -18,6 +18,9 @@ from app.models.schemas import RecentQuery, SourceItem
 logger = get_logger(__name__)
 _lock = threading.Lock()
 _MAX_RECENT = 20
+_CACHE: dict | None = None
+_CACHE_PATH: Path | None = None
+_CACHE_VALID = False
 
 
 def _path() -> Path:
@@ -27,18 +30,46 @@ def _path() -> Path:
 
 
 def _load() -> dict:
+    global _CACHE, _CACHE_PATH, _CACHE_VALID
     path = _path()
+    
+    # Use cache if path hasn't changed
+    if _CACHE_VALID and _CACHE_PATH == path and _CACHE is not None:
+        return _CACHE
+    
     if not path.exists():
-        return {"sources": [], "searches": [], "questions": []}
+        _CACHE = {"sources": [], "searches": [], "questions": []}
+        _CACHE_PATH = path
+        _CACHE_VALID = True
+        return _CACHE
     try:
-        return json.loads(path.read_text())
+        _CACHE = json.loads(path.read_text())
+        _CACHE_PATH = path
+        _CACHE_VALID = True
+        return _CACHE
     except (json.JSONDecodeError, OSError):
         logger.warning("Store file unreadable; starting fresh")
-        return {"sources": [], "searches": [], "questions": []}
+        _CACHE = {"sources": [], "searches": [], "questions": []}
+        _CACHE_PATH = path
+        _CACHE_VALID = True
+        return _CACHE
 
 
 def _save(data: dict) -> None:
-    _path().write_text(json.dumps(data, default=str, indent=2))
+    global _CACHE, _CACHE_VALID
+    path = _path()
+    # Atomic write: a crash mid-write must never truncate store.json.
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(data, default=str, indent=2))
+    tmp.replace(path)
+    _CACHE = data
+    _CACHE_VALID = True
+
+
+def invalidate_cache() -> None:
+    """Invalidate the cache to force reload from disk."""
+    global _CACHE_VALID
+    _CACHE_VALID = False
 
 
 def add_source(item: SourceItem) -> None:
@@ -168,3 +199,14 @@ def delete_note(note_id: str) -> bool:
         data["notes"] = new_notes
         _save(data)
         return len(new_notes) != len(notes)
+
+
+def delete_source(source_id: str) -> bool:
+    """Delete a source from the store. Returns True if deleted."""
+    with _lock:
+        data = _load()
+        sources = data.get("sources", [])
+        new_sources = [s for s in sources if s.get("source_id") != source_id]
+        data["sources"] = new_sources
+        _save(data)
+        return len(new_sources) != len(sources)

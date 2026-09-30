@@ -36,6 +36,7 @@ async def process_instagram(payload: InstagramRequest) -> SourceItem:
     return await ingest.ingest_text(
         text=post["text"], source_id=post["shortcode"], source_type="instagram",
         title=post["title"], channel=post["owner"], thumbnail=post["thumbnail"],
+        url=payload.url,
     )
 
 
@@ -120,13 +121,18 @@ async def process_instagram_stream(payload: InstagramRequest):
             for i, chunk in enumerate(chunks):
                 try:
                     vec = await embeddings.embed_text(chunk)
-                except Exception:
-                    vec = [0.0] * 768
+                except Exception as exc:  # noqa: BLE001
+                    yield sse("step_fail", {"step": 7, "error": f"Embedding failed on chunk {i + 1}/{len(chunks)}: {exc}"})
+                    return
                 vectors.append(vec)
                 yield sse("step_progress", {"step": 7, "progress": int(((i+1)/len(chunks))*100), "sub_text": f"Chunk {i+1}/{len(chunks)}"})
 
             vectorstore.ensure_collection()
-            payloads = [{"text": c, "source_id": shortcode, "source_type": "instagram", "title": post["title"], "chunk_index": i, "channel": payload.url, "thumbnail": post.get("thumbnail")} for i, c in enumerate(chunks)]
+            payloads = [{"text": c, "source_id": shortcode, "source_type": "instagram", "title": post["title"], "chunk_index": i, "channel": post.get("owner"), "thumbnail": post.get("thumbnail"), "url": payload.url} for i, c in enumerate(chunks)]
+            try:
+                vectorstore.delete_by_source_id(shortcode)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("delete_by_source_id failed for %s: %s", shortcode, exc)
             indexed = vectorstore.upsert_chunks(vectors, payloads)
 
             try:
@@ -137,7 +143,7 @@ async def process_instagram_stream(payload: InstagramRequest):
 
             yield sse("step_complete", {"step": 7, "duration_ms": ms()})
 
-            item = SourceItem(source_id=shortcode, source_type="instagram", title=post["title"], channel=post["owner"], thumbnail=post["thumbnail"], summary=summary, key_topics=topics, chunks_indexed=indexed)
+            item = SourceItem(source_id=shortcode, source_type="instagram", title=post["title"], channel=post["owner"], thumbnail=post["thumbnail"], summary=summary, key_topics=topics, chunks_indexed=indexed, url=payload.url)
             store.add_source(item)
             yield sse("complete", {"source_id": shortcode, "title": post["title"], "summary": summary, "key_topics": topics, "chunks_indexed": indexed})
         except Exception as exc:

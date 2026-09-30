@@ -6,7 +6,9 @@ import time
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 
+from app.core.config import get_settings
 from app.core.logging import get_logger
+from app.core.uploads import read_upload
 from app.models.schemas import SourceItem
 from app.services import chunking, embeddings, graph, rag, store, vectorstore
 from app.services.pdf_validator import validate as validate_pdf
@@ -54,7 +56,7 @@ def _get_extract_document():
 async def process_pdf(file: UploadFile = File(...)) -> SourceItem:
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Please upload a .pdf file")
-    data = await file.read()
+    data = await read_upload(file, get_settings().pdf_max_file_size)
     if not data:
         raise HTTPException(status_code=400, detail="Empty file")
 
@@ -82,7 +84,7 @@ async def process_pdf(file: UploadFile = File(...)) -> SourceItem:
 async def process_pdf_stream(file: UploadFile = File(...)):
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Please upload a .pdf file")
-    file_data = await file.read()
+    file_data = await read_upload(file, get_settings().pdf_max_file_size)
     if not file_data:
         raise HTTPException(status_code=400, detail="Empty file")
     file_name = file.filename
@@ -92,6 +94,9 @@ async def process_pdf_stream(file: UploadFile = File(...)):
         def ms(): return round((time.time() - t0) * 1000)
         summary = ""
         topics: list[str] = []
+        file_path: str | None = None
+        source_id: str | None = None
+        completed = False
 
         try:
             # Step 1: Validate PDF
@@ -106,6 +111,7 @@ async def process_pdf_stream(file: UploadFile = File(...)):
             # Save original file to disk
             from app.services import file_storage
             file_path = file_storage.save_file(source_id, file_data, "pdf", file_name)
+            # file_path returned is like "files/pdf/abc123.pdf"
 
             # Step 2: Detect Document Type
             yield sse("step_start", {"step": 2, "total_steps": TOTAL_STEPS, "name": "Detecting Document Type", "description": "Analyzing document structure and metadata..."})
@@ -182,8 +188,9 @@ async def process_pdf_stream(file: UploadFile = File(...)):
             for i, chunk_text in enumerate(chunk_texts):
                 try:
                     vec = await embeddings.embed_text(chunk_text)
-                except Exception:
-                    vec = [0.0] * 768
+                except Exception as exc:  # noqa: BLE001
+                    yield sse("step_fail", {"step": 11, "error": f"Embedding failed on chunk {i + 1}/{len(chunk_texts)}: {exc}"})
+                    return
                 vectors.append(vec)
                 yield sse("step_progress", {"step": 11, "progress": int(((i + 1) / len(chunk_texts)) * 100), "sub_text": f"Chunk {i + 1}/{len(chunk_texts)}"})
             yield sse("step_complete", {"step": 11, "duration_ms": ms(), "vectors_count": len(vectors)})
@@ -223,12 +230,16 @@ async def process_pdf_stream(file: UploadFile = File(...)):
                     "title": doc.title,
                     "chunk_index": c["chunk_index"],
                     "section_heading": c.get("section_heading", ""),
-                    "file_path": f"pdf/{source_id}.pdf",
+                    "file_path": file_path,  # Use the path returned by save_file
                     "file_name": file_name,
                 }
                 for c in chunks
             ]
             vectorstore.ensure_collection()
+            try:
+                vectorstore.delete_by_source_id(source_id)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("delete_by_source_id failed for %s: %s", source_id, exc)
             indexed = vectorstore.upsert_chunks(vectors, payloads)
             try:
                 triples = await graph.extract_relations(text)
@@ -237,11 +248,17 @@ async def process_pdf_stream(file: UploadFile = File(...)):
                 pass
             yield sse("step_complete", {"step": 13, "duration_ms": ms()})
 
-            item = SourceItem(source_id=source_id, source_type="pdf", title=doc.title, summary=summary, key_topics=topics, chunks_indexed=indexed, file_path=f"pdf/{source_id}.pdf", file_name=file_name, file_size=len(file_data), mime_type="application/pdf")
+            item = SourceItem(source_id=source_id, source_type="pdf", title=doc.title, summary=summary, key_topics=topics, chunks_indexed=indexed, file_path=file_path, file_name=file_name, file_size=len(file_data), mime_type="application/pdf", page_count=validation.page_count)
             store.add_source(item)
+            completed = True
             yield sse("complete", {"source_id": source_id, "title": doc.title, "summary": summary, "key_topics": topics, "chunks_indexed": indexed})
         except Exception as exc:
             logger.exception("PDF stream failed")
             yield sse("step_fail", {"step": 0, "error": str(exc)})
+        finally:
+            if not completed and file_path and source_id:
+                from app.services import file_storage
+                if file_storage.cleanup_if_unreferenced(file_path, source_id):
+                    logger.info("Removed unreferenced upload after failed PDF pipeline: %s", file_path)
 
     return StreamingResponse(event_generator(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"})

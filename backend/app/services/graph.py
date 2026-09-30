@@ -23,6 +23,9 @@ _EXTRACT_SYS = (
     "important concepts and how they relate."
 )
 
+_MAX_NODES = 500
+_MAX_EDGES = 1000
+
 
 def _path() -> Path:
     data_dir = Path(get_settings().data_dir)
@@ -41,7 +44,21 @@ def _load() -> dict:
 
 
 def _save(data: dict) -> None:
-    _path().write_text(json.dumps(data, default=str, indent=2))
+    path = _path()
+    # Atomic write: a crash mid-write must never truncate graph.json.
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(data, default=str, indent=2))
+    tmp.replace(path)
+
+
+def remove_source(source_id: str) -> None:
+    """Drop all nodes/edges that came from a deleted source."""
+    with _lock:
+        data = _load()
+        data["edges"] = [e for e in data["edges"] if e.get("source_id") != source_id]
+        used = {e["source"] for e in data["edges"]} | {e["target"] for e in data["edges"]}
+        data["nodes"] = {k: v for k, v in data["nodes"].items() if k in used}
+        _save(data)
 
 
 async def extract_relations(text: str) -> list[dict]:
@@ -94,8 +111,36 @@ def add_triples(
                     "title": title,
                 }
             )
+        
+        # Prune if exceeding limits
+        if len(data["nodes"]) > _MAX_NODES or len(data["edges"]) > _MAX_EDGES:
+            data = _prune_graph(data)
+        
         _save(data)
         return len(triples)
+
+
+def _prune_graph(data: dict) -> dict:
+    """Remove least important nodes/edges to stay within limits."""
+    # Sort nodes by count (importance) and keep top N
+    sorted_nodes = sorted(
+        data["nodes"].items(),
+        key=lambda x: x[1].get("count", 0),
+        reverse=True,
+    )
+    kept_keys = {k for k, _ in sorted_nodes[:_MAX_NODES]}
+    
+    # Filter nodes
+    data["nodes"] = {k: v for k, v in data["nodes"].items() if k in kept_keys}
+    
+    # Filter edges to only include kept nodes
+    data["edges"] = [
+        e for e in data["edges"]
+        if e["source"] in kept_keys and e["target"] in kept_keys
+    ][:_MAX_EDGES]
+    
+    logger.info("Pruned graph to %d nodes, %d edges", len(data["nodes"]), len(data["edges"]))
+    return data
 
 
 def get_graph() -> dict:

@@ -96,16 +96,15 @@ function timeAgo(date: string | Date) {
   return past.toLocaleDateString();
 }
 
-function getGreeting() {
-  const hour = new Date().getHours();
+function getGreeting(now: Date) {
+  const hour = now.getHours();
   if (hour >= 5 && hour < 12) return { text: "Good morning", emoji: "\u2600\uFE0F" };
   if (hour >= 12 && hour < 17) return { text: "Good afternoon", emoji: "\uD83D\uDC4B" };
   if (hour >= 17 && hour < 21) return { text: "Good evening", emoji: "\uD83C\uDF07" };
   return { text: "Good night", emoji: "\uD83C\uDF19" };
 }
 
-function getCurrentTime() {
-  const now = new Date();
+function getCurrentTime(now: Date) {
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   const day = days[now.getDay()];
@@ -138,15 +137,20 @@ export default function DashboardPage() {
   });
 
   const setCommandPaletteOpen = useAppStore((s) => s.setCommandPaletteOpen);
-  const [currentTime, setCurrentTime] = useState(getCurrentTime());
-  const greeting = useMemo(() => getGreeting(), []);
+  // Time-dependent UI is rendered only after mount so server HTML and the
+  // first client render always match (no hydration mismatch across timezones).
+  const [now, setNow] = useState<Date | null>(null);
   const [addSourceOpen, setAddSourceOpen] = useState(false);
   const addSourceRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(getCurrentTime()), 60000);
+    setNow(new Date());
+    const timer = setInterval(() => setNow(new Date()), 30000);
     return () => clearInterval(timer);
   }, []);
+
+  const greeting = now ? getGreeting(now) : { text: "Hello", emoji: "\uD83D\uDC4B" };
+  const currentTime = now ? getCurrentTime(now) : { date: "", time: "" };
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -237,8 +241,8 @@ export default function DashboardPage() {
               {[
                 { icon: Boxes, label: "Knowledge Chunks", value: stats?.indexed_chunks ?? 0, color: "#6E56CF" },
                 { icon: Database, label: "Sources", value: stats?.total_sources ?? 0, color: "#22C55E" },
-                { icon: Network, label: "Embeddings", value: Math.round((stats?.indexed_chunks ?? 0) * 1.5), color: "#0EA5E9" },
-                { icon: Activity, label: "Active Collection", value: 1, color: "#F59E0B" },
+                { icon: Network, label: "Embeddings", value: stats?.indexed_chunks ?? 0, color: "#0EA5E9" },
+                { icon: Activity, label: "Vector Collections", value: 1, color: "#F59E0B" },
               ].map((stat) => (
                 <div key={stat.label} className="flex items-center gap-2">
                   <div
@@ -586,7 +590,7 @@ export default function DashboardPage() {
                 <span className="text-[10px] font-medium text-[#22C55E]">All Systems Operational</span>
               </div>
             </div>
-            <LiveSystemStatus stats={stats} />
+            <LiveSystemStatus />
           </motion.div>
 
           {/* Quick Actions */}

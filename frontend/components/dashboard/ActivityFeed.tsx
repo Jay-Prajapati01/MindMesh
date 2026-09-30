@@ -24,6 +24,7 @@ const TYPE_ICONS: Record<string, typeof Video> = {
   youtube: Video,
   instagram: Instagram,
   pdf: FileText,
+  document: Files,
   documents: Files,
   audio: Music,
   web: Globe,
@@ -34,8 +35,9 @@ const TYPE_COLORS: Record<string, string> = {
   youtube: "#EF4444",
   instagram: "#E1306C",
   pdf: "#DC2626",
+  document: "#7C3AED",
   documents: "#7C3AED",
-  audio: "#059669",
+  audio: "#8B5CF6",
   web: "#0EA5E9",
   file: "#71717A",
 };

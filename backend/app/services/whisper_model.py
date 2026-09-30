@@ -1,0 +1,31 @@
+"""Shared faster-whisper model singleton.
+
+Loading WhisperModel takes seconds and hundreds of MB. Every transcript path
+(uploads, YouTube fallback, Instagram reels) must reuse one instance instead
+of reloading it per request.
+"""
+from __future__ import annotations
+
+import threading
+
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
+
+_lock = threading.Lock()
+_model = None
+
+MODEL_NAME = "base"
+
+
+def get_model():
+    """Return the process-wide WhisperModel, loading it on first use."""
+    global _model
+    if _model is None:
+        with _lock:
+            if _model is None:
+                from faster_whisper import WhisperModel
+
+                logger.info("Loading faster-whisper model '%s'", MODEL_NAME)
+                _model = WhisperModel(MODEL_NAME, device="cpu", compute_type="int8")
+    return _model

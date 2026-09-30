@@ -16,9 +16,8 @@ export function AISummaryBrief({ stats, isLoading }: Props) {
     if (!stats) return null;
     const chunks = stats.indexed_chunks;
     const sources = stats.total_sources;
-    const embeddings = Math.round(chunks * 1.5);
     const types = Object.keys(stats.sources_by_type).length;
-    return { chunks, sources, embeddings, types };
+    return { chunks, sources, types };
   }, [stats]);
 
   if (isLoading && !brief) {
@@ -35,7 +34,6 @@ export function AISummaryBrief({ stats, isLoading }: Props) {
 
   const items = [
     { label: "sources indexed", value: brief.sources, color: "#22C55E" },
-    { label: "embeddings generated", value: brief.embeddings, color: "#6E56CF" },
     { label: "knowledge chunks", value: brief.chunks, color: "#0EA5E9" },
     { label: "content types", value: brief.types, color: "#F59E0B" },
   ];

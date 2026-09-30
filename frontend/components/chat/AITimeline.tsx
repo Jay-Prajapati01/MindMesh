@@ -8,40 +8,33 @@ import {
   Loader2,
   Search,
   Network,
-  Sparkles,
   Zap,
   ChevronDown,
   ChevronUp,
   Clock,
-  Cpu,
 } from "lucide-react";
 
 interface Props {
   loading: boolean;
   chunksSearched: number;
   sourcesSearched: number;
-  embeddingsScanned: number;
   searchTimeMs: number;
-  model: string;
   completedSteps: number;
 }
 
 const PIPELINE_STEPS = [
-  { label: "Semantic Search Completed", icon: Search, detail: "Query embedded & matched" },
-  { label: "Chunks Retrieved", icon: Brain, detail: "Top-K selection" },
-  { label: "Embeddings Compared", icon: Network, detail: "Vector similarity" },
-  { label: "Knowledge Graph Expanded", icon: Zap, detail: "Entity connections" },
-  { label: "AI Re-ranking Finished", icon: Sparkles, detail: "Cross-encoder scoring" },
-  { label: "Final Answer Generated", icon: Check, detail: "Grounded response" },
+  { label: "Query Embedded", icon: Search, detail: "Vector embedding via Ollama" },
+  { label: "Chunks Retrieved", icon: Brain, detail: "Top-K cosine similarity" },
+  { label: "Sources Filtered", icon: Network, detail: "Ranked by relevance" },
+  { label: "Context Assembled", icon: Zap, detail: "Passages + citations" },
+  { label: "Answer Generated", icon: Check, detail: "LLM grounded response" },
 ];
 
 export function AITimeline({
   loading,
   chunksSearched,
   sourcesSearched,
-  embeddingsScanned,
   searchTimeMs,
-  model,
   completedSteps,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
@@ -74,17 +67,18 @@ export function AITimeline({
           )}
         </div>
         <div className="flex items-center gap-3">
-          {!loading && (
+          {!loading && searchTimeMs > 0 && (
             <div className="flex items-center gap-2 text-[10px] text-[#71717A]">
               <span className="flex items-center gap-1">
-                <Cpu className="h-3 w-3" />
-                {model}
+                <Clock className="h-3 w-3" />
+                {searchTimeMs >= 1000
+                  ? `${(searchTimeMs / 1000).toFixed(1)}s`
+                  : `${searchTimeMs}ms`}
               </span>
               <span>•</span>
-              <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {(searchTimeMs / 1000).toFixed(1)}s
-              </span>
+              <span>{chunksSearched} chunks</span>
+              <span>•</span>
+              <span>{sourcesSearched} sources</span>
             </div>
           )}
           {expanded ? (
@@ -141,9 +135,11 @@ export function AITimeline({
                       </span>
                     </div>
                     <span className="text-[10px] text-[#52525B]">{step.detail}</span>
-                    {done && (
+                    {done && loading === false && i === completedSteps - 1 && searchTimeMs > 0 && (
                       <span className="ml-auto text-[10px] text-[#22C55E]">
-                        {(searchTimeMs * (i + 1) / PIPELINE_STEPS.length / 1000).toFixed(1)}s
+                        {searchTimeMs >= 1000
+                          ? `${(searchTimeMs / 1000).toFixed(1)}s total`
+                          : `${searchTimeMs}ms total`}
                       </span>
                     )}
                   </motion.div>

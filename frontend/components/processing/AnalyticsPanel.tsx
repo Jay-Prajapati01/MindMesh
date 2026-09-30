@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { SSEEvent } from "@/hooks/useSSE";
+import { getDetailedHealth } from "@/lib/api";
 
 interface AnalyticsPanelProps {
   events: SSEEvent[];
@@ -42,7 +44,6 @@ function AnimatedNumber({ value, duration = 500 }: { value: number; duration?: n
 
 export function AnalyticsPanel({ events, steps, isStreaming, isIdle, startedAt }: AnalyticsPanelProps) {
   const [elapsed, setElapsed] = useState(0);
-  const [tokenCount, setTokenCount] = useState(0);
 
   useEffect(() => {
     if (!isStreaming) {
@@ -53,11 +54,18 @@ export function AnalyticsPanel({ events, steps, isStreaming, isIdle, startedAt }
     return () => clearInterval(i);
   }, [isStreaming, startedAt]);
 
-  useEffect(() => {
-    for (const evt of events) {
-      if (evt.event === "stream_token") setTokenCount((c) => c + 1);
-    }
-  }, [events]);
+  const { data: health } = useQuery({
+    queryKey: ["health", "detailed"],
+    queryFn: getDetailedHealth,
+    refetchInterval: 60000,
+    retry: 1,
+  });
+
+  // Derived from the full event list — no accumulation, so tokens are never double-counted.
+  const tokenCount = useMemo(
+    () => events.filter((e) => e.event === "stream_token").length,
+    [events]
+  );
 
   const stats = useMemo(() => {
     let completedSteps = 0;
@@ -92,6 +100,10 @@ export function AnalyticsPanel({ events, steps, isStreaming, isIdle, startedAt }
     ? Math.ceil((elapsed / stats.completedSteps) * (steps.length - stats.completedSteps) / 1000)
     : 0;
 
+  const checksOk = health
+    ? Object.values(health.checks).every((v) => v === "ok")
+    : false;
+
   const metrics: Metric[] = [
     { label: "Pipeline", value: isStreaming ? "Active" : isIdle ? "Ready" : "Done", icon: "⚡", color: isStreaming ? "text-[#6E56CF]" : isIdle ? "text-[#71717A]" : "text-[#22C55E]", bold: true },
     { label: "Current Task", value: stats.currentStepName || (isIdle ? "Idle" : "Starting..."), icon: "📋" },
@@ -101,10 +113,9 @@ export function AnalyticsPanel({ events, steps, isStreaming, isIdle, startedAt }
     { label: "Chunks", value: stats.chunks, icon: "📦" },
     { label: "Vectors", value: stats.vectors, icon: "🔢" },
     { label: "Tokens", value: tokenCount, icon: "🔤" },
-    { label: "LLM", value: "qwen2.5:3b", icon: "🧠" },
-    { label: "Embeddings", value: "nomic-embed-text", icon: "📐" },
-    { label: "Vector DB", value: "Qdrant", icon: "💾" },
-    { label: "Graph", value: isStreaming ? "Building" : isIdle ? "Ready" : "Done", icon: "🕸️" },
+    { label: "LLM", value: health?.llm_model ?? "—", icon: "🧠" },
+    { label: "Embeddings", value: health?.embedding_model ?? "—", icon: "📐" },
+    { label: "Vector DB", value: health?.collection ?? "—", icon: "💾" },
   ];
 
   return (
@@ -113,8 +124,10 @@ export function AnalyticsPanel({ events, steps, isStreaming, isIdle, startedAt }
       <div className="mb-3 flex items-center justify-between">
         <span className="text-[10px] font-bold uppercase tracking-wider text-[#71717A]">System Status</span>
         <div className="flex items-center gap-1.5">
-          <span className={`h-1.5 w-1.5 rounded-full ${isStreaming ? "bg-[#22C55E] animate-pulse" : "bg-[#71717A]"}`} />
-          <span className="text-[10px] text-[#71717A]">{isStreaming ? "Healthy" : "Idle"}</span>
+          <span className={`h-1.5 w-1.5 rounded-full ${checksOk ? "bg-[#22C55E]" : health ? "bg-[#F59E0B] animate-pulse" : "bg-[#71717A]"}`} />
+          <span className="text-[10px] text-[#71717A]">
+            {checksOk ? "Healthy" : health ? "Degraded" : "Unknown"}
+          </span>
         </div>
       </div>
 

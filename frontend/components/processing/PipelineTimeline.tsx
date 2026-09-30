@@ -268,6 +268,7 @@ export function PipelineTimeline({ steps, events, isStreaming, error, isIdle }: 
     for (const step of steps) {
       states[step.id] = { status: "pending" };
     }
+    let prevCumulativeMs = 0;
     for (const evt of events) {
       const d = evt.data;
       const stepIdx = (d.step || 1) - 1;
@@ -283,15 +284,21 @@ export function PipelineTimeline({ steps, events, isStreaming, error, isIdle }: 
             states[stepId] = { ...states[stepId], progress: d.progress, subText: d.sub_text || states[stepId].subText };
           }
           break;
-        case "step_complete":
+        case "step_complete": {
+          // Backend sends CUMULATIVE ms since the pipeline started; convert to
+          // a per-step duration so the label and the total are both correct.
+          const cumulative = typeof d.duration_ms === "number" ? d.duration_ms : 0;
+          const perStep = Math.max(0, cumulative - prevCumulativeMs);
+          prevCumulativeMs = Math.max(prevCumulativeMs, cumulative);
           states[stepId] = {
             ...states[stepId],
             status: "complete",
             progress: 100,
-            durationMs: d.duration_ms,
+            durationMs: perStep,
             preview: Object.fromEntries(Object.entries(d).filter(([k]) => k !== "step" && k !== "duration_ms")),
           };
           break;
+        }
         case "step_fail":
           states[stepId] = { ...states[stepId], status: "error", error: d.error };
           break;

@@ -36,6 +36,7 @@ async def ingest_text(
     title: str | None = None,
     channel: str | None = None,
     thumbnail: str | None = None,
+    url: str | None = None,
     file_path: str | None = None,
     file_name: str | None = None,
     file_size: int | None = None,
@@ -108,6 +109,7 @@ async def ingest_text(
             "chunk_index": i,
             "channel": channel,
             "thumbnail": thumbnail,
+            "url": url,
             "file_path": file_path,
             "file_name": file_name,
         }
@@ -118,6 +120,15 @@ async def ingest_text(
     await emit("step_start", {"step": 7, "total_steps": 7, "name": "Indexing & Graph", "description": "Storing in Qdrant and extracting knowledge graph..."})
 
     vectorstore.ensure_collection()
+    
+    # Delete existing chunks for this source_id to prevent duplicates
+    try:
+        deleted = vectorstore.delete_by_source_id(source_id)
+        if deleted > 0:
+            logger.info("Deleted %d existing chunks for %s before re-indexing", deleted, source_id)
+    except Exception as exc:
+        logger.warning("Failed to cleanup old chunks for %s: %s", source_id, exc)
+    
     indexed = vectorstore.upsert_chunks(vectors, payloads)
 
     # Best-effort knowledge graph extraction (non-fatal).
@@ -138,6 +149,7 @@ async def ingest_text(
         summary=summary,
         key_topics=topics,
         chunks_indexed=indexed,
+        url=url,
         file_path=file_path,
         file_name=file_name,
         file_size=file_size,
