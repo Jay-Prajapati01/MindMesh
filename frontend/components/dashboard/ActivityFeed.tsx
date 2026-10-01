@@ -10,15 +10,13 @@ import {
   Globe,
   Files,
   Brain,
-  Network,
-  Search,
-  MessageSquare,
   CheckCircle,
   AlertCircle,
   Clock,
   Loader2,
 } from "lucide-react";
-import { processManager, ProcessState } from "@/lib/processManager";
+import { processManager } from "@/lib/processManager";
+import { getSourceTheme } from "@/lib/sourceTheme";
 
 const TYPE_ICONS: Record<string, typeof Video> = {
   youtube: Video,
@@ -29,17 +27,6 @@ const TYPE_ICONS: Record<string, typeof Video> = {
   audio: Music,
   web: Globe,
   file: Files,
-};
-
-const TYPE_COLORS: Record<string, string> = {
-  youtube: "#EF4444",
-  instagram: "#E1306C",
-  pdf: "#DC2626",
-  document: "#7C3AED",
-  documents: "#7C3AED",
-  audio: "#8B5CF6",
-  web: "#0EA5E9",
-  file: "#71717A",
 };
 
 interface ActivityEntry {
@@ -73,10 +60,9 @@ export function ActivityFeed() {
         .sort((a, b) => b.startedAt - a.startedAt)
         .slice(0, 8)
         .map((proc) => {
-          const lastEvent = proc.events[proc.events.length - 1];
           const stepName = proc.events.filter((e) => e.event === "step_start").pop()?.data?.name || "";
           const Icon = TYPE_ICONS[proc.type] || Brain;
-          const color = TYPE_COLORS[proc.type] || "#71717A";
+          const srcTheme = getSourceTheme(proc.type);
 
           let title = `${proc.type.charAt(0).toUpperCase() + proc.type.slice(1)} Processing`;
           let description = stepName || "Starting...";
@@ -97,7 +83,7 @@ export function ActivityFeed() {
             timestamp: proc.startedAt,
             status: proc.status,
             icon: Icon,
-            color,
+            color: srcTheme.accent,
           };
         });
       setActivities(entries);
@@ -116,9 +102,9 @@ export function ActivityFeed() {
   if (activities.length === 0) {
     return (
       <div className="flex flex-col items-center py-8 text-center">
-        <Clock className="mb-2 h-6 w-6 text-[#52525B]" />
-        <p className="text-[12px] text-[#71717A]">No recent activity</p>
-        <p className="text-[10px] text-[#52525B]">Process sources to see activity</p>
+        <Clock className="mb-2 h-6 w-6 text-subtle" />
+        <p className="text-[12px] text-muted">No recent activity</p>
+        <p className="text-[10px] text-subtle">Process sources to see activity</p>
       </div>
     );
   }
@@ -134,36 +120,35 @@ export function ActivityFeed() {
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: i * 0.05 }}
-              className="flex items-center gap-3 rounded-[10px] p-2.5 transition-colors hover:bg-[rgba(255,255,255,0.03)]"
+              className="flex items-center gap-3 rounded-[10px] p-2.5 transition-colors hover:bg-surface"
             >
               <div className="relative flex-shrink-0">
                 <div
-                  className="flex h-8 w-8 items-center justify-center rounded-[8px]"
-                  style={{ backgroundColor: `${activity.color}15` }}
+                  className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-surface"
                 >
                   <Icon className="h-4 w-4" style={{ color: activity.color }} />
                 </div>
                 {activity.status === "running" && (
                   <div className="absolute -bottom-0.5 -right-0.5">
-                    <Loader2 className="h-3 w-3 animate-spin text-[#6E56CF]" />
+                    <Loader2 className="h-3 w-3 animate-spin text-brand" />
                   </div>
                 )}
                 {activity.status === "completed" && (
                   <div className="absolute -bottom-0.5 -right-0.5">
-                    <CheckCircle className="h-3 w-3 text-[#22C55E]" />
+                    <CheckCircle className="h-3 w-3 text-success" />
                   </div>
                 )}
                 {activity.status === "failed" && (
                   <div className="absolute -bottom-0.5 -right-0.5">
-                    <AlertCircle className="h-3 w-3 text-[#EF4444]" />
+                    <AlertCircle className="h-3 w-3 text-danger" />
                   </div>
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-[11px] font-medium text-[#F5F5F5]">{activity.title}</div>
-                <div className="truncate text-[10px] text-[#71717A]">{activity.description}</div>
+                <div className="text-[11px] font-medium text-foreground">{activity.title}</div>
+                <div className="truncate text-[10px] text-muted">{activity.description}</div>
               </div>
-              <span className="text-[9px] text-[#52525B] flex-shrink-0">{timeAgo(activity.timestamp)}</span>
+              <span className="text-[9px] text-subtle flex-shrink-0">{timeAgo(activity.timestamp)}</span>
             </motion.div>
           );
         })}

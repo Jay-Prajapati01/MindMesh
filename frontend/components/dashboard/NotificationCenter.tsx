@@ -5,16 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import {
   Bell,
-  X,
   Check,
   CheckCheck,
   Trash2,
-  Video,
-  FileText,
-  Instagram,
-  Music,
-  Globe,
-  Files,
   Brain,
   Search,
   MessageSquare,
@@ -25,16 +18,16 @@ import {
 import { useAppStore, Notification } from "@/lib/store";
 
 const TYPE_CONFIG: Record<string, { icon: typeof Bell; color: string }> = {
-  processing_started: { icon: Clock, color: "#6E56CF" },
-  processing_completed: { icon: Check, color: "#22C55E" },
-  processing_failed: { icon: AlertCircle, color: "#EF4444" },
-  knowledge_added: { icon: Brain, color: "#6E56CF" },
-  graph_updated: { icon: Network, color: "#0EA5E9" },
-  embedding_finished: { icon: Brain, color: "#7C69E3" },
-  search_completed: { icon: Search, color: "#22C55E" },
-  ai_finished: { icon: MessageSquare, color: "#22C55E" },
-  system_update: { icon: AlertCircle, color: "#F59E0B" },
-  warning: { icon: AlertCircle, color: "#F59E0B" },
+  processing_started: { icon: Clock, color: "var(--brand)" },
+  processing_completed: { icon: Check, color: "var(--success)" },
+  processing_failed: { icon: AlertCircle, color: "var(--danger)" },
+  knowledge_added: { icon: Brain, color: "var(--brand)" },
+  graph_updated: { icon: Network, color: "var(--info)" },
+  embedding_finished: { icon: Brain, color: "var(--brand)" },
+  search_completed: { icon: Search, color: "var(--success)" },
+  ai_finished: { icon: MessageSquare, color: "var(--success)" },
+  system_update: { icon: AlertCircle, color: "var(--warning)" },
+  warning: { icon: AlertCircle, color: "var(--warning)" },
 };
 
 function timeAgo(ts: number) {
@@ -69,27 +62,26 @@ function NotificationCard({
       }}
       className={`flex gap-3 rounded-[12px] p-3 transition-colors cursor-pointer ${
         notification.read
-          ? "hover:bg-[rgba(255,255,255,0.02)]"
-          : "bg-[rgba(110,86,207,0.04)] hover:bg-[rgba(110,86,207,0.08)]"
+          ? "hover:bg-surface"
+          : "bg-brand-soft/20 hover:bg-brand-soft/40"
       }`}
     >
       <div
-        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[8px]"
-        style={{ backgroundColor: `${config.color}15` }}
+        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[8px] bg-surface"
       >
         <Icon className="h-4 w-4" style={{ color: config.color }} />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className={`text-[12px] font-medium ${notification.read ? "text-[#A1A1AA]" : "text-[#F5F5F5]"}`}>
+          <span className={`text-[12px] font-medium ${notification.read ? "text-foreground-3" : "text-foreground font-semibold"}`}>
             {notification.title}
           </span>
           {!notification.read && (
-            <div className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#6E56CF]" />
+            <div className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand" />
           )}
         </div>
-        <p className="text-[11px] text-[#71717A] line-clamp-2">{notification.description}</p>
-        <span className="text-[10px] text-[#52525B]">{timeAgo(notification.timestamp)}</span>
+        <p className="text-[11px] text-muted line-clamp-2">{notification.description}</p>
+        <span className="text-[10px] text-subtle">{timeAgo(notification.timestamp)}</span>
       </div>
     </motion.div>
   );
@@ -122,14 +114,14 @@ export function NotificationCenter() {
         onClick={() => setDrawerOpen(!drawerOpen)}
         aria-label="Notifications"
         aria-expanded={drawerOpen}
-        className="relative flex h-10 w-10 items-center justify-center rounded-[12px] border border-[rgba(255,255,255,0.06)] bg-[#111318] text-[#A1A1AA] transition-all hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F5F5F5]"
+        className="relative flex h-10 w-10 items-center justify-center rounded-[12px] border border-border bg-card text-foreground-3 transition-all hover:bg-surface hover:text-foreground"
       >
         <Bell className="h-4 w-4" />
         {unreadCount > 0 && (
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#6E56CF] px-1"
+            className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand px-1"
           >
             <span className="text-[9px] font-bold text-white">{unreadCount > 9 ? "9+" : unreadCount}</span>
           </motion.div>
@@ -143,13 +135,13 @@ export function NotificationCenter() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.98 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 bottom-full z-50 mb-2 w-[380px] overflow-hidden rounded-[16px] border border-[rgba(255,255,255,0.08)] bg-[#111318] shadow-2xl shadow-black/50"
+            className="absolute right-0 bottom-full z-50 mb-2 w-[380px] overflow-hidden rounded-[16px] border border-border bg-card text-foreground shadow-floating"
           >
-            <div className="flex items-center justify-between border-b border-[rgba(255,255,255,0.06)] px-4 py-3">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <div className="flex items-center gap-2">
-                <h3 className="text-[13px] font-semibold text-[#F5F5F5]">Notifications</h3>
+                <h3 className="text-[13px] font-semibold text-foreground">Notifications</h3>
                 {unreadCount > 0 && (
-                  <span className="rounded-full bg-[#6E56CF]/20 px-2 py-0.5 text-[10px] font-semibold text-[#6E56CF]">
+                  <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-semibold text-brand">
                     {unreadCount} new
                   </span>
                 )}
@@ -158,7 +150,7 @@ export function NotificationCenter() {
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllRead}
-                    className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] text-[#71717A] transition-colors hover:bg-[rgba(255,255,255,0.05)] hover:text-[#A1A1AA]"
+                    className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] text-muted transition-colors hover:bg-surface hover:text-foreground"
                   >
                     <CheckCheck className="h-3 w-3" />
                     Mark all read
@@ -166,7 +158,7 @@ export function NotificationCenter() {
                 )}
                 <button
                   onClick={clearAll}
-                  className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] text-[#71717A] transition-colors hover:bg-[rgba(255,255,255,0.05)] hover:text-[#A1A1AA]"
+                  className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] text-muted transition-colors hover:bg-surface hover:text-foreground"
                 >
                   <Trash2 className="h-3 w-3" />
                   Clear
@@ -177,9 +169,9 @@ export function NotificationCenter() {
             <div className="max-h-[400px] overflow-y-auto p-2">
               {notifications.length === 0 ? (
                 <div className="flex flex-col items-center py-10 text-center">
-                  <Bell className="mb-2 h-6 w-6 text-[#52525B]" />
-                  <p className="text-[12px] text-[#71717A]">No notifications yet</p>
-                  <p className="text-[10px] text-[#52525B]">Activity will appear here</p>
+                  <Bell className="mb-2 h-6 w-6 text-subtle" />
+                  <p className="text-[12px] text-muted">No notifications yet</p>
+                  <p className="text-[10px] text-subtle">Activity will appear here</p>
                 </div>
               ) : (
                 <AnimatePresence>

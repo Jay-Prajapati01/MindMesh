@@ -2,8 +2,9 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Library, Download, Trash2, ExternalLink, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Library, Download, Trash2, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { listSources, downloadSource, deleteSource, SOURCE_TYPES, SourceItem, API_URL } from "@/lib/api";
+import { getSourceTheme } from "@/lib/sourceTheme";
 import {
   Badge,
   Card,
@@ -51,13 +52,10 @@ export default function StoredPage() {
   };
 
   const canDownload = (source: SourceItem) => {
-    // Can download if it's a file-based source with stored file
     return source.file_path && ["pdf", "document", "audio"].includes(source.source_type);
   };
 
   const getOpenUrl = (source: SourceItem): string | null => {
-    // Only treat real http(s) strings as URLs. `channel` usually holds a
-    // channel NAME (e.g. "MrBeast"), never a link.
     if (source.url && /^https?:\/\//.test(source.url)) return source.url;
     if (source.channel && /^https?:\/\//.test(source.channel)) return source.channel;
     return null;
@@ -71,26 +69,29 @@ export default function StoredPage() {
   const totalPages = data?.total_pages ?? 1;
 
   return (
-    <div className="max-w-4xl">
+    <div className="max-w-4xl text-foreground">
       <PageHeader
         title="Stored Sources"
         subtitle={`Everything indexed in your knowledge base. ${data?.total ?? 0} total sources.`}
       />
 
       <div className="mb-6 flex flex-wrap gap-2">
-        {SOURCE_TYPES.map((f) => (
-          <button
-            key={f || "all"}
-            onClick={() => { setFilter(f); setPage(1); }}
-            className={`rounded-full px-3 py-1 text-xs capitalize transition ${
-              filter === f
-                ? "bg-brand text-white"
-                : "bg-white/5 text-gray-400 hover:bg-white/10"
-            }`}
-          >
-            {f || "all"}
-          </button>
-        ))}
+        {SOURCE_TYPES.map((f) => {
+          const active = filter === f;
+          return (
+            <button
+              key={f || "all"}
+              onClick={() => { setFilter(f); setPage(1); }}
+              className={`rounded-full px-3 py-1 text-xs capitalize transition border ${
+                active
+                  ? "bg-brand border-brand text-white font-medium shadow-sm"
+                  : "bg-surface border-border text-muted hover:bg-surface-muted hover:text-foreground"
+              }`}
+            >
+              {f || "all"}
+            </button>
+          );
+        })}
       </div>
 
       {isLoading && (
@@ -101,101 +102,110 @@ export default function StoredPage() {
       )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {data?.items.map((s) => (
-          <Card key={s.source_id} className="p-4 relative group">
-            {s.thumbnail && (
-              <div className="mb-2 -mx-4 -mt-4">
-                <ThumbImage
-                  src={s.thumbnail}
-                  alt={s.title || "Thumbnail"}
-                  className="w-full h-32 object-cover rounded-t-lg"
-                  fallbackClassName="h-32 rounded-t-lg"
-                />
+        {data?.items.map((s) => {
+          const srcTheme = getSourceTheme(s.source_type);
+          const Icon = srcTheme.icon;
+          return (
+            <Card key={s.source_id} className="p-4 relative group flex flex-col justify-between">
+              <div>
+                {s.thumbnail && (
+                  <div className="mb-2 -mx-4 -mt-4">
+                    <ThumbImage
+                      src={s.thumbnail}
+                      alt={s.title || "Thumbnail"}
+                      className="w-full h-32 object-cover rounded-t-lg"
+                      fallbackClassName="h-32 rounded-t-lg"
+                    />
+                  </div>
+                )}
+                <div className="mb-1.5 flex items-center gap-2">
+                  <Icon className="h-3.5 w-3.5" style={{ color: srcTheme.accent }} />
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted">
+                    {s.source_type}
+                  </span>
+                  {s.file_size && (
+                    <span className="ml-auto text-[10px] text-subtle">{formatFileSize(s.file_size)}</span>
+                  )}
+                </div>
+                <h3 className="mb-1 font-medium text-foreground">
+                  {getOpenUrl(s) ? (
+                    <a
+                      href={getOpenUrl(s) ?? undefined}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-brand transition-colors"
+                    >
+                      {s.title || s.source_id}
+                    </a>
+                  ) : canViewInline(s) ? (
+                    <a
+                      href={`${API_URL}/api/sources/${s.source_id}/view`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-brand transition-colors"
+                    >
+                      {s.title || s.source_id}
+                    </a>
+                  ) : (
+                    s.title || s.source_id
+                  )}
+                </h3>
+                {s.channel && (
+                  <p className="mb-2 text-xs text-muted truncate">{s.channel}</p>
+                )}
+                <p className="line-clamp-3 text-sm text-foreground-3">{s.summary}</p>
+                <div className="mt-3 flex flex-wrap gap-1">
+                  {s.key_topics.slice(0, 4).map((t) => (
+                    <Badge key={t}>{t}</Badge>
+                  ))}
+                </div>
               </div>
-            )}
-            <div className="mb-1 text-xs uppercase text-brand">
-              {s.source_type}
-              {s.file_size && (
-                <span className="ml-2 text-gray-500">{formatFileSize(s.file_size)}</span>
-              )}
-            </div>
-            <h3 className="mb-1 font-medium">
-              {getOpenUrl(s) ? (
-                <a
-                  href={getOpenUrl(s) ?? undefined}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-brand transition"
-                >
-                  {s.title || s.source_id}
-                </a>
-              ) : canViewInline(s) ? (
-                <a
-                  href={`${API_URL}/api/sources/${s.source_id}/view`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-brand transition"
-                >
-                  {s.title || s.source_id}
-                </a>
-              ) : (
-                s.title || s.source_id
-              )}
-            </h3>
-            {s.channel && (
-              <p className="mb-2 text-xs text-gray-500 truncate">{s.channel}</p>
-            )}
-            <p className="line-clamp-3 text-sm text-gray-400">{s.summary}</p>
-            <div className="mt-3 flex flex-wrap gap-1">
-              {s.key_topics.slice(0, 4).map((t) => (
-                <Badge key={t}>{t}</Badge>
-              ))}
-            </div>
-            
-            {/* Action buttons — always visible on touch/small screens */}
-            <div className="mt-4 flex flex-wrap items-center gap-2 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
-              {canDownload(s) && (
+
+              {/* Action buttons */}
+              <div className="mt-4 flex flex-wrap items-center gap-2 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
+                {canDownload(s) && (
+                  <button
+                    onClick={() => handleDownload(s)}
+                    className="flex items-center gap-1 rounded-lg bg-brand-soft px-3 py-1.5 text-xs text-brand hover:bg-brand-soft/80 transition"
+                  >
+                    <Download className="h-3 w-3" />
+                    Download
+                  </button>
+                )}
+                {canViewInline(s) && (
+                  <a
+                    href={`${API_URL}/api/sources/${s.source_id}/view`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 rounded-lg bg-info/10 px-3 py-1.5 text-xs text-info hover:bg-info/20 transition"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Open
+                  </a>
+                )}
+                {canOpenOriginal(s) && (
+                  <a
+                    href={getOpenUrl(s) ?? undefined}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 rounded-lg bg-surface border border-border px-3 py-1.5 text-xs text-muted hover:bg-surface-muted hover:text-foreground transition"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Open
+                  </a>
+                )}
                 <button
-                  onClick={() => handleDownload(s)}
-                  className="flex items-center gap-1 rounded-lg bg-brand/20 px-3 py-1.5 text-xs text-brand hover:bg-brand/30 transition"
+                  onClick={() => handleDelete(s.source_id)}
+                  disabled={deleteMutation.isPending}
+                  className="flex items-center gap-1 rounded-lg bg-danger/10 px-3 py-1.5 text-xs text-danger hover:bg-danger/20 transition ml-auto"
                 >
-                  <Download className="h-3 w-3" />
-                  Download
+                  <Trash2 className="h-3 w-3" />
+                  Delete
                 </button>
-              )}
-              {canViewInline(s) && (
-                <a
-                  href={`${API_URL}/api/sources/${s.source_id}/view`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 rounded-lg bg-blue-500/20 px-3 py-1.5 text-xs text-blue-400 hover:bg-blue-500/30 transition"
-                >
-                  <ExternalLink className="h-3 w-3" />
-                  Open
-                </a>
-              )}
-              {canOpenOriginal(s) && (
-                <a
-                  href={getOpenUrl(s) ?? undefined}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 rounded-lg bg-gray-500/20 px-3 py-1.5 text-xs text-gray-400 hover:bg-gray-500/30 transition"
-                >
-                  <ExternalLink className="h-3 w-3" />
-                  Open
-                </a>
-              )}
-              <button
-                onClick={() => handleDelete(s.source_id)}
-                disabled={deleteMutation.isPending}
-                className="flex items-center gap-1 rounded-lg bg-red-500/20 px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/30 transition ml-auto"
-              >
-                <Trash2 className="h-3 w-3" />
-                Delete
-              </button>
-            </div>
-          </Card>
-        ))}
+              </div>
+            </Card>
+          );
+        })}
       </div>
 
       {/* Pagination */}
@@ -204,18 +214,18 @@ export default function StoredPage() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="flex items-center gap-1 rounded-lg bg-white/5 px-3 py-2 text-xs text-gray-400 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
+            className="flex items-center gap-1 rounded-lg border border-border bg-surface px-3 py-2 text-xs text-muted hover:bg-surface-muted hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition"
           >
             <ChevronLeft className="h-3 w-3" />
             Previous
           </button>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-subtle">
             Page {page} of {totalPages}
           </span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="flex items-center gap-1 rounded-lg bg-white/5 px-3 py-2 text-xs text-gray-400 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition"
+            className="flex items-center gap-1 rounded-lg border border-border bg-surface px-3 py-2 text-xs text-muted hover:bg-surface-muted hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition"
           >
             Next
             <ChevronRight className="h-3 w-3" />

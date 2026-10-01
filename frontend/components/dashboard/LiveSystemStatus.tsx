@@ -33,28 +33,28 @@ export function LiveSystemStatus() {
       label: "API",
       value: isLoading ? "Checking…" : health?.app ?? "Unknown",
       icon: Server,
-      color: isError ? "#EF4444" : health ? "#22C55E" : "#F59E0B",
+      color: isError ? "var(--danger)" : health ? "var(--success)" : "var(--warning)",
       status: isError ? "offline" : health ? "healthy" : "busy",
     },
     {
       label: "LLM",
       value: health?.llm_model ?? "Unknown",
       icon: Brain,
-      color: "#6E56CF",
+      color: "var(--brand)",
       status: ok("ollama") ? "healthy" : "offline",
     },
     {
       label: "Embeddings",
       value: health?.embedding_model ?? "Unknown",
       icon: Activity,
-      color: "#22C55E",
+      color: "var(--success)",
       status: ok("ollama") ? "healthy" : "offline",
     },
     {
       label: "Vector DB",
       value: health?.collection ?? "Unknown",
       icon: Database,
-      color: "#0EA5E9",
+      color: "var(--info)",
       status: ok("qdrant") ? "healthy" : "offline",
     },
   ];
@@ -69,48 +69,37 @@ export function LiveSystemStatus() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 * i }}
-            className="rounded-[12px] border border-[rgba(255,255,255,0.04)] bg-[rgba(255,255,255,0.02)] p-3"
+            className="rounded-[12px] border border-border bg-surface p-3"
           >
             <div className="mb-2 flex items-center justify-between">
               <div
-                className="flex h-6 w-6 items-center justify-center rounded-[6px]"
-                style={{ backgroundColor: `${item.color}15` }}
+                className="flex h-6 w-6 items-center justify-center rounded-[6px] bg-background"
               >
-                <Icon className="h-3 w-3" style={{ color: item.color }} />
+                <Icon className="h-3.5 w-3.5" style={{ color: item.color }} />
               </div>
               <span
-                className="flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[8px] font-semibold"
-                style={{
-                  backgroundColor:
-                    item.status === "healthy"
-                      ? "rgba(34,197,94,0.1)"
-                      : item.status === "busy"
-                      ? "rgba(245,158,11,0.1)"
-                      : "rgba(239,68,68,0.1)",
-                  color:
-                    item.status === "healthy"
-                      ? "#22C55E"
-                      : item.status === "busy"
-                      ? "#F59E0B"
-                      : "#EF4444",
-                }}
+                className={`flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[8px] font-semibold ${
+                  item.status === "healthy"
+                    ? "bg-success/10 text-success"
+                    : item.status === "busy"
+                    ? "bg-warning/10 text-warning"
+                    : "bg-danger/10 text-danger"
+                }`}
               >
                 <span
-                  className="h-1 w-1 rounded-full"
-                  style={{
-                    backgroundColor:
-                      item.status === "healthy"
-                        ? "#22C55E"
-                        : item.status === "busy"
-                        ? "#F59E0B"
-                        : "#EF4444",
-                  }}
+                  className={`h-1 w-1 rounded-full ${
+                    item.status === "healthy"
+                      ? "bg-success"
+                      : item.status === "busy"
+                      ? "bg-warning"
+                      : "bg-danger"
+                  }`}
                 />
                 {item.status}
               </span>
             </div>
-            <div className="text-[10px] font-medium text-[#F5F5F5]">{item.label}</div>
-            <div className="truncate text-[9px] text-[#71717A]">{item.value}</div>
+            <div className="text-[10px] font-medium text-foreground">{item.label}</div>
+            <div className="truncate text-[9px] text-muted">{item.value}</div>
           </motion.div>
         );
       })}

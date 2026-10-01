@@ -19,11 +19,8 @@ import {
   Settings,
   Home,
   LayoutGrid,
-  Plus,
-  Command,
   ArrowRight,
   History,
-  Zap,
 } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 
@@ -40,15 +37,15 @@ interface CommandItem {
 }
 
 const NAVIGATION_ITEMS: Omit<CommandItem, "category">[] = [
-  { id: "dashboard", label: "Dashboard", description: "Mission Control Center", icon: Home, color: "#6E56CF", href: "/", shortcut: "⌘1" },
-  { id: "workspace", label: "Workspace", description: "Notes and tools", icon: LayoutGrid, color: "#6E56CF", href: "/workspace" },
-  { id: "search", label: "Semantic Search", description: "Explore your knowledge", icon: Search, color: "#6E56CF", href: "/search" },
-  { id: "chat", label: "Ask AI", description: "Chat with your knowledge", icon: MessageSquare, color: "#6E56CF", href: "/chat" },
-  { id: "graph", label: "Knowledge Graph", description: "Visualize connections", icon: Network, color: "#0EA5E9", href: "/graph" },
-  { id: "timeline", label: "Timeline", description: "Chronological view", icon: Clock, color: "#F59E0B", href: "/timeline" },
-  { id: "compare", label: "Compare", description: "Compare sources", icon: GitCompare, color: "#22C55E", href: "/compare" },
-  { id: "stored", label: "Stored", description: "Browse all sources", icon: Library, color: "#71717A", href: "/stored" },
-  { id: "settings", label: "Settings", description: "App configuration", icon: Settings, color: "#71717A", href: "/settings" },
+  { id: "dashboard", label: "Dashboard", description: "Mission Control Center", icon: Home, color: "var(--brand)", href: "/", shortcut: "⌘1" },
+  { id: "workspace", label: "Workspace", description: "Notes and tools", icon: LayoutGrid, color: "var(--brand)", href: "/workspace" },
+  { id: "search", label: "Semantic Search", description: "Explore your knowledge", icon: Search, color: "var(--brand)", href: "/search" },
+  { id: "chat", label: "Ask AI", description: "Chat with your knowledge", icon: MessageSquare, color: "var(--brand)", href: "/chat" },
+  { id: "graph", label: "Knowledge Graph", description: "Visualize connections", icon: Network, color: "var(--info)", href: "/graph" },
+  { id: "timeline", label: "Timeline", description: "Chronological view", icon: Clock, color: "var(--warning)", href: "/timeline" },
+  { id: "compare", label: "Compare", description: "Compare sources", icon: GitCompare, color: "var(--success)", href: "/compare" },
+  { id: "stored", label: "Stored", description: "Browse all sources", icon: Library, color: "var(--foreground-3)", href: "/stored" },
+  { id: "settings", label: "Settings", description: "App configuration", icon: Settings, color: "var(--foreground-3)", href: "/settings" },
 ];
 
 const ACTION_ITEMS: Omit<CommandItem, "category">[] = [
@@ -75,7 +72,7 @@ export function CommandPalette() {
     id: `recent-${q}`,
     label: q,
     icon: History,
-    color: "#71717A",
+    color: "var(--foreground-3)",
     category: "recent" as const,
     action: () => {
       setOpen(false);
@@ -178,10 +175,10 @@ export function CommandPalette() {
           exit={{ opacity: 0, scale: 0.96, y: -10 }}
           transition={{ duration: 0.15 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-[560px] overflow-hidden rounded-[16px] border border-[rgba(255,255,255,0.08)] bg-[#111318] shadow-2xl shadow-black/50"
+          className="relative w-full max-w-[560px] overflow-hidden rounded-[16px] border border-border bg-card shadow-floating text-foreground"
         >
-          <div className="flex items-center gap-3 border-b border-[rgba(255,255,255,0.06)] px-4 py-3">
-            <Search className="h-4 w-4 text-[#71717A]" />
+          <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+            <Search className="h-4 w-4 text-muted" />
             <input
               ref={inputRef}
               type="text"
@@ -189,24 +186,24 @@ export function CommandPalette() {
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Search commands, pages, or actions..."
-              className="flex-1 bg-transparent text-[14px] text-[#F5F5F5] placeholder-[#52525B] outline-none"
+              className="flex-1 bg-transparent text-[14px] text-foreground placeholder-subtle outline-none"
             />
-            <div className="flex items-center gap-1 rounded-md bg-[rgba(255,255,255,0.04)] px-2 py-1">
-              <span className="text-[10px] text-[#71717A]">ESC</span>
+            <div className="flex items-center gap-1 rounded-md bg-surface px-2 py-1">
+              <span className="text-[10px] text-muted">ESC</span>
             </div>
           </div>
 
           <div ref={listRef} className="max-h-[360px] overflow-y-auto p-2">
             {flatFiltered.length === 0 && (
               <div className="flex flex-col items-center py-8 text-center">
-                <Search className="mb-2 h-6 w-6 text-[#52525B]" />
-                <p className="text-[12px] text-[#71717A]">No results found</p>
+                <Search className="mb-2 h-6 w-6 text-subtle" />
+                <p className="text-[12px] text-muted">No results found</p>
               </div>
             )}
 
             {grouped.navigation.length > 0 && (
               <div className="mb-1">
-                <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#52525B]">
+                <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-subtle">
                   Navigation
                 </div>
                 {grouped.navigation.map((item, i) => {
@@ -219,26 +216,25 @@ export function CommandPalette() {
                       onMouseEnter={() => setSelectedIndex(flatIndex)}
                       className={`flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-left transition-colors ${
                         selectedIndex === flatIndex
-                          ? "bg-[rgba(255,255,255,0.06)]"
-                          : "hover:bg-[rgba(255,255,255,0.03)]"
+                          ? "bg-surface text-foreground"
+                          : "text-foreground-2 hover:bg-surface/50"
                       }`}
                     >
                       <div
-                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[8px]"
-                        style={{ backgroundColor: `${item.color}15` }}
+                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[8px] bg-surface-muted"
                       >
-                        <Icon className="h-4 w-4" style={{ color: item.color }} />
+                        <Icon className="h-4 w-4 text-brand" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-[13px] font-medium text-[#F5F5F5]">{item.label}</div>
+                        <div className="text-[13px] font-medium text-foreground">{item.label}</div>
                         {item.description && (
-                          <div className="text-[11px] text-[#71717A]">{item.description}</div>
+                          <div className="text-[11px] text-muted">{item.description}</div>
                         )}
                       </div>
                       {item.shortcut && (
-                        <span className="text-[10px] text-[#52525B]">{item.shortcut}</span>
+                        <span className="text-[10px] text-subtle">{item.shortcut}</span>
                       )}
-                      <ArrowRight className="h-3.5 w-3.5 text-[#52525B]" />
+                      <ArrowRight className="h-3.5 w-3.5 text-subtle" />
                     </button>
                   );
                 })}
@@ -247,7 +243,7 @@ export function CommandPalette() {
 
             {grouped.action.length > 0 && (
               <div className="mb-1">
-                <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#52525B]">
+                <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-subtle">
                   Add Source
                 </div>
                 {grouped.action.map((item, i) => {
@@ -260,23 +256,22 @@ export function CommandPalette() {
                       onMouseEnter={() => setSelectedIndex(flatIndex)}
                       className={`flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-left transition-colors ${
                         selectedIndex === flatIndex
-                          ? "bg-[rgba(255,255,255,0.06)]"
-                          : "hover:bg-[rgba(255,255,255,0.03)]"
+                          ? "bg-surface text-foreground"
+                          : "text-foreground-2 hover:bg-surface/50"
                       }`}
                     >
                       <div
-                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[8px]"
-                        style={{ backgroundColor: `${item.color}15` }}
+                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[8px] bg-surface-muted"
                       >
                         <Icon className="h-4 w-4" style={{ color: item.color }} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-[13px] font-medium text-[#F5F5F5]">{item.label}</div>
+                        <div className="text-[13px] font-medium text-foreground">{item.label}</div>
                         {item.description && (
-                          <div className="text-[11px] text-[#71717A]">{item.description}</div>
+                          <div className="text-[11px] text-muted">{item.description}</div>
                         )}
                       </div>
-                      <ArrowRight className="h-3.5 w-3.5 text-[#52525B]" />
+                      <ArrowRight className="h-3.5 w-3.5 text-subtle" />
                     </button>
                   );
                 })}
@@ -285,7 +280,7 @@ export function CommandPalette() {
 
             {grouped.recent.length > 0 && (
               <div>
-                <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#52525B]">
+                <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-subtle">
                   Recent Searches
                 </div>
                 {grouped.recent.map((item, i) => {
@@ -298,15 +293,15 @@ export function CommandPalette() {
                       onMouseEnter={() => setSelectedIndex(flatIndex)}
                       className={`flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-left transition-colors ${
                         selectedIndex === flatIndex
-                          ? "bg-[rgba(255,255,255,0.06)]"
-                          : "hover:bg-[rgba(255,255,255,0.03)]"
+                          ? "bg-surface text-foreground"
+                          : "text-foreground-2 hover:bg-surface/50"
                       }`}
                     >
-                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[8px] bg-[rgba(255,255,255,0.04)]">
-                        <Icon className="h-4 w-4 text-[#71717A]" />
+                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[8px] bg-surface-muted">
+                        <Icon className="h-4 w-4 text-muted" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-[13px] text-[#A1A1AA]">{item.label}</div>
+                        <div className="text-[13px] text-foreground-2">{item.label}</div>
                       </div>
                     </button>
                   );
@@ -315,17 +310,17 @@ export function CommandPalette() {
             )}
           </div>
 
-          <div className="flex items-center gap-4 border-t border-[rgba(255,255,255,0.06)] px-4 py-2.5">
-            <span className="flex items-center gap-1.5 text-[10px] text-[#52525B]">
-              <span className="rounded bg-[rgba(255,255,255,0.06)] px-1.5 py-0.5">↑↓</span>
+          <div className="flex items-center gap-4 border-t border-border px-4 py-2.5 text-subtle">
+            <span className="flex items-center gap-1.5 text-[10px]">
+              <span className="rounded bg-surface px-1.5 py-0.5 font-mono">↑↓</span>
               Navigate
             </span>
-            <span className="flex items-center gap-1.5 text-[10px] text-[#52525B]">
-              <span className="rounded bg-[rgba(255,255,255,0.06)] px-1.5 py-0.5">↵</span>
+            <span className="flex items-center gap-1.5 text-[10px]">
+              <span className="rounded bg-surface px-1.5 py-0.5 font-mono">↵</span>
               Select
             </span>
-            <span className="flex items-center gap-1.5 text-[10px] text-[#52525B]">
-              <span className="rounded bg-[rgba(255,255,255,0.06)] px-1.5 py-0.5">ESC</span>
+            <span className="flex items-center gap-1.5 text-[10px]">
+              <span className="rounded bg-surface px-1.5 py-0.5 font-mono">ESC</span>
               Close
             </span>
           </div>

@@ -93,7 +93,6 @@ export function UploadZone({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const next = e.target.files?.[0] ?? null;
-    // Reset so picking the same file again re-triggers change.
     e.target.value = "";
     if (next) pick(next);
   };
@@ -109,40 +108,40 @@ export function UploadZone({
         relative flex flex-col items-center gap-3 rounded-xl border-2 border-dashed p-10 text-center transition-all duration-200
         ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
         ${error
-          ? "border-[#EF4444]/50 bg-[#EF4444]/[0.04]"
+          ? "border-danger/50 bg-danger/5"
           : dragging
-            ? "border-[#6E56CF] bg-[#6E56CF]/[0.08] shadow-[0_0_30px_rgba(110,86,207,0.15)]"
+            ? "border-brand bg-brand-soft shadow-elevated"
             : file
-              ? "border-[#22C55E]/40 bg-[#22C55E]/[0.04] hover:border-[#22C55E]/60"
-              : "border-white/20 bg-white/5 hover:border-[#6E56CF]/50 hover:bg-[#6E56CF]/[0.03]"
+              ? "border-success/40 bg-success/5 hover:border-success/60"
+              : "border-border bg-surface hover:border-brand/50 hover:bg-brand-soft/20"
         }
       `}
     >
       {dragging && (
-        <div className="absolute inset-0 rounded-xl flex items-center justify-center bg-[#6E56CF]/[0.06] backdrop-blur-sm z-10">
+        <div className="absolute inset-0 rounded-xl flex items-center justify-center bg-brand-soft backdrop-blur-sm z-10">
           <div className="flex flex-col items-center gap-2">
-            <Upload className="h-8 w-8 text-[#6E56CF] animate-bounce" />
-            <span className="text-[13px] font-medium text-[#6E56CF]">Drop your file here</span>
+            <Upload className="h-8 w-8 text-brand animate-bounce" />
+            <span className="text-[13px] font-medium text-brand">Drop your file here</span>
           </div>
         </div>
       )}
       {error && (
-        <div className="flex items-center justify-center gap-1.5 text-[#EF4444]">
+        <div className="flex items-center justify-center gap-1.5 text-danger">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span className="text-[12px] font-medium">{error}</span>
         </div>
       )}
       {file ? (
         <>
-          <CheckCircle className="h-6 w-6 text-[#22C55E]" />
-          <span className="text-sm text-[#A1A1AA]">{file.name}</span>
-          <span className="text-[11px] text-[#52525B]">Click or drop to replace</span>
+          <CheckCircle className="h-6 w-6 text-success" />
+          <span className="text-sm text-foreground-2">{file.name}</span>
+          <span className="text-[11px] text-subtle">Click or drop to replace</span>
         </>
       ) : (
         <>
-          <Upload className={`h-6 w-6 ${dragging ? "text-[#6E56CF]" : "text-[#6E56CF]"}`} />
-          <span className="text-sm text-[#71717A]">{label}</span>
-          <span className="text-[11px] text-[#52525B]">{hint || "Drag & drop or click to browse"}</span>
+          <Upload className="h-6 w-6 text-brand" />
+          <span className="text-sm text-foreground">{label}</span>
+          <span className="text-[11px] text-muted">{hint || "Drag & drop or click to browse"}</span>
         </>
       )}
       <input

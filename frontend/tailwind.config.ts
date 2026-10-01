@@ -6,26 +6,44 @@ const config: Config = {
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
     "./hooks/**/*.{ts,tsx}",
+    "./lib/**/*.{ts,tsx}",
   ],
   theme: {
     extend: {
       colors: {
-        bg: "#09090B",
-        card: "#111318",
-        surface: "#171A22",
-        border: "rgba(255,255,255,0.08)",
+        background: "var(--background)",
+        card: "var(--card)",
+        surface: "var(--surface)",
+        "surface-muted": "var(--surface-muted)",
+        border: "var(--border)",
+
+        foreground: "var(--foreground)",
+        "foreground-2": "var(--foreground-2)",
+        "foreground-3": "var(--foreground-3)",
+        muted: "var(--muted)",
+        subtle: "var(--subtle)",
+
         brand: {
-          DEFAULT: "#6E56CF",
-          hover: "#7C69E3",
-          light: "#6E56CF20",
+          DEFAULT: "var(--brand)",
+          hover: "var(--brand-hover)",
+          soft: "var(--brand-soft)",
+          light: "var(--brand-soft)",
         },
-        success: "#22C55E",
-        warning: "#F59E0B",
-        danger: "#EF4444",
-        info: "#38BDF8",
-        "primary-text": "#F5F5F5",
-        "secondary-text": "#A1A1AA",
-        muted: "#71717A",
+
+        success: "var(--success)",
+        warning: "var(--warning)",
+        danger: "var(--danger)",
+        info: "var(--info)",
+
+        // Backward compatibility mappings
+        bg: "var(--background)",
+        "primary-text": "var(--foreground)",
+        "secondary-text": "var(--foreground-2)",
+      },
+      boxShadow: {
+        card: "var(--shadow-card)",
+        elevated: "var(--shadow-elevated)",
+        floating: "var(--shadow-floating)",
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],

@@ -30,8 +30,8 @@ export function useToast() {
 }
 
 const ICONS = {
-  success: <CheckCircle2 className="h-4 w-4 text-emerald-400" />,
-  error: <XCircle className="h-4 w-4 text-red-400" />,
+  success: <CheckCircle2 className="h-4 w-4 text-success" />,
+  error: <XCircle className="h-4 w-4 text-danger" />,
   info: <Info className="h-4 w-4 text-brand" />,
 };
 
@@ -56,13 +56,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className="flex items-start gap-2 rounded-lg border border-white/10 bg-[#15151f] p-3 text-sm shadow-lg"
+            className="flex items-start gap-2 rounded-lg border border-border bg-card text-foreground p-3 text-sm shadow-floating"
           >
             {ICONS[t.type]}
-            <span className="flex-1">{t.message}</span>
+            <span className="flex-1 text-foreground font-medium">{t.message}</span>
             <button
               onClick={() => dismiss(t.id)}
-              className="text-gray-500 hover:text-gray-300"
+              className="text-foreground-3 hover:text-foreground"
             >
               <X className="h-4 w-4" />
             </button>

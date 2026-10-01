@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { Check, Sparkles, TrendingUp } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 import { Stats } from "@/lib/api";
 import { AnimatedCounter } from "@/components/search/AnimatedCounter";
 
@@ -24,7 +24,7 @@ export function AISummaryBrief({ stats, isLoading }: Props) {
     return (
       <div className="mt-4 flex gap-4">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="h-4 w-24 animate-pulse rounded bg-[rgba(255,255,255,0.05)]" />
+          <div key={i} className="h-4 w-24 animate-pulse rounded bg-surface" />
         ))}
       </div>
     );
@@ -33,9 +33,9 @@ export function AISummaryBrief({ stats, isLoading }: Props) {
   if (!brief) return null;
 
   const items = [
-    { label: "sources indexed", value: brief.sources, color: "#22C55E" },
-    { label: "knowledge chunks", value: brief.chunks, color: "#0EA5E9" },
-    { label: "content types", value: brief.types, color: "#F59E0B" },
+    { label: "sources indexed", value: brief.sources, color: "var(--success)" },
+    { label: "knowledge chunks", value: brief.chunks, color: "var(--info)" },
+    { label: "content types", value: brief.types, color: "var(--warning)" },
   ];
 
   return (
@@ -46,16 +46,16 @@ export function AISummaryBrief({ stats, isLoading }: Props) {
       className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2"
     >
       <div className="flex items-center gap-1.5">
-        <Sparkles className="h-3.5 w-3.5 text-[#6E56CF]" />
-        <span className="text-[12px] text-[#71717A]">Your AI has</span>
+        <Sparkles className="h-3.5 w-3.5 text-brand" />
+        <span className="text-[12px] text-muted">Your AI has</span>
       </div>
       {items.map((item) => (
         <div key={item.label} className="flex items-center gap-1.5">
           <Check className="h-3 w-3" style={{ color: item.color }} />
-          <span className="text-[12px] font-semibold text-[#F5F5F5]">
+          <span className="text-[12px] font-semibold text-foreground">
             <AnimatedCounter value={item.value} />
           </span>
-          <span className="text-[11px] text-[#71717A]">{item.label}</span>
+          <span className="text-[11px] text-muted">{item.label}</span>
         </div>
       ))}
     </motion.div>

@@ -10,10 +10,10 @@ export function EmptyState({
   hint?: string;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/5 p-10 text-center">
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface/50 p-10 text-center">
       {icon && <div className="mb-3 text-brand">{icon}</div>}
-      <p className="text-sm font-medium text-gray-300">{title}</p>
-      {hint && <p className="mt-1 text-xs text-gray-500">{hint}</p>}
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      {hint && <p className="mt-1 text-xs text-foreground-3">{hint}</p>}
     </div>
   );
 }

@@ -52,21 +52,21 @@ export function GraphDetailPanel({
       exit={{ opacity: 0, x: 24 }}
       transition={{ duration: 0.22, ease: "easeOut" }}
       aria-label={`Details for ${label}`}
-      className="absolute inset-x-2 bottom-2 z-30 flex max-h-[62%] flex-col rounded-xl border border-white/10 bg-[var(--card)] shadow-2xl shadow-black/50 sm:static sm:inset-auto sm:max-h-none sm:w-[340px] sm:shrink-0 sm:rounded-xl"
+      className="absolute inset-x-2 bottom-2 z-30 flex max-h-[62%] flex-col rounded-xl border border-border bg-card text-foreground shadow-floating sm:static sm:inset-auto sm:max-h-none sm:w-[340px] sm:shrink-0 sm:rounded-xl"
     >
-      <div className="flex items-start gap-2 border-b border-white/10 p-4">
+      <div className="flex items-start gap-2 border-b border-border p-4">
         <span
           aria-hidden
           className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full"
           style={{ background: color, boxShadow: `0 0 8px ${color}` }}
         />
         <div className="min-w-0 flex-1">
-          <h2 className="break-words text-sm font-semibold leading-snug">{label}</h2>
+          <h2 className="break-words text-sm font-semibold leading-snug text-foreground">{label}</h2>
           <div className="mt-1 flex flex-wrap gap-1.5">
             {types.map((t) => (
               <span
                 key={t}
-                className="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-[#A1A1AA]"
+                className="flex items-center gap-1 rounded-full border border-border bg-surface px-1.5 py-0.5 text-[10px] text-muted"
               >
                 <span
                   aria-hidden
@@ -81,34 +81,34 @@ export function GraphDetailPanel({
         <button
           onClick={onClose}
           aria-label="Close details"
-          className="rounded-md p-1 text-[#71717A] transition-colors hover:bg-white/10 hover:text-white"
+          className="rounded-md p-1 text-muted transition-colors hover:bg-surface hover:text-foreground"
         >
           <X className="h-4 w-4" />
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-px border-b border-white/10 bg-white/5">
+      <div className="grid grid-cols-3 gap-px border-b border-border bg-border">
         {stats.map((s) => (
-          <div key={s.label} className="bg-[var(--card)] px-2 py-2.5 text-center">
+          <div key={s.label} className="bg-card px-2 py-2.5 text-center">
             <div className="text-base font-semibold tabular-nums" style={{ color }}>
               {s.value}
             </div>
-            <div className="text-[10px] text-[#71717A]">{s.label}</div>
+            <div className="text-[10px] text-muted">{s.label}</div>
           </div>
         ))}
       </div>
 
-      <div className="flex gap-2 border-b border-white/10 p-3">
+      <div className="flex gap-2 border-b border-border p-3">
         <Link
           href={`/search?q=${encodeURIComponent(label)}`}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2 py-2 text-[11px] font-medium text-[#A1A1AA] transition-colors hover:border-white/20 hover:bg-white/10 hover:text-white"
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface px-2 py-2 text-[11px] font-medium text-foreground-3 transition-colors hover:bg-surface-muted hover:text-foreground"
         >
           <Search className="h-3.5 w-3.5" />
           Search
         </Link>
         <Link
           href={`/chat?q=${encodeURIComponent(label)}`}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[11px] font-medium text-white transition-opacity hover:opacity-90"
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[11px] font-medium text-white transition-opacity hover:opacity-90 shadow-sm"
           style={{ background: color }}
         >
           <MessageSquare className="h-3.5 w-3.5" />
@@ -118,14 +118,14 @@ export function GraphDetailPanel({
 
       <div className="min-h-0 flex-1 overflow-y-auto p-3">
         <div className="mb-2 flex items-center justify-between px-1">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-[#71717A]">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-subtle">
             Connections
           </span>
-          <span className="text-[11px] text-[#71717A] tabular-nums">{connections.length}</span>
+          <span className="text-[11px] text-subtle tabular-nums">{connections.length}</span>
         </div>
 
         {connections.length === 0 && (
-          <p className="px-1 py-3 text-xs text-[#71717A]">
+          <p className="px-1 py-3 text-xs text-muted">
             No connections for this concept in the current filter.
           </p>
         )}
@@ -138,18 +138,18 @@ export function GraphDetailPanel({
               <li key={`${c.direction}-${c.id}-${c.relation}`}>
                 <button
                   onClick={() => onSelect(c.id)}
-                  className="group w-full rounded-lg border border-transparent px-2 py-2 text-left transition-all hover:border-white/10 hover:bg-white/5"
+                  className="group w-full rounded-lg border border-transparent px-2 py-2 text-left transition-all hover:border-border hover:bg-surface"
                 >
                   <div className="flex items-center gap-1.5">
                     <Arrow
                       className="h-3 w-3 shrink-0"
-                      style={{ color: outgoing ? sourceColor(c.sourceType) : "#71717A" }}
+                      style={{ color: outgoing ? sourceColor(c.sourceType) : "var(--foreground-3)" }}
                     />
-                    <span className="truncate text-[10px] font-medium uppercase tracking-wide text-[#818CF8]">
+                    <span className="truncate text-[10px] font-medium uppercase tracking-wide text-brand">
                       {truncate(c.relation, 34)}
                     </span>
                   </div>
-                  <div className="mt-0.5 truncate text-xs font-medium text-[#F5F5F5] group-hover:text-white">
+                  <div className="mt-0.5 truncate text-xs font-medium text-foreground group-hover:text-brand transition-colors">
                     {c.label}
                   </div>
                   {c.title && (
@@ -159,7 +159,7 @@ export function GraphDetailPanel({
                         className="h-1.5 w-1.5 shrink-0 rounded-full"
                         style={{ background: sourceColor(c.sourceType) }}
                       />
-                      <span className="truncate text-[10px] text-[#71717A]">{c.title}</span>
+                      <span className="truncate text-[10px] text-muted">{c.title}</span>
                     </div>
                   )}
                 </button>
@@ -169,7 +169,7 @@ export function GraphDetailPanel({
         </ul>
       </div>
 
-      <p className="border-t border-white/10 px-4 py-2.5 text-[10px] text-[#52525B]">
+      <p className="border-t border-border px-4 py-2.5 text-[10px] text-subtle">
         Click a connection to keep exploring →
       </p>
     </motion.aside>

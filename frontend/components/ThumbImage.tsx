@@ -5,17 +5,10 @@ import { useState } from "react";
 interface ThumbImageProps {
   src?: string | null;
   alt?: string;
-  /** Classes for the rendered <img>. */
   className?: string;
-  /** Classes for the fallback placeholder (should match size classes). */
   fallbackClassName?: string;
 }
 
-/**
- * Thumbnail that degrades gracefully when the remote CDN rejects the hotlink
- * (Instagram CDN returns 403 for embedded thumbnails) instead of showing a
- * broken-image icon.
- */
 export function ThumbImage({
   src,
   alt = "",
@@ -28,7 +21,7 @@ export function ThumbImage({
     return (
       <div
         aria-hidden="true"
-        className={`flex items-center justify-center bg-gradient-to-br from-[#1A1C24] to-[#111318] ${className} ${fallbackClassName}`}
+        className={`flex items-center justify-center bg-surface border border-border ${className} ${fallbackClassName}`}
       />
     );
   }

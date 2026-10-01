@@ -20,6 +20,7 @@ import {
   Library,
   Settings,
 } from "lucide-react";
+import { ThemeToggle } from "./ThemeToggle";
 
 const links = [
   { href: "/", label: "Dashboard", icon: Home },
@@ -42,10 +43,10 @@ const links = [
 export function Nav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   return (
-    <aside className="flex h-full w-56 shrink-0 flex-col overflow-y-auto border-r border-white/10 p-4">
+    <aside className="flex h-full w-56 shrink-0 flex-col overflow-y-auto border-r border-border bg-card text-foreground p-4">
       <div className="mb-8 flex items-center gap-2 px-2">
         <Brain className="h-6 w-6 text-brand" />
-        <span className="text-lg font-semibold">MindMesh</span>
+        <span className="text-lg font-semibold text-foreground">MindMesh</span>
       </div>
       <nav className="space-y-1">
         {links.map(({ href, label, icon: Icon }) => {
@@ -55,10 +56,10 @@ export function Nav({ onNavigate }: { onNavigate?: () => void }) {
               key={href}
               href={href}
               onClick={onNavigate}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${
+              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
                 active
-                  ? "bg-brand text-white"
-                  : "text-gray-400 hover:bg-white/5 hover:text-white"
+                  ? "bg-brand text-white font-medium shadow-sm"
+                  : "text-foreground-3 hover:bg-surface hover:text-foreground"
               }`}
             >
               <Icon className="h-4 w-4" />
@@ -67,6 +68,9 @@ export function Nav({ onNavigate }: { onNavigate?: () => void }) {
           );
         })}
       </nav>
+      <div className="mt-auto flex justify-end px-2 pt-4 border-t border-border/50">
+        <ThemeToggle className="rounded-lg p-2 text-foreground-3 transition-colors hover:bg-surface hover:text-foreground" />
+      </div>
     </aside>
   );
 }

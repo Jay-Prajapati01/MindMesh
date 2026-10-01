@@ -53,32 +53,32 @@ function getIcon(icon: string): string {
 
 function StepCard({ step, state, isLast, isIdle = false }: { step: StepConfig; state: StepState; isLast: boolean; isIdle?: boolean }) {
   const statusColors = {
-    pending: isIdle ? "border-gray-800/50 bg-gray-900/30" : "border-gray-700 bg-gray-900/50",
-    active: "border-blue-500/50 bg-blue-950/30 shadow-lg shadow-blue-500/10",
-    complete: "border-emerald-500/30 bg-emerald-950/20",
-    error: "border-red-500/30 bg-red-950/20",
+    pending: isIdle ? "border-border/50 bg-surface/30" : "border-border bg-surface/50",
+    active: "border-brand/40 bg-brand-soft/40 shadow-sm",
+    complete: "border-success/30 bg-success/10",
+    error: "border-danger/30 bg-danger/10",
   };
 
   const statusIcons = {
     pending: (
-      <div className={`rounded-full border-2 ${isIdle ? "border-gray-700 bg-gray-800/50 h-4 w-4" : "border-gray-600 h-5 w-5"}`} />
+      <div className={`rounded-full border-2 ${isIdle ? "border-border bg-surface/50 h-4 w-4" : "border-subtle h-5 w-5"}`} />
     ),
     active: (
       <div className="relative h-5 w-5">
-        <div className="absolute inset-0 rounded-full border-2 border-blue-500 animate-ping opacity-30" />
-        <div className="absolute inset-0 rounded-full border-2 border-blue-500 bg-blue-500/20" />
-        <div className="absolute inset-1.5 rounded-full bg-blue-500" />
+        <div className="absolute inset-0 rounded-full border-2 border-brand animate-ping opacity-30" />
+        <div className="absolute inset-0 rounded-full border-2 border-brand bg-brand-soft" />
+        <div className="absolute inset-1.5 rounded-full bg-brand" />
       </div>
     ),
     complete: (
-      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500">
+      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-success">
         <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
         </svg>
       </div>
     ),
     error: (
-      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500">
+      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-danger">
         <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
@@ -94,12 +94,12 @@ function StepCard({ step, state, isLast, isIdle = false }: { step: StepConfig; s
           <div
             className={`h-full w-full transition-all duration-500 ${
               isIdle
-                ? "bg-gray-800"
+                ? "bg-border"
                 : state.status === "complete"
-                ? "bg-emerald-500"
+                ? "bg-success"
                 : state.status === "active"
-                ? "bg-gradient-to-b from-blue-500 to-gray-700"
-                : "bg-gray-700"
+                ? "bg-gradient-to-b from-brand to-border"
+                : "bg-border"
             }`}
           />
         </div>
@@ -117,20 +117,20 @@ function StepCard({ step, state, isLast, isIdle = false }: { step: StepConfig; s
             <span className="text-sm">{getIcon(step.icon)}</span>
             <span className={`text-sm font-medium ${
               isIdle
-                ? "text-gray-600"
+                ? "text-muted"
                 : state.status === "complete"
-                ? "text-emerald-300"
+                ? "text-foreground font-semibold"
                 : state.status === "active"
-                ? "text-blue-300"
+                ? "text-brand font-semibold"
                 : state.status === "error"
-                ? "text-red-300"
-                : "text-gray-400"
+                ? "text-danger font-semibold"
+                : "text-foreground-3"
             }`}>
               {step.name}
             </span>
           </div>
           {state.durationMs !== undefined && (
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-muted">
               {(state.durationMs / 1000).toFixed(1)}s
             </span>
           )}
@@ -139,19 +139,19 @@ function StepCard({ step, state, isLast, isIdle = false }: { step: StepConfig; s
         {/* Active step details */}
         {state.status === "active" && (
           <div className="mt-2">
-            <p className="text-xs text-gray-400">{step.description}</p>
+            <p className="text-xs text-foreground-3">{step.description}</p>
             {state.subText && (
-              <p className="mt-1 text-xs text-blue-300/70">{state.subText}</p>
+              <p className="mt-1 text-xs text-brand">{state.subText}</p>
             )}
             {state.progress !== undefined && (
               <div className="mt-2">
-                <div className="flex items-center justify-between text-xs text-gray-500">
+                <div className="flex items-center justify-between text-xs text-muted">
                   <span>{state.subText || "Progress"}</span>
                   <span>{state.progress}%</span>
                 </div>
-                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-gray-800">
+                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-muted">
                   <div
-                    className="h-full rounded-full bg-blue-500 transition-all duration-300"
+                    className="h-full rounded-full bg-brand transition-all duration-300"
                     style={{ width: `${state.progress}%` }}
                   />
                 </div>
@@ -162,7 +162,7 @@ function StepCard({ step, state, isLast, isIdle = false }: { step: StepConfig; s
 
         {/* Error state */}
         {state.status === "error" && state.error && (
-          <p className="mt-1 text-xs text-red-400">{state.error}</p>
+          <p className="mt-1 text-xs text-danger font-medium">{state.error}</p>
         )}
 
         {/* Preview (thumbnail, text) */}
@@ -177,7 +177,7 @@ function StepCard({ step, state, isLast, isIdle = false }: { step: StepConfig; s
 function PreviewCard({ preview, stepId }: { preview: Record<string, any>; stepId: string }) {
   if (stepId === "metadata" && preview.thumbnail) {
     return (
-      <div className="mt-2 rounded-lg border border-gray-700/50 bg-gray-800/50 p-2">
+      <div className="mt-2 rounded-lg border border-border bg-surface p-2">
         <div className="flex gap-3">
           <img
             src={preview.thumbnail}
@@ -185,10 +185,10 @@ function PreviewCard({ preview, stepId }: { preview: Record<string, any>; stepId
             className="h-16 w-28 rounded object-cover"
           />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-medium text-gray-200">{preview.title}</p>
-            <p className="text-xs text-gray-400">{preview.channel}</p>
+            <p className="truncate text-xs font-medium text-foreground">{preview.title}</p>
+            <p className="text-xs text-foreground-3">{preview.channel}</p>
             {preview.duration && (
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted">
                 {Math.floor(preview.duration / 60)}:{(preview.duration % 60).toString().padStart(2, "0")}
               </p>
             )}
@@ -200,12 +200,12 @@ function PreviewCard({ preview, stepId }: { preview: Record<string, any>; stepId
 
   if (preview.text) {
     return (
-      <div className="mt-2 rounded-lg border border-gray-700/50 bg-gray-800/50 p-2">
-        <p className="text-xs leading-relaxed text-gray-300 line-clamp-3">
+      <div className="mt-2 rounded-lg border border-border bg-surface p-2">
+        <p className="text-xs leading-relaxed text-foreground-2 line-clamp-3">
           {preview.text}
         </p>
         {preview.chars && (
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-muted">
             {preview.chars.toLocaleString()} characters
           </p>
         )}
@@ -240,8 +240,6 @@ export function ProcessingTimeline({
       states[step.id] = { status: "pending" };
     }
 
-    // Backend sends CUMULATIVE ms since the pipeline started; convert to a
-    // per-step duration so each row shows only its own time.
     let prevCumulativeMs = 0;
 
     for (const evt of events) {
@@ -294,7 +292,6 @@ export function ProcessingTimeline({
           break;
 
         case "preview": {
-          // Map preview types to step IDs (thumbnail -> metadata, transcript -> transcript)
           const typeMap: Record<string, string> = {
             thumbnail: "metadata",
             transcript: "transcript",
@@ -335,22 +332,22 @@ export function ProcessingTimeline({
       {/* Overall progress header */}
       <div className="mb-4">
         <div className="flex items-center justify-between text-sm">
-          <span className="font-medium text-gray-200">
+          <span className="font-medium text-foreground">
             {isIdle ? "Pipeline Overview" : isStreaming ? "Processing..." : error ? "Failed" : "Complete"}
           </span>
-          <span className="text-gray-400">
+          <span className="text-foreground-3">
             {isIdle ? `${steps.length} steps` : `${overallProgress}%`}
           </span>
         </div>
         {!isIdle && (
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-800">
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface">
             <div
               className={`h-full rounded-full transition-all duration-500 ${
                 error
-                  ? "bg-red-500"
+                  ? "bg-danger"
                   : overallProgress === 100
-                  ? "bg-emerald-500"
-                  : "bg-blue-500"
+                  ? "bg-success"
+                  : "bg-brand"
               }`}
               style={{ width: `${overallProgress}%` }}
             />

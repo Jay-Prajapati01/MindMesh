@@ -19,6 +19,8 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { getGraph } from "@/lib/api";
+import { useAppStore } from "@/lib/store";
+import { getGraphTheme } from "@/lib/graphTheme";
 import { ConceptData, ConceptNode } from "@/components/graph/ConceptNode";
 import { GraphDetailPanel, PanelConnection } from "@/components/graph/GraphDetailPanel";
 import {
@@ -51,8 +53,8 @@ function Chip({ active, color, label, count, onClick }: ChipProps) {
       aria-pressed={active}
       className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] transition-all ${
         active
-          ? "bg-white/10 font-medium text-white"
-          : "text-[#71717A] hover:bg-white/5 hover:text-[#A1A1AA]"
+          ? "bg-surface border border-border font-medium text-foreground shadow-sm"
+          : "text-muted hover:bg-surface hover:text-foreground"
       }`}
       style={active ? { boxShadow: `inset 0 0 0 1px ${color}99` } : undefined}
     >
@@ -71,6 +73,9 @@ export default function GraphPage() {
     refetchOnWindowFocus: false,
   });
 
+  const theme = useAppStore((s) => s.settings.theme);
+  const graphTheme = useMemo(() => getGraphTheme(theme), [theme]);
+
   const [filterType, setFilterType] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoverId, setHoverId] = useState<string | null>(null);
@@ -80,8 +85,6 @@ export default function GraphPage() {
   const firstFit = useRef(true);
   const canvasRef = useRef<HTMLDivElement>(null);
 
-  // Hover commits are expensive (graph-wide dim update), so only commit after
-  // the pointer pauses over a node — sweeping across the graph stays free.
   const hoverTimer = useRef(0);
   const pendingHover = useRef<string | null>(null);
   const scheduleHover = useCallback((id: string | null) => {
@@ -93,7 +96,6 @@ export default function GraphPage() {
   }, []);
   useEffect(() => () => window.clearTimeout(hoverTimer.current), []);
 
-  // ── Derived model ────────────────────────────────────────────────
   const filtered = useMemo(() => {
     const edges = (data?.edges ?? []).filter((e) => !filterType || e.source_type === filterType);
     const used = new Set<string>();
@@ -118,8 +120,6 @@ export default function GraphPage() {
     [filtered],
   );
 
-  // Force layout is the most expensive operation (~100ms). Cache results per
-  // node set so toggling filters back and forth never recomputes it.
   const layoutCache = useRef(new Map<string, Record<string, { x: number; y: number }>>());
   const layout = useMemo(() => {
     const key = `${filterType}|${filtered.nodes.map((n) => n.id).join(",")}`;
@@ -175,7 +175,6 @@ export default function GraphPage() {
     });
   }, [filtered]);
 
-  // ── Node state (draggable, highlightable) ────────────────────────
   const [nodes, setNodes] = useState<Node<ConceptData>[]>([]);
   useEffect(() => {
     setNodes(baseNodes);
@@ -187,10 +186,6 @@ export default function GraphPage() {
 
   const activeId = selectedId ?? hoverId;
 
-  // Dim is applied by CSS via the wrapper class (`graph-has-active` +
-  // `concept-on`), so React only touches the ~active/neighbor nodes each time
-  // instead of rewriting all 229 chips. Layout effect avoids a 1-frame flicker
-  // between the container class and the node classes.
   useLayoutEffect(() => {
     setNodes((prev) => {
       const isOn = (id: string) =>
@@ -217,7 +212,6 @@ export default function GraphPage() {
     });
   }, [activeId, neighbors]);
 
-  // Edge styling/labels change only on selection — hovering must stay cheap.
   const edges = useMemo<Edge[]>(() => {
     if (selectedId === null) return baseEdges;
     return baseEdges.map((e) => {
@@ -227,8 +221,8 @@ export default function GraphPage() {
         ...e,
         animated: on,
         label: on ? short((e.data as { relation?: string } | undefined)?.relation ?? "") : undefined,
-        labelStyle: { fill: "#C4C4CC", fontSize: 11, fontWeight: 500 },
-        labelBgStyle: { fill: "#111318", fillOpacity: 0.92 },
+        labelStyle: { fill: graphTheme.edgeLabel, fontSize: 11, fontWeight: 500 },
+        labelBgStyle: { fill: graphTheme.edgeLabelBackground, fillOpacity: 0.95 },
         labelBgPadding: [8, 4],
         labelBgBorderRadius: 8,
         style: {
@@ -244,9 +238,8 @@ export default function GraphPage() {
         },
       };
     });
-  }, [baseEdges, selectedId]);
+  }, [baseEdges, selectedId, graphTheme]);
 
-  // ── Selection / detail panel ─────────────────────────────────────
   const selectedNode = useMemo(
     () => filtered.nodes.find((n) => n.id === selectedId) ?? null,
     [filtered.nodes, selectedId],
@@ -289,9 +282,6 @@ export default function GraphPage() {
     rf?.fitView({ padding: 0.06, duration: 400, maxZoom: 1.2 });
   };
 
-  // Fit once data arrives, then again whenever the filter changes. fitView can
-  // lose a race against node measurement when data arrives fast (unmounted
-  // DOM → empty bounds → false), so retry until it actually applies.
   useEffect(() => {
     if (!rf || baseNodes.length === 0) return;
     let cancelled = false;
@@ -317,9 +307,6 @@ export default function GraphPage() {
     };
   }, [rf, baseNodes]);
 
-  // Re-fit (or re-center the selection) when the page/canvas area is resized —
-  // window resize or device rotation. Observed on the outer wrapper so that
-  // the detail panel opening/closing (inner width only) never interrupts focus.
   const selectedRef = useRef<string | null>(null);
   useEffect(() => {
     selectedRef.current = selectedId;
@@ -362,32 +349,31 @@ export default function GraphPage() {
     }
   };
 
-  // ── Render ───────────────────────────────────────────────────────
   const hasGraph = data !== undefined && filtered.nodes.length > 0;
 
   return (
-    <div className="flex h-[calc(100vh-6rem)] min-h-[460px] flex-col">
+    <div className="flex h-[calc(100vh-6rem)] min-h-[460px] flex-col text-foreground">
       <div className="mb-1 flex items-center gap-2">
-        <Network className="h-5 w-5 text-[#6E56CF]" aria-hidden />
-        <h1 className="text-2xl font-semibold">Knowledge Graph</h1>
+        <Network className="h-5 w-5 text-brand" aria-hidden />
+        <h1 className="text-2xl font-semibold text-foreground">Knowledge Graph</h1>
       </div>
-      <p className="mb-3 text-sm text-gray-400">
+      <p className="mb-3 text-sm text-muted">
         Concepts and how they connect across everything you&apos;ve indexed — click any node to
         explore it.
       </p>
 
       {/* Toolbar: stats · source filters · search · fit */}
       <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-        <span className="text-xs text-[#71717A]">
-          <b className="text-[#F5F5F5] tabular-nums">{filtered.nodes.length}</b> concepts
+        <span className="text-xs text-muted">
+          <b className="text-foreground tabular-nums">{filtered.nodes.length}</b> concepts
           <span className="mx-1 opacity-40">·</span>
-          <b className="text-[#F5F5F5] tabular-nums">{filtered.edges.length}</b> relations
+          <b className="text-foreground tabular-nums">{filtered.edges.length}</b> relations
         </span>
 
         <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter by source type">
           <Chip
             active={filterType === ""}
-            color="#6E56CF"
+            color="var(--brand)"
             label="All"
             count={data?.edges.length ?? 0}
             onClick={() => setFilterType("")}
@@ -408,7 +394,7 @@ export default function GraphPage() {
           <div className="relative">
             <Search
               aria-hidden
-              className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#71717A]"
+              className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted"
             />
             <input
               value={query}
@@ -421,17 +407,17 @@ export default function GraphPage() {
               }}
               placeholder="Find a concept…"
               aria-label="Find a concept in the graph"
-              className={`w-44 rounded-lg border bg-white/5 py-1.5 pl-8 pr-3 text-xs text-[#F5F5F5] placeholder:text-[#52525B] focus:outline-none ${
-                noMatch ? "border-red-500/60" : "border-white/10 focus:border-[#6E56CF]"
+              className={`w-44 rounded-lg border bg-surface py-1.5 pl-8 pr-3 text-xs text-foreground placeholder:text-subtle focus:outline-none ${
+                noMatch ? "border-danger/60" : "border-border focus:border-brand"
               }`}
             />
           </div>
-          {noMatch && <span className="text-[11px] text-red-400">no match</span>}
+          {noMatch && <span className="text-[11px] text-danger font-medium">no match</span>}
           <button
             onClick={fitWholeGraph}
             aria-label="Fit whole graph to view"
             title="Fit whole graph to view"
-            className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-[#A1A1AA] transition-colors hover:border-white/20 hover:bg-white/10 hover:text-white"
+            className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-foreground-3 transition-colors hover:bg-surface-muted hover:text-foreground"
           >
             <Maximize2 className="h-3.5 w-3.5" />
             Fit
@@ -442,9 +428,10 @@ export default function GraphPage() {
       {/* Canvas + detail panel */}
       <div ref={canvasRef} className="relative flex min-h-0 flex-1 gap-3">
         <div
-          className={`relative min-w-0 flex-1 overflow-hidden rounded-xl border border-white/10 bg-[radial-gradient(ellipse_at_center,#12121d_0%,#0d0d16_72%)]${
+          className={`relative min-w-0 flex-1 overflow-hidden rounded-xl border border-border bg-card shadow-card ${
             activeId !== null ? " graph-has-active" : ""
           }`}
+          style={{ backgroundColor: graphTheme.canvas }}
         >
           <ReactFlow
             nodes={nodes}
@@ -468,21 +455,21 @@ export default function GraphPage() {
             zoomOnDoubleClick={false}
             onlyRenderVisibleElements
           >
-            <Background variant={BackgroundVariant.Dots} gap={22} size={1} color="#262633" />
+            <Background variant={BackgroundVariant.Dots} gap={22} size={1} color={graphTheme.grid} />
             <Controls showInteractive={false} />
             <MiniMap
               position="bottom-right"
               pannable
               zoomable
-              className="hidden sm:block"
-              style={{ background: "#0d0d16" }}
-              maskColor="rgba(9,9,11,0.72)"
-              nodeColor={(n) => (n.data as ConceptData | undefined)?.color ?? "#6E56CF"}
+              className="hidden sm:block border border-border rounded-lg overflow-hidden"
+              style={{ background: graphTheme.minimapBackground }}
+              maskColor={graphTheme.minimapMask}
+              nodeColor={(n) => (n.data as ConceptData | undefined)?.color ?? "var(--brand)"}
               nodeStrokeWidth={0}
             />
             {selectedId === null && (
               <Panel position="top-left" className="!m-3">
-                <div className="rounded-full border border-white/10 bg-black/75 px-3 py-1.5 text-[12px] text-[#A1A1AA]">
+                <div className="rounded-full border border-border bg-card/90 backdrop-blur-md px-3 py-1.5 text-[12px] text-muted shadow-sm">
                   💡 Click a concept to explore its connections
                 </div>
               </Panel>
@@ -490,9 +477,9 @@ export default function GraphPage() {
           </ReactFlow>
 
           {isLoading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#0d0d16]/75">
-              <div className="flex items-center gap-3 text-sm text-[#A1A1AA]">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#6E56CF] border-t-transparent" />
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-card/80 backdrop-blur-sm">
+              <div className="flex items-center gap-3 text-sm text-foreground">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-brand border-t-transparent" />
                 Loading graph…
               </div>
             </div>
@@ -500,8 +487,8 @@ export default function GraphPage() {
 
           {data !== undefined && !isLoading && !hasGraph && (
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center">
-              <Network className="h-8 w-8 text-[#3F3F46]" aria-hidden />
-              <p className="text-sm text-[#A1A1AA]">
+              <Network className="h-8 w-8 text-subtle" aria-hidden />
+              <p className="text-sm text-muted">
                 {filterType
                   ? `No ${SOURCE_LABELS[filterType] ?? filterType} concepts yet.`
                   : "No graph yet. Ingest some content first."}
@@ -509,7 +496,7 @@ export default function GraphPage() {
               {filterType && (
                 <button
                   onClick={() => setFilterType("")}
-                  className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-[#A1A1AA] transition-colors hover:bg-white/10 hover:text-white"
+                  className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs text-foreground transition-colors hover:bg-surface-muted"
                 >
                   <Layers className="h-3.5 w-3.5" />
                   Show all sources

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { Nav } from "./Nav";
 import { ActiveProcessesBanner } from "./ActiveProcessesBanner";
+import { ThemeToggle } from "./ThemeToggle";
 import { useAppStore } from "@/lib/store";
 import { applyThemeToDOM, applyAccentToDOM, applyDensityToDOM } from "./ThemeEffect";
 
@@ -16,10 +17,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
     applyThemeToDOM(settings.theme);
     applyAccentToDOM(settings.accentColor);
     applyDensityToDOM(settings.density);
-  }, []);
+  }, [settings.theme, settings.accentColor, settings.density]);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-background text-foreground transition-colors duration-200">
       {/* Desktop sidebar */}
       <div className="hidden md:block">
         <Nav />
@@ -29,22 +30,25 @@ export function Shell({ children }: { children: React.ReactNode }) {
       {open && (
         <div className="fixed inset-0 z-40 md:hidden">
           <div
-            className="absolute inset-0 bg-black/60"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute left-0 top-0 h-full bg-[#0b0b12]">
+          <div className="absolute left-0 top-0 h-full w-56 bg-card border-r border-border shadow-elevated">
             <Nav onNavigate={() => setOpen(false)} />
           </div>
         </div>
       )}
 
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col min-w-0">
         {/* Mobile top bar */}
-        <header className="flex items-center gap-3 border-b border-white/10 p-4 md:hidden">
-          <button onClick={() => setOpen((v) => !v)} aria-label="Toggle menu">
+        <header className="flex items-center gap-3 border-b border-border bg-card px-4 py-3 md:hidden">
+          <button onClick={() => setOpen((v) => !v)} aria-label="Toggle menu" className="text-foreground">
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
-          <span className="font-semibold">MindMesh</span>
+          <span className="font-semibold text-foreground">MindMesh</span>
+          <div className="ml-auto">
+            <ThemeToggle className="-mr-2 rounded-lg p-1.5 text-foreground-3 transition-colors hover:bg-surface hover:text-foreground" />
+          </div>
         </header>
 
         <main className="flex-1 p-4 sm:p-8">{children}</main>

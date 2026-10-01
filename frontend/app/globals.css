@@ -5,39 +5,110 @@
 @tailwind utilities;
 
 :root {
-  --bg: #09090B;
+  color-scheme: dark;
+  --background: #09090B;
   --card: #111318;
   --surface: #171A22;
-  --border: rgba(255,255,255,0.08);
+  --surface-muted: #1D2028;
+  --border: rgba(255, 255, 255, 0.08);
+
+  --foreground: #F5F5F5;
+  --foreground-2: #D4D4D8;
+  --foreground-3: #A1A1AA;
+  --muted: #71717A;
+  --subtle: #52525B;
+
   --brand: #6E56CF;
   --brand-hover: #7C69E3;
+  --brand-soft: rgba(110, 86, 207, 0.10);
+
   --success: #22C55E;
   --warning: #F59E0B;
   --danger: #EF4444;
   --info: #38BDF8;
-  --primary-text: #F5F5F5;
-  --secondary-text: #A1A1AA;
+
+  --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+  --shadow-elevated: 0 10px 30px -4px rgba(0, 0, 0, 0.7);
+  --shadow-floating: 0 20px 40px -8px rgba(0, 0, 0, 0.8);
+
+  /* Legacy alias mappings */
+  --bg: var(--background);
+  --primary-text: var(--foreground);
+  --secondary-text: var(--foreground-2);
+}
+
+:root.dark {
+  color-scheme: dark;
+  --background: #09090B;
+  --card: #111318;
+  --surface: #171A22;
+  --surface-muted: #1D2028;
+  --border: rgba(255, 255, 255, 0.08);
+
+  --foreground: #F5F5F5;
+  --foreground-2: #D4D4D8;
+  --foreground-3: #A1A1AA;
   --muted: #71717A;
+  --subtle: #52525B;
+
+  --brand: #6E56CF;
+  --brand-hover: #7C69E3;
+  --brand-soft: rgba(110, 86, 207, 0.10);
+
+  --success: #22C55E;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --info: #38BDF8;
+
+  --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+  --shadow-elevated: 0 10px 30px -4px rgba(0, 0, 0, 0.7);
+  --shadow-floating: 0 20px 40px -8px rgba(0, 0, 0, 0.8);
+
+  --bg: var(--background);
+  --primary-text: var(--foreground);
+  --secondary-text: var(--foreground-2);
 }
 
 :root.light {
-  --bg: #F8F9FA;
+  color-scheme: light;
+  --background: #F6F7F9;
   --card: #FFFFFF;
-  --surface: #F1F3F5;
-  --border: rgba(0,0,0,0.08);
-  --primary-text: #1A1A2E;
-  --secondary-text: #495057;
-  --muted: #868E96;
+  --surface: #F0F2F5;
+  --surface-muted: #E7EAF0;
+  --border: rgba(15, 23, 42, 0.10);
+
+  --foreground: #111827;
+  --foreground-2: #374151;
+  --foreground-3: #6B7280;
+  --muted: #8A93A3;
+  --subtle: #A7AFBC;
+
+  --brand: #6046C8;
+  --brand-hover: #5137B4;
+  --brand-soft: rgba(96, 70, 200, 0.08);
+
+  --success: #168A4A;
+  --warning: #B96A00;
+  --danger: #C62828;
+  --info: #087EA4;
+
+  --shadow-card: 0 2px 12px -2px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04);
+  --shadow-elevated: 0 8px 24px -4px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(15, 23, 42, 0.06);
+  --shadow-floating: 0 16px 36px -6px rgba(15, 23, 42, 0.16), 0 4px 12px rgba(15, 23, 42, 0.08);
+
+  --bg: var(--background);
+  --primary-text: var(--foreground);
+  --secondary-text: var(--foreground-2);
 }
 
-:root.light body {
-  background: var(--bg);
-  color: var(--primary-text);
+html:where(.light) body {
+  background: var(--background);
+  color: var(--foreground);
 }
 
 .dark body {
-  background: var(--bg);
-  color: var(--primary-text);
+  background: var(--background);
+  color: var(--foreground);
 }
 
 * {
@@ -46,8 +117,8 @@
 
 body {
   font-family: 'Inter', system-ui, sans-serif;
-  background: var(--bg);
-  color: var(--primary-text);
+  background: var(--background);
+  color: var(--foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: -0.01em;
@@ -62,11 +133,11 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--border);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--muted);
 }
 
 /* Skeleton shimmer */
@@ -78,9 +149,9 @@ body {
 .skeleton {
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0.04) 25%,
-    rgba(255, 255, 255, 0.08) 37%,
-    rgba(255, 255, 255, 0.04) 63%
+    var(--surface) 25%,
+    var(--surface-muted) 37%,
+    var(--surface) 63%
   );
   background-size: 800px 100%;
   animation: shimmer 1.4s ease infinite;
@@ -91,11 +162,11 @@ body {
 .progress-stripes {
   background-image: linear-gradient(
     45deg,
-    rgba(255, 255, 255, 0.1) 25%,
+    var(--brand-soft) 25%,
     transparent 25%,
     transparent 50%,
-    rgba(255, 255, 255, 0.1) 50%,
-    rgba(255, 255, 255, 0.1) 75%,
+    var(--brand-soft) 50%,
+    var(--brand-soft) 75%,
     transparent 75%,
     transparent
   );
@@ -153,8 +224,6 @@ body {
   will-change: transform;
 }
 
-/* Dimming when a node is hovered/selected: applied by the canvas container
-   (`graph-has-active`) so React only toggles classes on the active cluster. */
 .graph-has-active .react-flow__node.concept-node:not(.concept-on):not(.dragging):not(
     .react-flow__node-dragging
   ) {
@@ -171,35 +240,36 @@ body {
 }
 
 .react-flow__controls {
-  background: var(--card);
-  border: 1px solid var(--border);
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-elevated) !important;
 }
 
 .react-flow__controls-button {
   width: 30px;
   height: 30px;
-  background: var(--card);
-  border-bottom: 1px solid var(--border);
-  fill: var(--secondary-text);
+  background: var(--card) !important;
+  border-bottom: 1px solid var(--border) !important;
+  fill: var(--foreground-2) !important;
 }
 
 .react-flow__controls-button:last-child {
-  border-bottom: none;
+  border-bottom: none !important;
 }
 
 .react-flow__controls-button:hover {
-  background: var(--surface);
-  fill: var(--primary-text);
+  background: var(--surface) !important;
+  fill: var(--foreground) !important;
 }
 
 .react-flow__minimap {
-  border: 1px solid var(--border);
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-elevated) !important;
 }
 
 .react-flow__attribution {
@@ -214,4 +284,15 @@ body {
 .react-flow__node.concept:focus-visible > div {
   outline: 2px solid var(--brand);
   outline-offset: 3px;
+}
+
+/* ── Theme: color scheme + AnimatedThemeToggler (View Transitions) ── */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+html[data-magicui-theme-vt="active"]::view-transition-group(root) {
+  animation-duration: var(--magicui-theme-toggle-vt-duration);
 }
