@@ -13,6 +13,12 @@ node_modules/
 out/
 npm-debug.log*
 yarn-error.log*
+*.tsbuildinfo
+
+# QA / test artifacts
+.playwright-mcp/
+playwright-report/
+test-results/
 
 # Data / models
 data/
@@ -22,5 +28,6 @@ ollama_data/
 
 # OS / editor
 .DS_Store
+Thumbs.db
 .idea/
 .vscode/

@@ -10,7 +10,7 @@ Instead of remembering *where* you saw something, you just ask MindMesh naturall
 
 | Dashboard | AI Chat | Knowledge Graph |
 |-----------|---------|-----------------|
-| ![Dashboard](search-page-new.png) | *Chat with your knowledge* | *Visualize connections* |
+| ![Dashboard](docs/search-page-new.png) | *Chat with your knowledge* | *Visualize connections* |
 
 ---
 
@@ -126,7 +126,8 @@ MindMesh/
 │   └── manifest.json
 ├── docker-compose.yml    # Full stack orchestration
 ├── .gitlab-ci.yml        # CI/CD pipeline
-└── MINDMESH_ARCHITECTURE_PLAN.md
+├── scripts/qa/           # Regression suite (pytest + QA checks)
+└── docs/                 # Architecture, setup guide, QA report, screenshots
 ```
 
 ---
@@ -184,6 +185,17 @@ Full docs: http://localhost:8000/docs
 - **Type-safe** — End-to-end TypeScript + Pydantic validation
 - **Extensible** — Plugin-style ingestion pipelines
 - **Production-ready** — Docker, health checks, structured logging, CI/CD
+
+---
+
+## 📚 Documentation
+
+| Document | Description |
+|----------|-------------|
+| [docs/SETUP_GUIDE.md](docs/SETUP_GUIDE.md) | Installation, configuration, first run |
+| [docs/MINDMESH_ARCHITECTURE_PLAN.md](docs/MINDMESH_ARCHITECTURE_PLAN.md) | System design, data flow, pipelines |
+| [docs/QA_REPORT.md](docs/QA_REPORT.md) | Full QA report: journeys, findings, fixes, regression suite |
+| [scripts/qa/](scripts/qa/) | Runnable regression checks (`run_all.ps1`) |
 
 ---
 
