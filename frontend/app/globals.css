@@ -111,6 +111,119 @@ html:where(.light) body {
   color: var(--foreground);
 }
 
+/* ============================================================
+   Light-theme adapter
+   The app was originally dark-only; many components hardcode
+   dark hexes / white-alpha surfaces. Under :root.light these
+   selectors remap the recurring offenders to the light palette
+   so every component follows the theme without editing ~1100
+   individual class attributes.
+
+   Specificity note: stateless overrides use
+   `html:where(.light) .X` (0,1,1) so they beat Tailwind's
+   static utilities (0,1,0) but LOSE to Tailwind's :hover /
+   :focus / :focus-within variants (0,2,0) — preserving
+   interactive feedback. Stateful overrides use
+   `:root.light .hover\:X:hover` (0,4,0) so they beat both
+   Tailwind's static rules and its own hover rules.
+   ============================================================ */
+
+/* --- Dark text -> light inks --- */
+html:where(.light) .text-\[\#F5F5F5\] { color: #1a1a2e; }
+html:where(.light) .text-\[\#A1A1AA\] { color: #495057; }
+html:where(.light) .text-\[\#D4D4D8\] { color: #3f3f46; }
+html:where(.light) .text-\[\#FCA5A5\] { color: #ef4444; }
+html:where(.light) .text-\[\#F87171\] { color: #dc2626; }
+
+/* --- Gray-scale text --- */
+html:where(.light) .text-gray-100 { color: #3f3f46; }
+html:where(.light) .text-gray-200 { color: #1a1a2e; }
+html:where(.light) .text-gray-300 { color: #3f3f46; }
+html:where(.light) .text-gray-400 { color: #495057; }
+
+/* --- White text on NEUTRAL (non-brand) hover surfaces --- */
+:root.light .hover\:text-white:hover { color: #1a1a2e; }
+:root.light .group:hover .group-hover\:text-white { color: #1a1a2e; }
+html:where(.light) .bg-white\/10.text-white,
+html:where(.light) .bg-white\/15.text-white,
+html:where(.light) .bg-white\/20.text-white { color: #1a1a2e; }
+
+/* --- Dark panels -> light surfaces --- */
+html:where(.light) .bg-\[\#09090B\] { background-color: #f8f9fa; }
+html:where(.light) .bg-\[\#111318\] { background-color: #ffffff; }
+html:where(.light) .bg-\[\#171A22\] { background-color: #f1f3f5; }
+html:where(.light) .bg-\[\#0b0b12\] { background-color: #ffffff; }
+html:where(.light) .bg-\[\#0C0D12\] { background-color: #ffffff; }
+html:where(.light) .bg-\[\#0d0d16\] { background-color: #ffffff; }
+html:where(.light) .bg-\[\#15151f\] { background-color: #ffffff; }
+html:where(.light) .bg-\[\#111318\]\/95 { background-color: rgb(255 255 255 / 0.95); }
+html:where(.light) .bg-\[\#0d0d16\]\/75 { background-color: rgb(255 255 255 / 0.92); }
+
+/* --- rgba(255,255,255,x) arbitrary backgrounds (static) --- */
+html:where(.light) .bg-\[rgba\(255\,255\,255\,0\.02\)\] { background-color: rgb(0 0 0 / 0.03); }
+html:where(.light) .bg-\[rgba\(255\,255\,255\,0\.03\)\] { background-color: rgb(0 0 0 / 0.04); }
+html:where(.light) .bg-\[rgba\(255\,255\,255\,0\.04\)\] { background-color: rgb(0 0 0 / 0.05); }
+html:where(.light) .bg-\[rgba\(255\,255\,255\,0\.05\)\] { background-color: rgb(0 0 0 / 0.06); }
+html:where(.light) .bg-\[rgba\(255\,255\,255\,0\.06\)\] { background-color: rgb(0 0 0 / 0.07); }
+html:where(.light) .bg-\[rgba\(255\,255\,255\,0\.08\)\] { background-color: rgb(0 0 0 / 0.09); }
+html:where(.light) .bg-\[rgba\(255\,255\,255\,0\.1\)\] { background-color: rgb(0 0 0 / 0.1); }
+
+/* --- white/N backgrounds --- */
+html:where(.light) .bg-white\/5 { background-color: rgb(0 0 0 / 0.04); }
+html:where(.light) .bg-white\/10 { background-color: rgb(0 0 0 / 0.07); }
+html:where(.light) .bg-white\/15 { background-color: rgb(0 0 0 / 0.1); }
+html:where(.light) .bg-white\/20 { background-color: rgb(0 0 0 / 0.12); }
+
+/* --- rgba(255,255,255,x) arbitrary borders (static) --- */
+html:where(.light) .border-\[rgba\(255\,255\,255\,0\.04\)\] { border-color: rgb(0 0 0 / 0.06); }
+html:where(.light) .border-\[rgba\(255\,255\,255\,0\.05\)\] { border-color: rgb(0 0 0 / 0.07); }
+html:where(.light) .border-\[rgba\(255\,255\,255\,0\.06\)\] { border-color: rgb(0 0 0 / 0.08); }
+html:where(.light) .border-\[rgba\(255\,255\,255\,0\.08\)\] { border-color: rgb(0 0 0 / 0.1); }
+html:where(.light) .border-\[rgba\(255\,255\,255\,0\.1\)\] { border-color: rgb(0 0 0 / 0.13); }
+html:where(.light) .border-\[rgba\(255\,255\,255\,0\.12\)\] { border-color: rgb(0 0 0 / 0.16); }
+
+/* --- white/N borders --- */
+html:where(.light) .border-white\/5 { border-color: rgb(0 0 0 / 0.07); }
+html:where(.light) .border-white\/10 { border-color: rgb(0 0 0 / 0.1); }
+html:where(.light) .border-white\/15 { border-color: rgb(0 0 0 / 0.12); }
+html:where(.light) .border-white\/20 { border-color: rgb(0 0 0 / 0.15); }
+html:where(.light) .border-white\/30 { border-color: rgb(0 0 0 / 0.2); }
+
+/* --- Dark gradient stops -> light --- */
+html:where(.light) .from-\[\#111318\] { --tw-gradient-from: #fff; }
+html:where(.light) .via-\[\#111318\] {
+  --tw-gradient-stops: var(--tw-gradient-from), #fff var(--tw-gradient-via-position), var(--tw-gradient-to);
+}
+
+/* --- Hover: white-alpha backgrounds -> black-alpha --- */
+:root.light .hover\:bg-\[rgba\(255\,255\,255\,0\.02\)\]:hover { background-color: rgb(0 0 0 / 0.03); }
+:root.light .hover\:bg-\[rgba\(255\,255\,255\,0\.03\)\]:hover { background-color: rgb(0 0 0 / 0.04); }
+:root.light .hover\:bg-\[rgba\(255\,255\,255\,0\.04\)\]:hover { background-color: rgb(0 0 0 / 0.05); }
+:root.light .hover\:bg-\[rgba\(255\,255\,255\,0\.05\)\]:hover { background-color: rgb(0 0 0 / 0.06); }
+:root.light .hover\:bg-\[rgba\(255\,255\,255\,0\.06\)\]:hover { background-color: rgb(0 0 0 / 0.07); }
+:root.light .hover\:bg-\[rgba\(255\,255\,255\,0\.08\)\]:hover { background-color: rgb(0 0 0 / 0.09); }
+:root.light .hover\:bg-\[rgba\(255\,255\,255\,0\.1\)\]:hover { background-color: rgb(0 0 0 / 0.1); }
+
+/* --- Hover: white/N backgrounds --- */
+:root.light .hover\:bg-white\/5:hover { background-color: rgb(0 0 0 / 0.04); }
+:root.light .hover\:bg-white\/10:hover { background-color: rgb(0 0 0 / 0.07); }
+:root.light .hover\:bg-white\/15:hover { background-color: rgb(0 0 0 / 0.1); }
+:root.light .hover\:bg-white\/20:hover { background-color: rgb(0 0 0 / 0.12); }
+
+/* --- Hover: white-alpha borders -> black-alpha --- */
+:root.light .hover\:border-\[rgba\(255\,255\,255\,0\.1\)\]:hover { border-color: rgb(0 0 0 / 0.14); }
+:root.light .hover\:border-\[rgba\(255\,255\,255\,0\.12\)\]:hover { border-color: rgb(0 0 0 / 0.18); }
+
+/* --- Hover: white/N borders --- */
+:root.light .hover\:border-white\/10:hover { border-color: rgb(0 0 0 / 0.15); }
+:root.light .hover\:border-white\/20:hover { border-color: rgb(0 0 0 / 0.2); }
+
+/* --- Hover: light text -> dark --- */
+:root.light .hover\:text-\[\#F5F5F5\]:hover { color: #1a1a2e; }
+:root.light .hover\:text-\[\#A1A1AA\]:hover { color: #1a1a2e; }
+:root.light .hover\:text-gray-300:hover { color: #3f3f46; }
+:root.light .hover\:text-red-400:hover { color: #dc2626; }
+
 * {
   box-sizing: border-box;
 }
