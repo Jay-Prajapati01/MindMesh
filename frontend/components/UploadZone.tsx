@@ -150,6 +150,7 @@ export function UploadZone({
         type="file"
         accept={accept}
         className="hidden"
+        aria-label={label || "Upload file"}
         disabled={disabled}
         onChange={handleChange}
       />

@@ -25,7 +25,7 @@ export default function SettingsPage() {
           <Row label="Vector store" value={data?.vector_store ?? "qdrant"} />
           <Row
             label="Indexed chunks"
-            value={String(data?.indexed_chunks ?? 0)}
+            value={data ? String(data.indexed_chunks) : "—"}
           />
         </div>
 
@@ -40,6 +40,7 @@ export default function SettingsPage() {
             type="number"
             min={1}
             max={20}
+            aria-label="Results per query (top K)"
             value={settings.topK}
             onChange={(e) =>
               setSettings({ topK: Number(e.target.value) || 5 })

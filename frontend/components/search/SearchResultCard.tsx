@@ -19,6 +19,7 @@ import {
   File,
 } from "lucide-react";
 import { SearchHit } from "@/lib/api";
+import { ThumbImage } from "@/components/ThumbImage";
 
 function getSourceIcon(type: string) {
   switch (type) {
@@ -45,14 +46,14 @@ function getSourceColor(type: string) {
 }
 
 function getScoreColor(score: number) {
-  if (score >= 0.85) return "#22C55E";
-  if (score >= 0.7) return "#F59E0B";
+  if (score >= 0.55) return "#22C55E";
+  if (score >= 0.4) return "#F59E0B";
   return "#EF4444";
 }
 
 function getScoreLabel(score: number) {
-  if (score >= 0.85) return "High Match";
-  if (score >= 0.7) return "Medium Match";
+  if (score >= 0.55) return "High Match";
+  if (score >= 0.4) return "Medium Match";
   return "Low Match";
 }
 
@@ -96,7 +97,7 @@ export function SearchResultCard({ hit, index }: Props) {
       whileHover={{ y: -2 }}
       className="group relative overflow-hidden rounded-[18px] border border-[rgba(255,255,255,0.06)] bg-[#111318] transition-all duration-300 hover:border-[rgba(255,255,255,0.12)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.3)]"
     >
-      <div className="flex gap-4 p-5">
+      <div className="flex flex-wrap gap-4 p-5">
         <div className="flex flex-col items-center gap-2 pt-1">
           <div
             className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-[14px] text-[22px] font-bold tabular-nums"
@@ -199,11 +200,11 @@ export function SearchResultCard({ hit, index }: Props) {
         </div>
 
         {hit.thumbnail && (
-          <div className="relative h-24 w-40 flex-shrink-0 overflow-hidden rounded-[12px]">
-            <img
+          <div className="relative hidden h-24 w-40 flex-shrink-0 overflow-hidden rounded-[12px] sm:block">
+            <ThumbImage
               src={hit.thumbnail}
-              alt=""
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              fallbackClassName="h-24 w-40"
             />
             {hit.duration && (
               <div className="absolute bottom-1.5 right-1.5 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-medium text-white">
@@ -214,7 +215,7 @@ export function SearchResultCard({ hit, index }: Props) {
         )}
 
         {!hit.thumbnail && hit.source_type === "youtube" && (
-          <div className="flex h-24 w-40 flex-shrink-0 items-center justify-center rounded-[12px] bg-[rgba(255,255,255,0.03)]">
+          <div className="hidden h-24 w-40 flex-shrink-0 items-center justify-center rounded-[12px] bg-[rgba(255,255,255,0.03)] sm:flex">
             <Youtube className="h-8 w-8 text-[#EF4444]/30" />
           </div>
         )}

@@ -15,6 +15,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { SearchHit } from "@/lib/api";
+import { ThumbImage } from "@/components/ThumbImage";
 
 function getSourceIcon(type: string) {
   switch (type) {
@@ -117,7 +118,11 @@ export function SourceReferenceCard({ sources, visibleCount = 5 }: Props) {
                   <div className="flex gap-3">
                     {source.thumbnail ? (
                       <div className="relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-[10px]">
-                        <img src={source.thumbnail} alt="" className="h-full w-full object-cover" />
+                        <ThumbImage
+                          src={source.thumbnail}
+                          className="h-full w-full object-cover"
+                          fallbackClassName="h-16 w-24"
+                        />
                       </div>
                     ) : (
                       <div

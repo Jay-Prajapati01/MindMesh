@@ -50,9 +50,9 @@ export function AITimeline({
     >
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex w-full items-center justify-between px-5 py-3"
+        className="flex w-full flex-wrap items-center justify-between gap-2 px-5 py-3"
       >
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
           <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[#6E56CF]/15">
             <Brain className="h-3.5 w-3.5 text-[#6E56CF]" />
           </div>
@@ -66,7 +66,7 @@ export function AITimeline({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
           {!loading && searchTimeMs > 0 && (
             <div className="flex items-center gap-2 text-[10px] text-[#71717A]">
               <span className="flex items-center gap-1">

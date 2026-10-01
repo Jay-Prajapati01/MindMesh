@@ -38,10 +38,12 @@ class VideoProcessResponse(BaseModel):
 
 
 def _clean_text(value: str, field_name: str, max_len: int) -> str:
-    """Trim user text and reject blank or oversized input (-> 422)."""
+    """Normalize user text (trim) and reject oversized input with a 422.
+
+    Blank input is allowed by the schema so the endpoints can answer
+    gracefully instead of erroring; handlers short-circuit empty values.
+    """
     cleaned = value.strip()
-    if not cleaned:
-        raise ValueError(f"{field_name} must not be empty")
     if len(cleaned) > max_len:
         raise ValueError(f"{field_name} must be at most {max_len} characters")
     return cleaned

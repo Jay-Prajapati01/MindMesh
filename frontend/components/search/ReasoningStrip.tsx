@@ -59,7 +59,7 @@ export function ReasoningStrip({
       exit={{ opacity: 0, height: 0 }}
       className="overflow-hidden rounded-[14px] border border-[rgba(255,255,255,0.06)] bg-[#111318]"
     >
-      <div className="flex items-center gap-6 px-5 py-3">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3">
         <div className="flex items-center gap-2">
           <Brain className="h-4 w-4 text-[#6E56CF]" />
           <span className="text-[11px] font-semibold uppercase tracking-wider text-[#A1A1AA]">
@@ -67,7 +67,7 @@ export function ReasoningStrip({
           </span>
         </div>
 
-        <div className="flex flex-1 items-center gap-1">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
           {PIPELINE_STEPS.map((step, i) => {
             const done = i < completedSteps;
             const active = i === completedSteps && loading;
@@ -117,7 +117,7 @@ export function ReasoningStrip({
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex items-center gap-4 text-[11px]"
+            className="flex flex-wrap items-center gap-4 text-[11px]"
           >
             <span className="text-[#71717A]">
               <AnimatedCounter value={chunksSearched} /> chunks

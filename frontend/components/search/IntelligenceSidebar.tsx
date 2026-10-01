@@ -310,7 +310,7 @@ export function IntelligenceSidebar({ hits, stats, query = "", chunksSearched = 
                   <Brain className="h-3 w-3 text-[#71717A]" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-[11px] font-medium text-[#F5F5F5]">
+                  <div className="break-words text-[11px] font-medium text-[#F5F5F5]">
                     {memory.title}
                   </div>
                   <div className="text-[9px] text-[#52525B] capitalize">

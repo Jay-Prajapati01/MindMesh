@@ -110,9 +110,9 @@ function SearchPageInner() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="mb-6 flex items-start justify-between"
+        className="mb-6 flex flex-wrap items-start justify-between gap-4"
       >
-        <div>
+        <div className="min-w-0">
           <div className="flex items-center gap-3">
             <h1 className="text-[24px] font-bold text-[#F5F5F5] tracking-tight">
               Semantic Search
@@ -151,10 +151,10 @@ function SearchPageInner() {
         />
       </div>
 
-      {/* Main Content Area */}
-      <div className="mt-6 flex gap-6">
+      {/* Main Content Area (stacks vertically below lg) */}
+      <div className="mt-6 flex flex-col gap-6 lg:flex-row">
         {/* Left Column - Results */}
-        <div className="min-w-0 flex-1" style={{ flex: "0 0 65%" }}>
+        <div className="min-w-0 flex-1 lg:flex-[0_0_65%]">
           {/* Reasoning Strip */}
           <AnimatePresence>
             {(isLoading || hasSearched) && (
@@ -263,8 +263,8 @@ function SearchPageInner() {
           </div>
         </div>
 
-        {/* Right Column - Intelligence Sidebar */}
-        <div style={{ flex: "0 0 35%" }} className="min-w-0">
+        {/* Right Column - Intelligence Sidebar (below results on small screens) */}
+        <div className="w-full min-w-0 lg:w-auto lg:flex-[0_0_35%]">
           <IntelligenceSidebar
             hits={hits}
             stats={stats}

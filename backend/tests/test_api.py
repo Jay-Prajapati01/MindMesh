@@ -54,6 +54,46 @@ def test_list_sources_pagination(client):
 def test_chat_empty_question(client):
     resp = client.post("/api/chat", json={"question": ""})
     assert resp.status_code == 200  # Backend handles empty gracefully
+    data = resp.json()
+    # Graceful means no retrieval ran: no fabricated citations.
+    assert data["citations"] == []
+    assert data["chunks_searched"] == 0
+
+
+def test_chat_whitespace_question_is_graceful(client):
+    resp = client.post("/api/chat", json={"question": "   "})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["citations"] == []
+    assert data["chunks_searched"] == 0
+
+
+def test_chat_stream_blank_question_is_graceful(client):
+    with client.stream("POST", "/api/chat/stream", json={"question": ""}) as resp:
+        assert resp.status_code == 200
+        body = "".join(resp.iter_text())
+    assert '"type": "done"' in body
+    assert "Please enter a question" in body
+
+
+def test_chat_oversized_question_rejected(client):
+    resp = client.post("/api/chat", json={"question": "x" * 5000})
+    assert resp.status_code == 422
+
+
+def test_search_blank_query_is_graceful(client):
+    for query in ("", "   "):
+        resp = client.post("/api/search", json={"query": query})
+        assert resp.status_code == 200
+        data = resp.json()
+        # Hermetic fixture would return hits for any non-blank query.
+        assert data["hits"] == []
+        assert data["chunks_searched"] == 0
+
+
+def test_search_oversized_query_rejected(client):
+    resp = client.post("/api/search", json={"query": "x" * 2000})
+    assert resp.status_code == 422
 
 
 def test_chat_with_history(client):
@@ -104,3 +144,31 @@ def test_notes_crud(client):
     # Delete
     resp = client.delete(f"/api/notes/{note['id']}")
     assert resp.status_code == 200
+
+
+def test_search_matches_workspace_notes(client):
+    created = client.post(
+        "/api/notes",
+        json={"title": "Zorblax Project", "body": "Maintenance notes for zorblax flanges."},
+    ).json()
+    try:
+        resp = client.post("/api/search", json={"query": "zorblax"})
+        assert resp.status_code == 200
+        note_hits = [h for h in resp.json()["hits"] if h["source_type"] == "note"]
+        assert note_hits, "notes should be discoverable through search"
+        assert note_hits[0]["source_id"] == created["id"]
+        assert note_hits[0]["score"] >= 0.8
+    finally:
+        client.delete(f"/api/notes/{created['id']}")
+
+
+def test_search_note_hits_respect_source_type_filter(client):
+    created = client.post(
+        "/api/notes", json={"title": "Snark", "body": "Body mentioning snarky wombat."}
+    ).json()
+    try:
+        resp = client.post("/api/search", json={"query": "wombat", "source_type": "pdf"})
+        assert resp.status_code == 200
+        assert all(h["source_type"] != "note" for h in resp.json()["hits"])
+    finally:
+        client.delete(f"/api/notes/{created['id']}")

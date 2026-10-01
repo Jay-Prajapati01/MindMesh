@@ -9,9 +9,25 @@ from app.services import rag, store
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
+EMPTY_QUESTION_ANSWER = (
+    "Please enter a question so I can search your knowledge base."
+)
+
 
 @router.post("", response_model=ChatResponse)
 async def chat(payload: ChatRequest) -> ChatResponse:
+    # Blank questions get a graceful reply: no retrieval, no citations,
+    # and nothing written to recent questions.
+    if not payload.question:
+        return ChatResponse(
+            question=payload.question,
+            answer=EMPTY_QUESTION_ANSWER,
+            citations=[],
+            search_time_ms=0,
+            chunks_searched=0,
+            sources_searched=0,
+        )
+
     store.add_question(payload.question)
     answer, citations, metrics = await rag.answer(
         payload.question,
@@ -33,9 +49,14 @@ async def chat(payload: ChatRequest) -> ChatResponse:
 @router.post("/stream")
 async def chat_stream(payload: ChatRequest):
     """Stream chat response tokens via SSE."""
-    store.add_question(payload.question)
 
     async def event_generator():
+        if not payload.question:
+            yield f"data: {json.dumps({'type': 'token', 'content': EMPTY_QUESTION_ANSWER})}\n\n"
+            yield f"data: {json.dumps({'type': 'done', 'answer': EMPTY_QUESTION_ANSWER})}\n\n"
+            return
+
+        store.add_question(payload.question)
         full_answer = ""
         async for token in rag.answer_stream(
             payload.question,

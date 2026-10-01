@@ -82,28 +82,31 @@ export function ChatInput({ query, setQuery, onSend, loading, placeholder, compa
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder || "Ask anything about your knowledge..."}
-          className="h-[64px] flex-1 bg-transparent px-4 text-[15px] font-normal text-[#F5F5F5] placeholder-[#52525B] outline-none"
+          size={1}
+          className="h-[64px] min-w-0 flex-1 bg-transparent px-4 text-[15px] font-normal text-[#F5F5F5] placeholder-[#52525B] outline-none"
         />
 
         {query && (
           <button
             onClick={() => setQuery("")}
-            className="mr-1 flex h-8 w-8 items-center justify-center rounded-lg text-[#71717A] transition-colors hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F5F5F5]"
+            className="mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#71717A] transition-colors hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F5F5F5]"
           >
             <span className="text-[14px]">×</span>
           </button>
         )}
 
         <button
-          className="mr-1 flex h-9 w-9 items-center justify-center rounded-xl text-[#71717A] transition-colors hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F5F5F5]"
+          className="mr-1 hidden h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#71717A] transition-colors hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F5F5F5] sm:flex"
           title="Voice input"
+          aria-label="Voice input"
         >
           <Mic className="h-4 w-4" />
         </button>
 
         <button
-          className="mr-1 flex h-9 w-9 items-center justify-center rounded-xl text-[#71717A] transition-colors hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F5F5F5]"
+          className="mr-1 hidden h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#71717A] transition-colors hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F5F5F5] sm:flex"
           title="Attach file"
+          aria-label="Attach file"
         >
           <Paperclip className="h-4 w-4" />
         </button>
@@ -111,17 +114,18 @@ export function ChatInput({ query, setQuery, onSend, loading, placeholder, compa
         <button
           onClick={() => query.trim() && onSend()}
           disabled={!query.trim() || loading}
-          className="mr-2 flex h-11 items-center gap-2 rounded-[14px] bg-[#6E56CF] px-5 text-[13px] font-semibold text-white transition-all hover:bg-[#7C69E3] disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-[#6E56CF]/20"
+          className="mr-2 flex h-11 shrink-0 items-center gap-2 rounded-[14px] bg-[#6E56CF] px-3 text-[13px] font-semibold text-white transition-all hover:bg-[#7C69E3] disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-[#6E56CF]/20 sm:px-5"
+          aria-label="Send message"
         >
           {loading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <Sparkles className="h-4 w-4" />
           )}
-          Send
+          <span className="hidden sm:inline">Send</span>
         </button>
 
-        <div className="mr-4 flex items-center gap-1 rounded-md bg-[rgba(255,255,255,0.04)] px-2.5 py-1.5">
+        <div className="mr-4 hidden shrink-0 items-center gap-1 rounded-md bg-[rgba(255,255,255,0.04)] px-2.5 py-1.5 sm:flex">
           <Command className="h-3 w-3 text-[#71717A]" />
           <span className="text-[11px] font-medium text-[#71717A]">K</span>
         </div>

@@ -114,6 +114,7 @@ if settings.environment == "production":
         window=60,
         skip_prefixes=(
             f"{settings.api_prefix}/health",
+            "/health",
             "/docs",
             "/redoc",
             "/openapi.json",
@@ -157,3 +158,9 @@ async def root() -> dict:
         "docs": "/docs",
         "health": f"{settings.api_prefix}/health",
     }
+
+
+@app.get("/health")
+async def health_alias():
+    """Bare /health alias for probes that do not use the /api prefix."""
+    return await health.health()

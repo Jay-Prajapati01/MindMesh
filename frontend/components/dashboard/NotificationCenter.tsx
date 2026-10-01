@@ -120,6 +120,8 @@ export function NotificationCenter() {
     <div ref={drawerRef} className="relative">
       <button
         onClick={() => setDrawerOpen(!drawerOpen)}
+        aria-label="Notifications"
+        aria-expanded={drawerOpen}
         className="relative flex h-10 w-10 items-center justify-center rounded-[12px] border border-[rgba(255,255,255,0.06)] bg-[#111318] text-[#A1A1AA] transition-all hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F5F5F5]"
       >
         <Bell className="h-4 w-4" />

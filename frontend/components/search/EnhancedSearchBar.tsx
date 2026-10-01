@@ -64,21 +64,24 @@ export function EnhancedSearchBar({
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="h-16 flex-1 bg-transparent px-4 text-[15px] font-normal text-[#F5F5F5] placeholder-[#52525B] outline-none"
+          size={1}
+          className="h-16 min-w-0 flex-1 bg-transparent px-4 text-[15px] font-normal text-[#F5F5F5] placeholder-[#52525B] outline-none"
         />
 
         {query && (
           <button
             onClick={() => setQuery("")}
-            className="mr-1 flex h-8 w-8 items-center justify-center rounded-lg text-[#71717A] transition-colors hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F5F5F5]"
+            className="mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#71717A] transition-colors hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F5F5F5]"
+            aria-label="Clear search"
           >
             <X className="h-4 w-4" />
           </button>
         )}
 
         <button
-          className="mr-1 flex h-8 w-8 items-center justify-center rounded-lg text-[#71717A] transition-colors hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F5F5F5]"
+          className="mr-1 hidden h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#71717A] transition-colors hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F5F5F5] sm:flex"
           title="Voice search"
+          aria-label="Voice search"
         >
           <Mic className="h-4 w-4" />
         </button>
@@ -86,17 +89,18 @@ export function EnhancedSearchBar({
         <button
           onClick={() => query.trim() && onSearch()}
           disabled={!query.trim() || loading}
-          className="mr-2 flex h-10 items-center gap-2 rounded-[12px] bg-[#6E56CF] px-5 text-[13px] font-semibold text-white transition-all hover:bg-[#7C69E3] disabled:opacity-40 disabled:cursor-not-allowed"
+          className="mr-2 flex h-10 shrink-0 items-center gap-2 rounded-[12px] bg-[#6E56CF] px-3 text-[13px] font-semibold text-white transition-all hover:bg-[#7C69E3] disabled:opacity-40 disabled:cursor-not-allowed sm:px-5"
+          aria-label="Run search"
         >
           {loading ? (
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
           ) : (
             <Sparkles className="h-4 w-4" />
           )}
-          Search
+          <span className="hidden sm:inline">Search</span>
         </button>
 
-        <div className="mr-4 flex items-center gap-1 rounded-md bg-[rgba(255,255,255,0.04)] px-2.5 py-1.5">
+        <div className="mr-4 hidden shrink-0 items-center gap-1 rounded-md bg-[rgba(255,255,255,0.04)] px-2.5 py-1.5 sm:flex">
           <Command className="h-3 w-3 text-[#71717A]" />
           <span className="text-[11px] font-medium text-[#71717A]">K</span>
         </div>

@@ -11,6 +11,7 @@ import {
   EmptyState,
   PageHeader,
 } from "@/components/ui";
+import { ThumbImage } from "@/components/ThumbImage";
 
 export default function StoredPage() {
   const [filter, setFilter] = useState("");
@@ -104,10 +105,11 @@ export default function StoredPage() {
           <Card key={s.source_id} className="p-4 relative group">
             {s.thumbnail && (
               <div className="mb-2 -mx-4 -mt-4">
-                <img 
-                  src={s.thumbnail} 
+                <ThumbImage
+                  src={s.thumbnail}
                   alt={s.title || "Thumbnail"}
                   className="w-full h-32 object-cover rounded-t-lg"
+                  fallbackClassName="h-32 rounded-t-lg"
                 />
               </div>
             )}
@@ -151,7 +153,7 @@ export default function StoredPage() {
             </div>
             
             {/* Action buttons — always visible on touch/small screens */}
-            <div className="mt-4 flex items-center gap-2 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
+            <div className="mt-4 flex flex-wrap items-center gap-2 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
               {canDownload(s) && (
                 <button
                   onClick={() => handleDownload(s)}

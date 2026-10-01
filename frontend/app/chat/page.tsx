@@ -72,8 +72,12 @@ function ChatPageInner() {
       queryClient.invalidateQueries({ queryKey: ["stats"] });
       setError(null);
     },
-    onError: (err: any) => {
+    onError: (err: any, failedQuestion) => {
       setError(err?.message || "Failed to generate answer. Is the backend running?");
+      // Restore the question so the user's input is not lost on failure.
+      if (typeof failedQuestion === "string" && failedQuestion.trim()) {
+        setQuery(failedQuestion);
+      }
     },
   });
 
@@ -132,9 +136,9 @@ function ChatPageInner() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="mb-6 flex items-start justify-between"
+        className="mb-6 flex flex-wrap items-start justify-between gap-4"
       >
-        <div>
+        <div className="min-w-0">
           <div className="flex items-center gap-3">
             <h1 className="text-[24px] font-bold text-[#F5F5F5] tracking-tight">
               Ask AI
@@ -184,10 +188,10 @@ function ChatPageInner() {
         />
       </div>
 
-      {/* Main Content Area: 70/30 */}
-      <div className="flex gap-6">
+      {/* Main Content Area: 70/30 (stacks vertically below lg) */}
+      <div className="flex flex-col gap-6 lg:flex-row">
         {/* Left Column — 70% */}
-        <div className="min-w-0 flex-1" style={{ flex: "0 0 68%" }}>
+        <div className="min-w-0 flex-1 lg:flex-[0_0_68%]">
           <AnimatePresence mode="wait">
             {/* Loading State */}
             {isLoading && (
@@ -283,8 +287,8 @@ function ChatPageInner() {
           </AnimatePresence>
         </div>
 
-        {/* Right Sidebar — 30% */}
-        <div style={{ flex: "0 0 32%" }} className="min-w-0">
+        {/* Right Sidebar — 30% (moves below the chat on small screens) */}
+        <div className="w-full min-w-0 lg:w-auto lg:flex-[0_0_32%]">
           <div className="sticky top-4">
             <ChatSidebar
               stats={stats}
