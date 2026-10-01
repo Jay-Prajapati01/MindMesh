@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence } from "framer-motion";
 import { Layers, Maximize2, Network, Search } from "lucide-react";
@@ -64,7 +64,12 @@ function Chip({ active, color, label, count, onClick }: ChipProps) {
 }
 
 export default function GraphPage() {
-  const { data, isLoading } = useQuery({ queryKey: ["graph"], queryFn: getGraph });
+  const { data, isLoading } = useQuery({
+    queryKey: ["graph"],
+    queryFn: getGraph,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
 
   const [filterType, setFilterType] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -74,6 +79,19 @@ export default function GraphPage() {
   const [rf, setRf] = useState<ReactFlowInstance | null>(null);
   const firstFit = useRef(true);
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  // Hover commits are expensive (graph-wide dim update), so only commit after
+  // the pointer pauses over a node — sweeping across the graph stays free.
+  const hoverTimer = useRef(0);
+  const pendingHover = useRef<string | null>(null);
+  const scheduleHover = useCallback((id: string | null) => {
+    pendingHover.current = id;
+    window.clearTimeout(hoverTimer.current);
+    hoverTimer.current = window.setTimeout(() => {
+      setHoverId(pendingHover.current);
+    }, 140);
+  }, []);
+  useEffect(() => () => window.clearTimeout(hoverTimer.current), []);
 
   // ── Derived model ────────────────────────────────────────────────
   const filtered = useMemo(() => {
@@ -100,14 +118,23 @@ export default function GraphPage() {
     [filtered],
   );
 
+  // Force layout is the most expensive operation (~100ms). Cache results per
+  // node set so toggling filters back and forth never recomputes it.
+  const layoutCache = useRef(new Map<string, Record<string, { x: number; y: number }>>());
   const layout = useMemo(() => {
+    const key = `${filterType}|${filtered.nodes.map((n) => n.id).join(",")}`;
+    const cached = layoutCache.current.get(key);
+    if (cached) return cached;
     const radii: Record<string, number> = {};
     const ids = filtered.nodes.map((n) => {
       radii[n.id] = estimateRadius(n.label, adj.degree.get(n.id) ?? 0);
       return n.id;
     });
-    return runForceLayout(ids, filtered.edges, radii);
-  }, [filtered, adj]);
+    const result = runForceLayout(ids, filtered.edges, radii);
+    if (layoutCache.current.size > 20) layoutCache.current.clear();
+    layoutCache.current.set(key, result);
+    return result;
+  }, [filtered, adj, filterType]);
 
   const neighbors = useMemo(() => {
     const map = new Map<string, Set<string>>();
@@ -125,9 +152,10 @@ export default function GraphPage() {
       return {
         id: n.id,
         type: "concept",
+        className: "concept-node",
         position: layout[n.id] ?? { x: 0, y: 0 },
         zIndex: hub ? 2 : 1,
-        data: { label: n.label, count: n.count, degree, color, hub, dim: false, active: false },
+        data: { label: n.label, count: n.count, degree, color, hub, active: false },
       };
     });
   }, [filtered, adj, layout]);
@@ -159,37 +187,54 @@ export default function GraphPage() {
 
   const activeId = selectedId ?? hoverId;
 
-  useEffect(() => {
-    setNodes((prev) =>
-      prev.map((n) => {
-        const isActive = activeId !== null && n.id === activeId;
-        const isNeighbor = activeId !== null && neighbors.get(activeId)?.has(n.id) === true;
-        const dim = activeId !== null && !isActive && !isNeighbor;
-        const zIndex = isActive ? 6 : dim ? 0 : n.data.hub ? 2 : 1;
-        if (n.data.active === isActive && n.data.dim === dim && n.zIndex === zIndex) return n;
-        return { ...n, zIndex, data: { ...n.data, active: isActive, dim } };
-      }),
-    );
+  // Dim is applied by CSS via the wrapper class (`graph-has-active` +
+  // `concept-on`), so React only touches the ~active/neighbor nodes each time
+  // instead of rewriting all 229 chips. Layout effect avoids a 1-frame flicker
+  // between the container class and the node classes.
+  useLayoutEffect(() => {
+    setNodes((prev) => {
+      const isOn = (id: string) =>
+        activeId !== null && (id === activeId || neighbors.get(activeId)?.has(id) === true);
+      let any = false;
+      for (const n of prev) {
+        if (isOn(n.id) !== (n.className === "concept-node concept-on") || n.data.active !== (activeId === n.id)) {
+          any = true;
+          break;
+        }
+      }
+      if (!any) return prev;
+      return prev.map((n) => {
+        const on = isOn(n.id);
+        const has = n.className === "concept-node concept-on";
+        const act = activeId === n.id;
+        if (on === has && n.data.active === act) return n;
+        return {
+          ...n,
+          className: on ? "concept-node concept-on" : "concept-node",
+          data: { ...n.data, active: act },
+        };
+      });
+    });
   }, [activeId, neighbors]);
 
+  // Edge styling/labels change only on selection — hovering must stay cheap.
   const edges = useMemo<Edge[]>(() => {
-    if (activeId === null) return baseEdges;
-    const isSelected = selectedId === activeId;
+    if (selectedId === null) return baseEdges;
     return baseEdges.map((e) => {
-      const on = e.source === activeId || e.target === activeId;
+      const on = e.source === selectedId || e.target === selectedId;
       const color = (e.data as { color?: string } | undefined)?.color ?? sourceColor();
       return {
         ...e,
-        animated: on && isSelected,
+        animated: on,
         label: on ? short((e.data as { relation?: string } | undefined)?.relation ?? "") : undefined,
-        labelStyle: { fill: "#C4C4CC", fontSize: 10, fontWeight: 500 },
+        labelStyle: { fill: "#C4C4CC", fontSize: 11, fontWeight: 500 },
         labelBgStyle: { fill: "#111318", fillOpacity: 0.92 },
         labelBgPadding: [8, 4],
         labelBgBorderRadius: 8,
         style: {
           stroke: color,
           strokeWidth: on ? 2.4 : 1.6,
-          strokeOpacity: on ? (isSelected ? 1 : 0.7) : 0.08,
+          strokeOpacity: on ? 1 : 0.08,
         },
         markerEnd: {
           type: MarkerType.ArrowClosed,
@@ -199,7 +244,7 @@ export default function GraphPage() {
         },
       };
     });
-  }, [baseEdges, activeId, selectedId]);
+  }, [baseEdges, selectedId]);
 
   // ── Selection / detail panel ─────────────────────────────────────
   const selectedNode = useMemo(
@@ -241,17 +286,35 @@ export default function GraphPage() {
   };
 
   const fitWholeGraph = () => {
-    rf?.fitView({ padding: 0.12, duration: 400, maxZoom: 1.2 });
+    rf?.fitView({ padding: 0.06, duration: 400, maxZoom: 1.2 });
   };
 
-  // Fit once data arrives, then again whenever the filter changes.
+  // Fit once data arrives, then again whenever the filter changes. fitView can
+  // lose a race against node measurement when data arrives fast (unmounted
+  // DOM → empty bounds → false), so retry until it actually applies.
   useEffect(() => {
     if (!rf || baseNodes.length === 0) return;
-    const timer = window.setTimeout(() => {
-      rf.fitView({ padding: 0.12, duration: firstFit.current ? 0 : 300, maxZoom: 1.15 });
-      firstFit.current = false;
-    }, 120);
-    return () => window.clearTimeout(timer);
+    let cancelled = false;
+    let timer = 0;
+    const attemptFit = (attempt: number) => {
+      if (cancelled) return;
+      let ok = false;
+      try {
+        ok = rf.fitView({ padding: 0.06, duration: firstFit.current ? 0 : 300, maxZoom: 1.15 });
+      } catch {
+        ok = false;
+      }
+      if (ok) {
+        firstFit.current = false;
+        return;
+      }
+      if (attempt < 10) timer = window.setTimeout(() => attemptFit(attempt + 1), 200);
+    };
+    timer = window.setTimeout(() => attemptFit(0), 120);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, [rf, baseNodes]);
 
   // Re-fit (or re-center the selection) when the page/canvas area is resized —
@@ -275,7 +338,7 @@ export default function GraphPage() {
             rf.setCenter(node.position.x, node.position.y, { zoom: rf.getZoom(), duration: 0 });
           }
         } else {
-          rf.fitView({ padding: 0.12, duration: 0, maxZoom: 1.15 });
+          rf.fitView({ padding: 0.06, duration: 0, maxZoom: 1.15 });
         }
       }, 180);
     });
@@ -303,7 +366,7 @@ export default function GraphPage() {
   const hasGraph = data !== undefined && filtered.nodes.length > 0;
 
   return (
-    <div className="flex h-[calc(100vh-12rem)] min-h-[520px] flex-col">
+    <div className="flex h-[calc(100vh-6rem)] min-h-[460px] flex-col">
       <div className="mb-1 flex items-center gap-2">
         <Network className="h-5 w-5 text-[#6E56CF]" aria-hidden />
         <h1 className="text-2xl font-semibold">Knowledge Graph</h1>
@@ -378,25 +441,32 @@ export default function GraphPage() {
 
       {/* Canvas + detail panel */}
       <div ref={canvasRef} className="relative flex min-h-0 flex-1 gap-3">
-        <div className="relative min-w-0 flex-1 overflow-hidden rounded-xl border border-white/10 bg-[radial-gradient(ellipse_at_center,#12121d_0%,#0d0d16_72%)]">
+        <div
+          className={`relative min-w-0 flex-1 overflow-hidden rounded-xl border border-white/10 bg-[radial-gradient(ellipse_at_center,#12121d_0%,#0d0d16_72%)]${
+            activeId !== null ? " graph-has-active" : ""
+          }`}
+        >
           <ReactFlow
             nodes={nodes}
             edges={edges}
             nodeTypes={NODE_TYPES}
             onInit={setRf}
+            fitView
+            fitViewOptions={{ padding: 0.06, maxZoom: 1.15 }}
             onNodesChange={onNodesChange}
             onNodeClick={(_, node) => setSelectedId(node.id)}
-            onNodeMouseEnter={(_, node) => setHoverId(node.id)}
-            onNodeMouseLeave={() => setHoverId(null)}
+            onNodeMouseEnter={(_, node) => scheduleHover(node.id)}
+            onNodeMouseLeave={() => scheduleHover(null)}
             onPaneClick={() => {
               setSelectedId(null);
-              setHoverId(null);
+              scheduleHover(null);
             }}
             minZoom={0.05}
             maxZoom={2}
             nodesConnectable={false}
             deleteKeyCode={null}
             zoomOnDoubleClick={false}
+            onlyRenderVisibleElements
           >
             <Background variant={BackgroundVariant.Dots} gap={22} size={1} color="#262633" />
             <Controls showInteractive={false} />
@@ -412,7 +482,7 @@ export default function GraphPage() {
             />
             {selectedId === null && (
               <Panel position="top-left" className="!m-3">
-                <div className="rounded-full border border-white/10 bg-black/50 px-3 py-1.5 text-[11px] text-[#A1A1AA] backdrop-blur">
+                <div className="rounded-full border border-white/10 bg-black/75 px-3 py-1.5 text-[12px] text-[#A1A1AA]">
                   💡 Click a concept to explore its connections
                 </div>
               </Panel>

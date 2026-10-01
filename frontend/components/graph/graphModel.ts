@@ -117,8 +117,8 @@ export function buildAdjacency(nodes: GraphNode[], edges: GraphEdge[]): Adjacenc
 export function estimateRadius(label: string, degree: number): number {
   const len = cleanLabel(label).length;
   const shown = len > 34 ? 34 : len;
-  const width = 34 + shown * 6.8;
-  return Math.min(64, Math.max(18, width / 2)) + Math.min(degree, 8) * 2.5;
+  const width = 44 + shown * 7.8;
+  return Math.min(80, Math.max(22, width / 2)) + Math.min(degree, 8) * 2.5;
 }
 
 function mulberry32(seed: number) {
@@ -258,10 +258,18 @@ export function runForceLayout(
   }
   const scale = Math.min(1, 2800 / Math.max(1, maxX - minX), 2500 / Math.max(1, maxY - minY));
 
+  // Stretch horizontally so the graph fills a wide viewport rectangle. This
+  // only widens horizontal gaps between chips (never causes overlap), and the
+  // fit zoom stays bound by the height cap, so it simply uses the empty side
+  // space of a wide canvas.
+  const w = (maxX - minX) * scale;
+  const h = (maxY - minY) * scale;
+  const stretchX = w > 0 && h > 0 ? Math.min(1.9, Math.max(1, 1.78 / (w / h))) : 1;
+
   const out: Record<string, { x: number; y: number }> = {};
   for (let i = 0; i < n; i++) {
     out[ids[i]] = {
-      x: Math.round((px[i] - cx) * scale * 10) / 10,
+      x: Math.round((px[i] - cx) * scale * stretchX * 10) / 10,
       y: Math.round((py[i] - cy) * scale * 10) / 10,
     };
   }

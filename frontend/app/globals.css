@@ -149,6 +149,23 @@ body {
 }
 
 /* ── React Flow (knowledge graph) ─────────────────────────────── */
+.react-flow__viewport {
+  will-change: transform;
+}
+
+/* Dimming when a node is hovered/selected: applied by the canvas container
+   (`graph-has-active`) so React only toggles classes on the active cluster. */
+.graph-has-active .react-flow__node.concept-node:not(.concept-on):not(.dragging):not(
+    .react-flow__node-dragging
+  ) {
+  opacity: 0.3;
+  z-index: 0 !important;
+}
+
+.react-flow__node.concept-node.concept-on {
+  z-index: 4 !important;
+}
+
 .react-flow__edge-path {
   vector-effect: non-scaling-stroke;
 }

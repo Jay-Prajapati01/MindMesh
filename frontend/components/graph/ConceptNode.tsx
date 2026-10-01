@@ -10,7 +10,6 @@ export interface ConceptData {
   degree: number;
   color: string;
   hub: boolean;
-  dim: boolean;
   active: boolean;
 }
 
@@ -19,10 +18,10 @@ function truncate(text: string, max: number): string {
 }
 
 function ConceptNodeInner({ data, selected }: NodeProps<ConceptData>) {
-  const { label, count, degree, color, hub, dim, active } = data;
+  const { label, count, degree, color, hub, active } = data;
   const on = active || selected;
   const clean = cleanLabel(label);
-  const display = truncate(clean, hub ? 46 : 30);
+  const display = truncate(clean, hub ? 30 : 28);
 
   return (
     <div
@@ -30,22 +29,20 @@ function ConceptNodeInner({ data, selected }: NodeProps<ConceptData>) {
         count > 1 ? ` · mentioned ${count}×` : ""
       }`}
       aria-label={`Concept: ${clean}, ${degree} connections`}
-      className={`flex max-w-[260px] items-center gap-1.5 rounded-full border px-2.5 py-1.5 transition-all duration-200 ${
-        hub ? "text-[13px]" : "text-xs"
+      className={`flex items-center gap-1.5 overflow-hidden rounded-full border px-2.5 py-1.5 transition-[border-color,box-shadow] duration-150 ${
+        hub ? "max-w-[320px] text-[15px]" : "max-w-[290px] text-[14px]"
       } ${on ? "font-medium" : "font-normal"}`}
       style={{
         borderColor: on ? color : `${color}80`,
         background: hub
           ? `linear-gradient(135deg, ${color}59 0%, rgba(26,28,40,0.96) 65%)`
           : `linear-gradient(135deg, ${color}30 0%, rgba(24,26,38,0.95) 65%)`,
-        color: dim ? "#52525B" : "#F5F5F5",
-        opacity: dim ? 0.3 : 1,
+        color: "#F5F5F5",
         boxShadow: on
           ? `0 0 0 3px ${color}33, 0 0 22px ${color}66`
           : hub
             ? `0 0 14px ${color}40`
-            : "0 2px 8px rgba(0,0,0,0.45)",
-        zIndex: on ? 5 : dim ? 0 : hub ? 2 : 1,
+            : "none",
       }}
     >
       <Handle
@@ -56,13 +53,13 @@ function ConceptNodeInner({ data, selected }: NodeProps<ConceptData>) {
       />
       <span
         aria-hidden
-        className="h-1.5 w-1.5 shrink-0 rounded-full"
+        className="h-2 w-2 shrink-0 rounded-full"
         style={{ background: color, boxShadow: on ? `0 0 6px ${color}` : "none" }}
       />
       <span className="whitespace-nowrap">{display}</span>
       {count > 1 && (
         <span
-          className="shrink-0 rounded-full px-1.5 py-px text-[9px] font-semibold tabular-nums"
+          className="shrink-0 rounded-full px-1.5 py-px text-[11px] font-semibold tabular-nums"
           style={{ background: `${color}2e`, color: color }}
         >
           {count}
