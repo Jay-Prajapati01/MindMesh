@@ -147,3 +147,54 @@ body {
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
+
+/* ── React Flow (knowledge graph) ─────────────────────────────── */
+.react-flow__edge-path {
+  vector-effect: non-scaling-stroke;
+}
+
+.react-flow__controls {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+.react-flow__controls-button {
+  width: 30px;
+  height: 30px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  fill: var(--secondary-text);
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: none;
+}
+
+.react-flow__controls-button:hover {
+  background: var(--surface);
+  fill: var(--primary-text);
+}
+
+.react-flow__minimap {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+.react-flow__attribution {
+  background: transparent !important;
+}
+
+.react-flow__attribution a {
+  color: var(--muted) !important;
+  font-size: 9px;
+}
+
+.react-flow__node.concept:focus-visible > div {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+}
