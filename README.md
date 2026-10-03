@@ -1,8 +1,10 @@
 <div align="center">
 
-# 🧠 **MindMesh**
+<img src="MindMesh_logo.png" alt="MindMesh logo" width="130">
 
-### *Your AI Personal Knowledge Operating System*
+# **MindMesh**
+
+### *Your buddy who remembers everything you save*
 
 **Capture → Understand → Connect → Ask.**  
 Stop remembering *where* you saw something — just ask MindMesh naturally.
@@ -22,7 +24,7 @@ Stop remembering *where* you saw something — just ask MindMesh naturally.
 
 <br/>
 
-<img src="docs/search-page-new.png" alt="MindMesh Dashboard" width="88%">
+<img src="docs/screenshots/dashboard.png" alt="MindMesh Dashboard" width="88%">
 
 <br/>
 
@@ -34,7 +36,7 @@ Stop remembering *where* you saw something — just ask MindMesh naturally.
 
 <div align="center">
 
-> ### 🧩 *“Everything you watch, read, hear, and save — unified into one brain you can talk to.”*
+> ### 🧩 *“Everything you watch, read, hear and save, unified into one brain you can talk to.”*
 
 </div>
 
@@ -47,16 +49,17 @@ Stop remembering *where* you saw something — just ask MindMesh naturally.
 
 1. [✨ Why MindMesh](#-why-mindmesh)
 2. [🎯 Features](#-features)
-3. [🏗 Architecture](#-architecture)
-4. [🧰 Tech Stack](#-tech-stack)
-5. [🚀 Quick Start](#-quick-start)
-6. [🧪 Development & Testing](#-development--testing)
-7. [📦 API Overview](#-api-overview)
-8. [🗂 Repository Structure](#-repository-structure)
-9. [⚙️ Configuration](#-configuration)
-10. [📚 Documentation](#-documentation)
-11. [🤝 Contributing](#-contributing)
-12. [📄 License & Author](#-license--author)
+3. [🖼️ Screenshots](#️-screenshots)
+4. [🏗 Architecture](#-architecture)
+5. [🧰 Tech Stack](#-tech-stack)
+6. [🚀 Quick Start](#-quick-start)
+7. [🧪 Development & Testing](#-development--testing)
+8. [📦 API Overview](#-api-overview)
+9. [🗂 Repository Structure](#-repository-structure)
+10. [⚙️ Configuration](#-configuration)
+11. [📚 Documentation](#-documentation)
+12. [🤝 Contributing](#-contributing)
+13. [📄 License & Author](#-license--author)
 
 </details>
 
@@ -91,6 +94,7 @@ A **private, self-hosted second brain**: semantic search, knowledge graphs, time
 
 | | |
 |---|---|
+| 🗣️ **Grounded Ask AI** | Answers only from *your* content — with citations, mic & file uploads |
 | 🕸️ **Hybrid RAG** | Dense + sparse + graph retrieval fused with **RRF** |
 | 🧠 **GraphRAG** | Entity/relation extraction → knowledge graph → community summaries |
 | ⚡ **Streaming UX** | SSE live ingestion progress + token-streamed chat |
@@ -120,17 +124,28 @@ A **private, self-hosted second brain**: semantic search, knowledge graphs, time
 
 | | Feature | What it does |
 |---|---------|--------------|
-| 🧠 | **Unified AI Chat** | RAG + GraphRAG + hybrid search across every source |
+| 🗣️ | **Grounded Ask AI** | Context-only answers with citations — refuses to guess, voice input + file uploads |
 | 🕸️ | **Knowledge Graph** | Auto-extracted entities & relations, interactive React Flow viz |
 | ⏰ | **Memory Timeline** | Chronological view of everything you've ingested |
 | 🔀 | **Cross-Source Intel** | Compare, contrast & synthesize across multiple sources |
-| 🤖 | **AI Workspace** | Persistent threads, follow-ups, citations, confidence scores |
+| 🤖 | **AI Workspace** | Persistent threads, follow-ups, source filters |
 | 🧩 | **Browser Extension** | MV3 one-click clipper for instant capture |
 | 🔔 | **Real-time Processing** | SSE live pipeline updates with progress tracking |
+| 🌓 | **Light & Dark** | One-click theme toggle across the whole app |
 
 </td>
 </tr>
 </table>
+
+---
+
+## 🖼️ Screenshots
+
+| 🌙 Landing — Dark | 💡 Landing — Light |
+|---|---|
+| ![Landing dark](docs/screenshots/landing-dark.png) | ![Landing light](docs/screenshots/landing-light.png) |
+| 💬 Ask AI — Dark | 🕸️ Knowledge Graph |
+| ![Ask AI](docs/screenshots/ask-ai.png) | ![Knowledge graph](docs/screenshots/graph.png) |
 
 ---
 
@@ -159,12 +174,13 @@ A **private, self-hosted second brain**: semantic search, knowledge graphs, time
 
 | Layer | 🛠 Technology |
 |-------|--------------|
-| **Frontend** | Next.js 15, TypeScript, Tailwind CSS, React Query, Zustand, Axios, React Flow |
+| **Frontend** | Next.js 15, TypeScript, Tailwind CSS, React Query, Zustand, Axios, React Flow, Framer Motion, Lenis, Three.js |
 | **Backend** | FastAPI, Python 3.11+, AsyncIO, Pydantic v2 |
 | **AI / ML** | Ollama (Qwen2.5 / Qwen3), nomic-embed-text / BGE-M3, Faster-Whisper, yt-dlp |
 | **Vector DB** | Qdrant (HNSW, payload filtering) |
 | **Relational DB** | PostgreSQL (asyncpg, SQLAlchemy 2.0) |
 | **Cache / Queue** | Redis (BullMQ-style) |
+| **Contact form** | Supabase (Postgres, publishable key) |
 | **Infra** | Docker, Docker Compose, Nginx, GitLab CI/CD |
 | **Extension** | Manifest V3, TypeScript, Webpack |
 
@@ -303,6 +319,8 @@ Edit **`backend/.env`**:
 | 🤖 Models | `OLLAMA_MODEL`, `EMBEDDING_MODEL` |
 | ✂️ Chunking | `CHUNK_SIZE`, `CHUNK_OVERLAP` |
 | 🕸️ Graph | `ENTITY_EXTRACTION_ENABLED`, `RELATION_EXTRACTION_ENABLED` |
+| 🗣️ Chat grounding | `CHAT_MIN_SCORE` (minimum retrieval score before answering) |
+| 🌐 Frontend | `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` |
 | 🔑 API Keys | YouTube, Instagram, etc. |
 
 ---
