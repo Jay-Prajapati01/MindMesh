@@ -61,7 +61,7 @@ export default function InstagramPage() {
       {/* Hero Section */}
       <div className="mb-8 rounded-[24px] border-2 border-ink bg-gradient-to-br from-card via-card to-brand-soft p-8">
         <div className="flex items-start gap-5">
-          <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-[20px] bg-brand-soft shadow-lg shadow-brut">
+          <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-[20px] bg-brand-soft shadow-brut">
             <Camera className="h-7 w-7 text-brand" />
           </div>
           <div className="flex-1">
