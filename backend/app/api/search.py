@@ -5,7 +5,7 @@ from fastapi import APIRouter
 
 from app.core.config import get_settings
 from app.models.schemas import SearchHit, SearchRequest, SearchResponse
-from app.services import embeddings, store, vectorstore
+from app.services import embeddings, note_search, store, vectorstore
 
 router = APIRouter(prefix="/search", tags=["search"])
 
@@ -33,47 +33,8 @@ def _resolve_hit_url(hit: dict, source_type: str, source_id: str, settings) -> s
 
 
 def _note_hits(query: str, source_type: str | None) -> list[SearchHit]:
-    """Match Workspace notes by plain text (notes are not embedded).
-
-    Returns hits with `source_type="note"` so notes are discoverable through
-    search without changing RAG/chat behaviour.
-    """
-    if source_type and source_type != "note":
-        return []
-    needle = query.lower()
-    tokens = [t for t in needle.split() if len(t) >= 2]
-    hits: list[SearchHit] = []
-    for note in store.list_notes():
-        note_id = str(note.get("id", ""))
-        if not note_id:
-            continue
-        title = str(note.get("title") or "")
-        body = str(note.get("body") or "")
-        haystack_title = title.lower()
-        haystack_body = body.lower()
-        if needle and needle in haystack_title:
-            score = 0.95
-        elif needle and needle in haystack_body:
-            score = 0.85
-        elif tokens and all(t in haystack_title or t in haystack_body for t in tokens):
-            score = 0.8 if tokens[0] in haystack_title else 0.7
-        else:
-            continue
-        text = body.strip() or title
-        if len(text) > 500:
-            text = text[:500].rstrip() + "…"
-        hits.append(
-            SearchHit(
-                score=score,
-                text=text,
-                source_id=note_id,
-                source_type="note",
-                title=title or "Untitled note",
-                url=None,
-                thumbnail=None,
-            )
-        )
-    return hits
+    """Adapt plain-text Workspace note matches into SearchHit rows."""
+    return [SearchHit(**hit) for hit in note_search.note_hits(query, source_type)]
 
 
 @router.post("", response_model=SearchResponse)

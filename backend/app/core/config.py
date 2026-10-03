@@ -51,6 +51,10 @@ class Settings(BaseSettings):
     chunk_size: int = 800
     chunk_overlap: int = 120
     top_k: int = 5
+    # Minimum cosine similarity for a retrieved chunk to be used as context.
+    # Chunks below this score are treated as irrelevant so chat answers stay
+    # grounded in the user's own content instead of guessing from noise.
+    chat_min_score: float = 0.3
 
     # PDF Pipeline
     pdf_max_file_size: int = 100 * 1024 * 1024  # 100 MB

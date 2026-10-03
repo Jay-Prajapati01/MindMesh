@@ -8,7 +8,7 @@ from typing import AsyncIterator
 
 from app.core.config import get_settings
 from app.models.schemas import Citation, ChatMessage
-from app.services import embeddings, llm, store, vectorstore
+from app.services import embeddings, llm, note_search, store, vectorstore
 
 _SUMMARY_SYS = (
     "You are a precise assistant that summarizes content. "
@@ -16,15 +16,49 @@ _SUMMARY_SYS = (
 )
 
 _ANSWER_SYS = (
-    "You are MindMesh, a personal knowledge assistant. "
-    "Answer ONLY using the provided context. "
-    "If the answer is not in the context, say you don't have that information. "
-    "Be concise and accurate. "
-    "When you reference a source, include a citation marker like [1], [2] etc. "
+    "You are MindMesh, a personal knowledge assistant that answers ONLY from "
+    "the user's own indexed content provided in CONTEXT. "
+    "Rules: "
+    "1) Never use general or world knowledge - every fact must come from CONTEXT. "
+    "2) If the answer is not in CONTEXT, say you don't have that information in "
+    "the user's content and suggest what they could add. Do not guess or invent. "
+    "3) For greetings or small talk, reply in one short friendly sentence and ask "
+    "what they would like to know from their content; never fabricate details. "
+    "4) Be concise and accurate. "
+    "5) When you reference a source, include a citation marker like [1], [2] etc. "
     "corresponding to the source number in the SOURCES list. "
-    "Always cite sources when referencing specific information. "
-    "You may use conversation history to understand follow-up questions."
+    "6) Conversation history may be used only to understand follow-up questions; "
+    "the facts themselves must still come from CONTEXT."
 )
+
+_NO_CONTEXT_ANSWER = "I don't have any indexed knowledge yet. Add some content first."
+_NO_MATCH_ANSWER = (
+    "I couldn't find anything relevant to that in your indexed content. "
+    "Try rephrasing your question, or add content covering that topic."
+)
+
+
+async def _retrieve(
+    question: str,
+    top_k: int,
+    source_type: str | None = None,
+    source_id: str | None = None,
+) -> list[dict]:
+    """Fetch the most relevant chunks for a question.
+
+    Combines dense vector search over Qdrant with plain-text Workspace note
+    matches (notes are not embedded), drops everything below the relevance
+    threshold, and returns the best `top_k` hits — so chat can reach all of
+    the user's stored data while answers stay grounded in their own content.
+    """
+    settings = get_settings()
+    query_vec = await embeddings.embed_text(question)
+    hits = vectorstore.search(query_vec, top_k, source_type=source_type, source_id=source_id)
+    if not source_id:
+        hits = hits + note_search.note_hits(question, source_type)
+    hits.sort(key=lambda h: h.get("score") or 0.0, reverse=True)
+    relevant = [h for h in hits if (h.get("score") or 0.0) >= settings.chat_min_score]
+    return relevant[:top_k]
 
 
 def _lookup_source_metadata(source_id: str) -> dict:
@@ -139,8 +173,7 @@ async def answer(
     top_k = top_k or settings.top_k
     start_time = time.time()
 
-    query_vec = await embeddings.embed_text(question)
-    hits = vectorstore.search(query_vec, top_k, source_type=source_type, source_id=source_id)
+    hits = await _retrieve(question, top_k, source_type=source_type, source_id=source_id)
     search_time_ms = int((time.time() - start_time) * 1000)
 
     metrics = {
@@ -150,11 +183,11 @@ async def answer(
     }
 
     if not hits:
-        return (
-            "I don't have any indexed knowledge yet. Add some content first.",
-            [],
-            metrics,
-        )
+        # Nothing indexed at all vs. nothing *relevant* to this question:
+        # both refuse to answer rather than falling back to general knowledge.
+        if vectorstore.count() == 0 and not store.list_notes():
+            return (_NO_CONTEXT_ANSWER, [], metrics)
+        return (_NO_MATCH_ANSWER, [], metrics)
 
     context_blocks, citations = [], []
     for idx, hit in enumerate(hits):
@@ -224,11 +257,13 @@ async def answer_stream(
     settings = get_settings()
     top_k = top_k or settings.top_k
 
-    query_vec = await embeddings.embed_text(question)
-    hits = vectorstore.search(query_vec, top_k, source_type=source_type, source_id=source_id)
+    hits = await _retrieve(question, top_k, source_type=source_type, source_id=source_id)
 
     if not hits:
-        yield "I don't have any indexed knowledge yet. Add some content first."
+        if vectorstore.count() == 0 and not store.list_notes():
+            yield _NO_CONTEXT_ANSWER
+        else:
+            yield _NO_MATCH_ANSWER
         return
 
     context_blocks = []
