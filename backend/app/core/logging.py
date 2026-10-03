@@ -25,3 +25,14 @@ def configure_logging() -> None:
 
 def get_logger(name: str) -> logging.Logger:
     return logging.getLogger(name)
+
+
+def safe_log_str(value: str, max_len: int = 200) -> str:
+    """Sanitize a string for safe logging: strip control characters and truncate."""
+    if not value:
+        return ""
+    # Strip control characters (except tab, newline, carriage return)
+    cleaned = "".join(ch if ch >= " " or ch in "\t\n\r" else "\\u{:04x}".format(ord(ch)) for ch in value)
+    if len(cleaned) > max_len:
+        cleaned = cleaned[:max_len] + "..."
+    return cleaned

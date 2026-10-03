@@ -5,6 +5,9 @@
  * Processes survive page navigation and can be reconnected on refresh.
  */
 
+import { API_URL } from "./api";
+import { useAppStore } from "./store";
+
 export interface ProcessState {
   id: string;
   type: string; // "pdf" | "youtube" | "instagram" | "documents" | "audio" | "web"
@@ -120,18 +123,21 @@ class ProcessManager {
   ) {
     try {
       let res: Response;
+      const apiKey = useAppStore.getState().settings.apiKey;
+      const headers: Record<string, string> = apiKey ? { "X-API-Key": apiKey } : {};
       if (file) {
         const formData = new FormData();
         formData.append("file", file);
         res = await fetch(url, {
           method: "POST",
+          headers,
           body: formData,
           signal: abort?.signal,
         });
       } else {
         res = await fetch(url, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { ...headers, "Content-Type": "application/json" },
           body: JSON.stringify(body || {}),
           signal: abort?.signal,
         });

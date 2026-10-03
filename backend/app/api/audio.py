@@ -10,7 +10,7 @@ from app.core.logging import get_logger
 from app.core.uploads import read_upload
 from app.models.schemas import SourceItem
 from app.services import audio, chunking, embeddings, graph, rag, store, vectorstore
-from app.services.sse import sse
+from app.services.sse import public_error, sse
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/audio", tags=["audio"])
@@ -77,7 +77,8 @@ async def process_audio_stream(file: UploadFile = File(...)):
                 yield sse("step_fail", {"step": 2, "error": str(exc)})
                 return
             except Exception as exc:
-                yield sse("step_fail", {"step": 2, "error": str(exc)})
+                logger.exception("Audio transcription failed")
+                yield sse("step_fail", {"step": 2, "error": public_error(exc, "Transcription")})
                 return
             if not parsed["text"]:
                 yield sse("step_fail", {"step": 2, "error": "No speech detected"})
@@ -122,7 +123,7 @@ async def process_audio_stream(file: UploadFile = File(...)):
                 try:
                     vec = await embeddings.embed_text(chunk)
                 except Exception as exc:  # noqa: BLE001
-                    yield sse("step_fail", {"step": 5, "error": f"Embedding failed on chunk {i + 1}/{len(chunks)}: {exc}"})
+                    yield sse("step_fail", {"step": 5, "error": f"Embedding failed on chunk {i + 1}/{len(chunks)} ({type(exc).__name__})"})
                     return
                 vectors.append(vec)
                 yield sse("step_progress", {"step": 5, "progress": int(((i+1)/len(chunks))*100), "sub_text": f"Chunk {i+1}/{len(chunks)}"})
@@ -152,7 +153,7 @@ async def process_audio_stream(file: UploadFile = File(...)):
             yield sse("complete", {"source_id": source_id, "title": parsed.get("title"), "summary": summary, "key_topics": topics, "chunks_indexed": indexed})
         except Exception as exc:
             logger.exception("Audio stream failed")
-            yield sse("step_fail", {"step": 0, "error": str(exc)})
+            yield sse("step_fail", {"step": 0, "error": public_error(exc)})
         finally:
             if not completed and file_path and source_id:
                 from app.services import file_storage

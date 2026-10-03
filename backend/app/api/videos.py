@@ -11,7 +11,7 @@ from app.models.schemas import (
     VideoProcessResponse,
 )
 from app.services import chunking, embeddings, graph, rag, store, vectorstore, youtube
-from app.services.sse import sse
+from app.services.sse import public_error, sse
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/videos", tags=["videos"])
@@ -86,7 +86,8 @@ async def process_video_stream(payload: VideoProcessRequest):
                 })
                 yield sse("preview", {"type": "thumbnail", "thumbnail": metadata.thumbnail, "title": metadata.title, "channel": metadata.channel})
             except Exception as exc:
-                yield sse("step_fail", {"step": 2, "error": str(exc)})
+                logger.exception("Video metadata fetch failed")
+                yield sse("step_fail", {"step": 2, "error": public_error(exc, "Metadata fetch")})
                 return
 
             # ── Step 3: Fetch Transcript ──────────────────────────────────
@@ -138,15 +139,15 @@ async def process_video_stream(payload: VideoProcessRequest):
                 return
             yield sse("step_complete", {"step": 5, "duration_ms": ms(), "chunk_count": len(chunks)})
 
-            # ── Step 6: Create Embeddings ─────────────────────────────────
+# ── Step 6: Create Embeddings ─────────────────────────────────
             yield sse("step_start", {"step": 6, "total_steps": 7, "name": "Creating Embeddings", "description": "Generating vector embeddings..."})
             vectors: list[list[float]] = []
             for i, chunk in enumerate(chunks):
                 try:
                     vec = await embeddings.embed_text(chunk)
                 except Exception as exc:  # noqa: BLE001
-                    # Never index zero-vectors — they poison search results.
-                    yield sse("step_fail", {"step": 6, "error": f"Embedding failed on chunk {i + 1}/{len(chunks)}: {exc}"})
+                    # Never index zero-vectors - they poison search results.
+                    yield sse("step_fail", {"step": 6, "error": f"Embedding failed on chunk {i + 1}/{len(chunks)} ({type(exc).__name__})"})
                     return
                 vectors.append(vec)
                 pct = int(((i + 1) / len(chunks)) * 100)
@@ -194,7 +195,7 @@ async def process_video_stream(payload: VideoProcessRequest):
             yield sse("complete", {"source_id": video_id, "title": metadata.title, "summary": summary, "key_topics": topics, "chunks_indexed": indexed})
         except Exception as exc:
             logger.exception("Videos stream failed")
-            yield sse("step_fail", {"step": 0, "error": str(exc)})
+            yield sse("step_fail", {"step": 0, "error": public_error(exc)})
 
     return StreamingResponse(
         event_generator(),

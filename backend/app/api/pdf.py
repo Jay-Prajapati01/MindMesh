@@ -13,7 +13,7 @@ from app.models.schemas import SourceItem
 from app.services import chunking, embeddings, graph, rag, store, vectorstore
 from app.services.pdf_validator import validate as validate_pdf
 from app.services.pdf_chunker import chunk_document
-from app.services.sse import sse
+from app.services.sse import public_error, sse
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/pdf", tags=["pdf"])
@@ -123,7 +123,8 @@ async def process_pdf_stream(file: UploadFile = File(...)):
             try:
                 doc = extract_doc(file_data, file_name)
             except Exception as exc:
-                yield sse("step_fail", {"step": 3, "error": str(exc)})
+                logger.exception("PDF layout extraction failed")
+                yield sse("step_fail", {"step": 3, "error": public_error(exc, "PDF parsing")})
                 return
             if not doc.markdown:
                 yield sse("step_fail", {"step": 3, "error": "No extractable text in PDF"})
@@ -189,7 +190,7 @@ async def process_pdf_stream(file: UploadFile = File(...)):
                 try:
                     vec = await embeddings.embed_text(chunk_text)
                 except Exception as exc:  # noqa: BLE001
-                    yield sse("step_fail", {"step": 11, "error": f"Embedding failed on chunk {i + 1}/{len(chunk_texts)}: {exc}"})
+                    yield sse("step_fail", {"step": 11, "error": f"Embedding failed on chunk {i + 1}/{len(chunk_texts)} ({type(exc).__name__})"})
                     return
                 vectors.append(vec)
                 yield sse("step_progress", {"step": 11, "progress": int(((i + 1) / len(chunk_texts)) * 100), "sub_text": f"Chunk {i + 1}/{len(chunk_texts)}"})
@@ -254,7 +255,7 @@ async def process_pdf_stream(file: UploadFile = File(...)):
             yield sse("complete", {"source_id": source_id, "title": doc.title, "summary": summary, "key_topics": topics, "chunks_indexed": indexed})
         except Exception as exc:
             logger.exception("PDF stream failed")
-            yield sse("step_fail", {"step": 0, "error": str(exc)})
+            yield sse("step_fail", {"step": 0, "error": public_error(exc)})
         finally:
             if not completed and file_path and source_id:
                 from app.services import file_storage

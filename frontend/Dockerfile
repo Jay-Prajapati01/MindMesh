@@ -2,9 +2,11 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-COPY package.json ./
-RUN npm install
+# Install dependencies first (cached layer)
+COPY package.json package-lock.json ./
+RUN npm ci
 
+# Copy source (in dev, we bind-mount over this anyway)
 COPY . .
 
 EXPOSE 3000

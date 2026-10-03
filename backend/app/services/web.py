@@ -10,7 +10,8 @@ import re
 from urllib.parse import urlparse, urljoin
 
 from app.core.config import get_settings
-from app.core.logging import get_logger
+from app.core.logging import get_logger, safe_log_str
+from app.core.ssrf import SSRFBlockedError, validate_public_url, safe_get
 
 logger = get_logger(__name__)
 
@@ -65,6 +66,9 @@ async def fetch_article(url: str) -> dict:
     """
     if not url.startswith(("http://", "https://")):
         raise ValueError("URL must start with http:// or https://")
+
+    # SSRF guard: reject internal/private addresses before any fetch
+    validate_public_url(url)
 
     # Handle YouTube video URLs via transcript API
     if _is_youtube_video(url):
@@ -125,8 +129,10 @@ async def fetch_article(url: str) -> dict:
     # Try httpx first (fast, no browser needed)
     try:
         text, title = await _fetch_with_httpx(url)
+    except SSRFBlockedError:
+        raise
     except Exception as exc:
-        logger.info("httpx failed for %s: %s", url, exc)
+        logger.info("httpx failed for %s: %s", safe_log_str(url), exc)
 
     # If httpx got too little content, try Crawl4AI (browser-based, slower)
     if len(text) < 100:
@@ -144,10 +150,19 @@ async def fetch_article(url: str) -> dict:
             run_config = CrawlerRunConfig(
                 cache_mode=cache_mode,
                 word_count_threshold=10,
+                page_timeout=settings.fetch_timeout_seconds * 1000,
             )
 
             async with AsyncWebCrawler(config=browser_config) as crawler:
                 result = await crawler.arun(url, config=run_config)
+
+            # Re-validate final URL if crawler followed redirects (DNS rebinding mitigation)
+            final_url = getattr(result, "redirected_url", None) or getattr(result, "url", url)
+            if final_url != url:
+                try:
+                    validate_public_url(final_url)
+                except SSRFBlockedError:
+                    raise
 
             if result.success and result.markdown:
                 fit = getattr(result.markdown, "fit_markdown", None) or ""
@@ -168,7 +183,7 @@ async def fetch_article(url: str) -> dict:
 
 
 async def _fetch_with_httpx(url: str) -> tuple[str, str]:
-    """Fallback fetcher using httpx + basic HTML parsing."""
+    """Fallback fetcher using httpx + basic HTML parsing (with SSRF revalidation)."""
     import httpx
 
     headers = {
@@ -178,13 +193,23 @@ async def _fetch_with_httpx(url: str) -> tuple[str, str]:
         )
     }
 
-    async with httpx.AsyncClient(timeout=30, follow_redirects=True, headers=headers) as client:
-        resp = await client.get(url)
-        resp.raise_for_status()
-        html = resp.text
+    status, body, final_url = await safe_get(
+        url,
+        timeout=30,
+        headers=headers,
+        max_bytes=settings.fetch_max_bytes,
+    )
+    html = body.decode("utf-8", errors="replace")
+
+    # Re-validate final URL after redirects (DNS rebinding mitigation)
+    if final_url != url:
+        try:
+            validate_public_url(final_url)
+        except SSRFBlockedError:
+            raise
 
     # Extract title
-    title = url
+    title = final_url
     title_match = re.search(r"<title[^>]*>([^<]+)</title>", html, re.IGNORECASE)
     if title_match:
         title = title_match.group(1).strip()
@@ -229,7 +254,7 @@ async def _fetch_youtube_video(url: str) -> dict:
 
 
 async def _fetch_pdf_url(url: str) -> dict:
-    """Download and extract text from a PDF URL."""
+    """Download and extract text from a PDF URL (with SSRF revalidation)."""
     import tempfile
     from pathlib import Path
 
@@ -242,12 +267,22 @@ async def _fetch_pdf_url(url: str) -> dict:
         )
     }
 
-    async with httpx.AsyncClient(timeout=60, follow_redirects=True, headers=headers) as client:
-        resp = await client.get(url)
-        resp.raise_for_status()
+    # Validate initial URL
+    validate_public_url(url)
+
+    status, body, final_url = await safe_get(
+        url,
+        timeout=60,
+        headers=headers,
+        max_bytes=settings.fetch_max_bytes,
+    )
+
+    # Re-validate final URL after redirects
+    if final_url != url:
+        validate_public_url(final_url)
 
     with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
-        tmp.write(resp.content)
+        tmp.write(body)
         tmp_path = tmp.name
 
     try:
@@ -259,7 +294,7 @@ async def _fetch_pdf_url(url: str) -> dict:
             text_parts.append(page.get_text())
 
         # Extract metadata BEFORE closing the document
-        title = url
+        title = final_url
         try:
             metadata = doc.metadata
             if metadata and metadata.get("title"):
@@ -270,12 +305,12 @@ async def _fetch_pdf_url(url: str) -> dict:
         doc.close()
         text = "\n".join(text_parts).strip()
 
-        if title == url and text_parts:
+        if title == final_url and text_parts:
             first_line = text_parts[0].split("\n")[0].strip()
             if 10 < len(first_line) < 100:
                 title = first_line
 
-        return {"url": url, "title": title, "text": text}
+        return {"url": final_url, "title": title, "text": text}
     finally:
         import os
         os.unlink(tmp_path)

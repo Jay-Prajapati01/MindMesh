@@ -5,7 +5,8 @@ services:
     env_file:
       - ./backend/.env
     ports:
-      - "8000:8000"
+      # Loopback-only: never expose the (unauthenticated in dev) API to the LAN.
+      - "127.0.0.1:8000:8000"
     depends_on:
       - qdrant
     extra_hosts:
@@ -29,7 +30,7 @@ services:
       - WATCHPACK_POLLING=true
       - CHOKIDAR_USEPOLLING=true
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     depends_on:
       - backend
     volumes:
@@ -41,8 +42,11 @@ services:
     image: qdrant/qdrant:latest
     container_name: mindmesh-qdrant
     ports:
-      - "6333:6333"
-      - "6334:6334"
+      # Loopback-only: the backend reaches Qdrant as http://qdrant:6333 on the
+      # internal network; publishing on 0.0.0.0 would expose the whole
+      # knowledge base without authentication.
+      - "127.0.0.1:6333:6333"
+      - "127.0.0.1:6334:6334"
     volumes:
       - qdrant_storage:/qdrant/storage
 

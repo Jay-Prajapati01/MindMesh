@@ -9,6 +9,16 @@ export const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+// Attach X-API-Key from settings store on every mutating request
+api.interceptors.request.use((config) => {
+  const state = useAppStore.getState();
+  if (state.settings.apiKey) {
+    config.headers = config.headers || {};
+    config.headers["X-API-Key"] = state.settings.apiKey;
+  }
+  return config;
+});
+
 export interface VideoMetadata {
   video_id: string;
   title?: string;

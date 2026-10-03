@@ -238,11 +238,19 @@ export function SearchResultCard({ hit, index }: Props) {
           const urlStr = hit.url || "";
           // Only http(s) links and absolute paths ("/api/...") are valid.
           // Anything else (e.g. a channel name) would produce a garbage URL.
-          const sourceUrl = urlStr.startsWith("http")
-            ? urlStr
-            : urlStr.startsWith("/")
-            ? `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${urlStr}`
-            : null;
+          let sourceUrl: string | null = null;
+          if (urlStr.startsWith("/")) {
+            sourceUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${urlStr}`;
+          } else {
+            try {
+              const u = new URL(urlStr);
+              if (u.protocol === "http:" || u.protocol === "https:") {
+                sourceUrl = urlStr;
+              }
+            } catch {
+              // invalid URL
+            }
+          }
           return sourceUrl ? (
             <a
               href={sourceUrl}

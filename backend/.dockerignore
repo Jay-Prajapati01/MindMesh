@@ -1,0 +1,20 @@
+# Secrets and local env — never bake into image layers
+.env
+.env.*
+!.env.example
+
+# Local data (bind-mounted at runtime anyway)
+data/
+uploads/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+venv/
+.venv/
+
+# Tests are not needed inside the runtime image
+tests/

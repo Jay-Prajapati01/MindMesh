@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from app.core.logging import get_logger
 from app.models.schemas import SourceItem
 from app.services import chunking, embeddings, graph, rag, store, vectorstore, web
-from app.services.sse import sse
+from app.services.sse import public_error, sse
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/web", tags=["web"])
@@ -74,7 +74,7 @@ async def process_web_stream(payload: WebRequest):
                 return
             except Exception as exc:
                 logger.exception("Fetch failed for %s", payload.url)
-                yield sse("step_fail", {"step": 2, "error": f"Failed to fetch content: {exc}"})
+                yield sse("step_fail", {"step": 2, "error": public_error(exc, "Content fetch")})
                 return
 
             text = article.get("text", "").strip()
@@ -131,7 +131,7 @@ async def process_web_stream(payload: WebRequest):
                 try:
                     vec = await embeddings.embed_text(chunk)
                 except Exception as exc:  # noqa: BLE001
-                    yield sse("step_fail", {"step": 4, "error": f"Embedding failed on chunk {i + 1}/{len(chunks)}: {exc}"})
+                    yield sse("step_fail", {"step": 4, "error": f"Embedding failed on chunk {i + 1}/{len(chunks)} ({type(exc).__name__})"})
                     return
                 vectors.append(vec)
                 yield sse("step_progress", {"step": 4, "progress": int(((i+1)/len(chunks))*100), "sub_text": f"Chunk {i+1}/{len(chunks)}"})
@@ -158,6 +158,6 @@ async def process_web_stream(payload: WebRequest):
             yield sse("complete", {"source_id": source_id, "title": title, "summary": summary, "key_topics": topics, "chunks_indexed": indexed})
         except Exception as exc:
             logger.exception("Web stream failed")
-            yield sse("step_fail", {"step": 0, "error": str(exc)})
+            yield sse("step_fail", {"step": 0, "error": public_error(exc)})
 
     return StreamingResponse(event_generator(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"})

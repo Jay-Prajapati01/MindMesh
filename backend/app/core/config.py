@@ -21,6 +21,36 @@ class Settings(BaseSettings):
     # require an X-API-Key header matching this value.
     api_key: str = ""
 
+    # Request body caps enforced in middleware BEFORE parsing (a huge body
+    # otherwise buffers/spools to disk before any in-handler size check).
+    max_json_body_size: int = 10 * 1024 * 1024  # 10 MB for JSON endpoints
+    # multipart: max_upload_size + slack for form fields/boundaries
+    max_multipart_body_size: int = 210 * 1024 * 1024
+
+    # SSRF guard for outbound fetches (web ingestion, PDF URLs, crawler).
+    # Blocks loopback/private/link-local/metadata addresses. Set to false
+    # only if you intentionally ingest pages from internal addresses.
+    ssrf_block_private: bool = True
+
+    # Rate limiting — on by default in every environment.
+    rate_limit_enabled: bool = True
+    rate_limit_max_requests: int = 120
+    rate_limit_window: int = 60
+    # Trust X-Forwarded-For only when behind a reverse proxy you control.
+    trust_proxy: bool = False
+
+    # Concurrency cap for heavy pipelines (transcription, OCR, downloads).
+    max_concurrent_heavy_tasks: int = 2
+
+    # Parser limits (zip bombs, huge PDFs).
+    max_pdf_pages: int = 500
+    zip_max_uncompressed_bytes: int = 500 * 1024 * 1024  # 500 MB
+    zip_max_ratio: int = 200
+
+    # Outbound fetch limits.
+    fetch_max_bytes: int = 20 * 1024 * 1024  # 20 MB
+    fetch_timeout_seconds: int = 30
+
     # Uploads
     max_upload_size: int = 200 * 1024 * 1024  # 200 MB
 
@@ -81,13 +111,25 @@ class Settings(BaseSettings):
         """Validate critical settings at startup."""
         import logging
         logger = logging.getLogger(__name__)
-        
+
+        # Normalize so "Production"/" PROD" cannot silently disable the
+        # API-key guard or the rate limiter (exact-case comparisons before).
+        self.environment = self.environment.strip().lower()
+
+        # allow_credentials=True is hardcoded in main.py; Starlette would
+        # reflect any request Origin if "*" were allowed — reject it outright.
+        if "*" in self.cors_origin_list:
+            raise ValueError(
+                "CORS_ORIGINS must not contain '*' when credentials are "
+                "allowed. List explicit origins instead."
+            )
+
         if self.environment == "production":
             if self.cors_origins == "http://localhost:3000,http://127.0.0.1:3000":
                 logger.warning("CORS origins are set to localhost in production! Set CORS_ORIGINS env var.")
             if self.data_dir == "/app/data":
                 logger.warning("Using default data_dir in production. Set DATA_DIR env var.")
-        
+
         return self
 
 

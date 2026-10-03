@@ -5,6 +5,8 @@ development keeps working without any header.
 """
 from __future__ import annotations
 
+import secrets
+
 from fastapi import HTTPException, Security
 from fastapi.security import APIKeyHeader
 
@@ -24,5 +26,6 @@ async def require_key(key: str | None = Security(_api_key_header)) -> None:
             status_code=503,
             detail="API key authentication is not configured (set API_KEY).",
         )
-    if key != settings.api_key:
+    # Constant-time comparison — a plain != leaks timing information.
+    if not key or not secrets.compare_digest(key.encode(), settings.api_key.encode()):
         raise HTTPException(status_code=401, detail="Invalid or missing API key")

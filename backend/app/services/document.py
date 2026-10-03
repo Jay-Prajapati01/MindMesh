@@ -11,7 +11,9 @@ from __future__ import annotations
 import csv
 import io
 import re
+import zipfile
 
+from app.core.config import get_settings
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -19,6 +21,37 @@ logger = get_logger(__name__)
 SUPPORTED = {".docx", ".pptx", ".txt", ".md", ".markdown", ".csv", ".xlsx"}
 
 SUPPORTED_LABELS = "DOCX, PPTX, XLSX, CSV, TXT, Markdown (MD)"
+
+_ZIP_EXTENSIONS = {".docx", ".pptx", ".xlsx"}
+
+
+def _validate_zip_bomb(data: bytes, filename: str) -> None:
+    """Reject ZIP-based files that exceed uncompressed size or ratio limits."""
+    lower = filename.lower()
+    ext = "." + lower.rsplit(".", 1)[-1] if "." in lower else ""
+    if ext not in _ZIP_EXTENSIONS:
+        return
+    settings = get_settings()
+    try:
+        with zipfile.ZipFile(io.BytesIO(data)) as zf:
+            total = 0
+            for info in zf.infolist():
+                total += info.file_size
+                if total > settings.zip_max_uncompressed_bytes:
+                    raise ValueError(
+                        f"ZIP uncompressed size ({total} bytes) exceeds limit "
+                        f"({settings.zip_max_uncompressed_bytes} bytes)"
+                    )
+            if settings.zip_max_uncompressed_bytes > 0 and len(data) > 0:
+                ratio = total / len(data)
+                if ratio > settings.zip_max_ratio:
+                    raise ValueError(
+                        f"ZIP decompression ratio ({ratio:.1f}:1) exceeds limit "
+                        f"({settings.zip_max_ratio}:1)"
+                    )
+    except zipfile.BadZipFile:
+        # Not a valid ZIP; let the format-specific extractor handle the error
+        pass
 
 
 def _md_escape(cell: str) -> str:
@@ -188,6 +221,9 @@ def extract_text(data: bytes, filename: str) -> dict:
             f"Unsupported document type: {ext or filename}. "
             f"Supported formats: {SUPPORTED_LABELS}"
         )
+
+    if ext in _ZIP_EXTENSIONS:
+        _validate_zip_bomb(data, filename)
 
     if ext == ".docx":
         text = _extract_docx(data)

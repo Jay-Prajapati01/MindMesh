@@ -1,6 +1,7 @@
 stages:
   - lint
   - test
+  - audit
   - build
 
 backend-lint:
@@ -37,6 +38,31 @@ backend-test:
     - changes:
         - backend/**/*
 
+# Dependency vulnerability audits
+backend-audit:
+  stage: audit
+  image: python:3.11-slim
+  before_script:
+    - pip install pip-audit
+  script:
+    - pip-audit -r backend/requirements.txt
+  allow_failure: true
+  rules:
+    - changes:
+        - backend/requirements.txt
+        - backend/Dockerfile
+
+frontend-audit:
+  stage: audit
+  image: node:20-alpine
+  script:
+    - cd frontend && npm install && npm audit --audit-level=high
+  allow_failure: true
+  rules:
+    - changes:
+        - frontend/package.json
+        - frontend/package-lock.json
+
 backend-build:
   stage: build
   image: docker:24
@@ -47,3 +73,14 @@ backend-build:
   rules:
     - changes:
         - backend/**/*
+
+frontend-build:
+  stage: build
+  image: docker:24
+  services:
+    - docker:24-dind
+  script:
+    - docker build -t mindmesh-frontend ./frontend
+  rules:
+    - changes:
+        - frontend/**/*

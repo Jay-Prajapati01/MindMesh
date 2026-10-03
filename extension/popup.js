@@ -15,8 +15,26 @@ async function init() {
   apiEl.value = stored.apiUrl || "http://localhost:8000";
 }
 
+function validateApiUrl(url: string): { ok: boolean; error?: string } {
+  try {
+    const u = new URL(url);
+    if (u.protocol === "https:") return { ok: true };
+    if (u.protocol === "http:" && u.hostname === "localhost" && u.port === "8000") return { ok: true };
+    return { ok: false, error: "Only https:// or http://localhost:8000 are allowed" };
+  } catch {
+    return { ok: false, error: "Invalid URL" };
+  }
+}
+
 apiEl.addEventListener("change", () => {
-  chrome.storage.sync.set({ apiUrl: apiEl.value.trim() });
+  const val = apiEl.value.trim();
+  const check = validateApiUrl(val);
+  if (check.ok) {
+    chrome.storage.sync.set({ apiUrl: val });
+  } else {
+    apiEl.value = "http://localhost:8000";
+    alert(check.error);
+  }
 });
 
 saveEl.addEventListener("click", async () => {

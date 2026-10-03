@@ -4,6 +4,7 @@ from __future__ import annotations
 import io
 from dataclasses import dataclass, field
 
+from app.core.config import get_settings
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -57,6 +58,17 @@ def validate(data: bytes, filename: str = "") -> ValidationResult:
 
         doc = fitz.open(stream=data, filetype="pdf")
         result.page_count = doc.page_count
+
+        # Page count cap to prevent resource exhaustion (M-10)
+        settings = get_settings()
+        if settings.max_pdf_pages and result.page_count > settings.max_pdf_pages:
+            result.valid = False
+            result.errors.append(
+                f"PDF has {result.page_count} pages, exceeding the limit of "
+                f"{settings.max_pdf_pages} pages"
+            )
+            doc.close()
+            return result
 
         if doc.is_encrypted:
             result.is_encrypted = True

@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 
 from app.core.config import get_settings
-from app.core.logging import get_logger
+from app.core.logging import get_logger, safe_log_str
 
 logger = get_logger(__name__)
 
@@ -42,7 +42,7 @@ def save_file(source_id: str, data: bytes, source_type: str, filename: str) -> s
     file_path = dir_path / fname
     file_path.write_bytes(data)
     rel = f"files/{_TYPE_DIR_MAP.get(source_type, source_type)}/{fname}"
-    logger.info("Saved %s file: %s (%d bytes)", source_type, rel, len(data))
+    logger.info("Saved %s file: %s (%d bytes)", source_type, safe_log_str(rel), len(data))
     return rel
 
 

@@ -1,0 +1,73 @@
+# Local Development Docker Compose
+# Usage: docker compose -f deploy/docker-compose.dev.yml up
+# Or: docker compose -f deploy/docker-compose.dev.yml up --build
+
+services:
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: mindmesh-backend-dev
+    env_file:
+      - ../backend/.env.development
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      - qdrant
+      - ollama
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    shm_size: "1g"
+    volumes:
+      - ../backend:/app
+      - backend_data:/app/data
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: mindmesh-frontend-dev
+    env_file:
+      - ../frontend/.env.development
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+      - NEXT_TELEMETRY_DISABLED=1
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: mindmesh-qdrant-dev
+    ports:
+      - "127.0.0.1:6333:6333"
+      - "127.0.0.1:6334:6334"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: mindmesh-ollama-dev
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - ollama_storage:/root/.ollama
+    # Pre-pull models on startup (optional, speeds up first request)
+    # command: serve
+
+volumes:
+  qdrant_storage:
+    driver: local
+  ollama_storage:
+    driver: local
+  backend_data:
+    driver: local

@@ -16,7 +16,7 @@ class HealthResponse(BaseModel):
 
 
 class VideoProcessRequest(BaseModel):
-    url: str = Field(..., description="YouTube video URL")
+    url: str = Field(..., min_length=1, max_length=2048, description="YouTube video URL")
 
 
 class VideoMetadata(BaseModel):
@@ -51,9 +51,11 @@ def _clean_text(value: str, field_name: str, max_len: int) -> str:
 
 class SearchRequest(BaseModel):
     query: str
-    top_k: int | None = None
+    # Bounded: an unbounded top_k lets a caller materialize the entire
+    # collection in the app process (or 500 on negative values).
+    top_k: int | None = Field(default=None, ge=1, le=50)
     source_type: str | None = Field(
-        default=None, description="Optional filter by source type"
+        default=None, max_length=32, description="Optional filter by source type"
     )
 
     @field_validator("query", mode="after")
@@ -81,16 +83,16 @@ class SearchResponse(BaseModel):
 
 
 class ChatMessage(BaseModel):
-    role: str  # "user" or "assistant"
-    content: str
+    role: str = Field(..., max_length=16)  # "user" or "assistant"
+    content: str = Field(..., max_length=20000)
 
 
 class ChatRequest(BaseModel):
     question: str
-    top_k: int | None = None
-    source_type: str | None = None
-    source_id: str | None = None
-    history: list[ChatMessage] = []
+    top_k: int | None = Field(default=None, ge=1, le=50)
+    source_type: str | None = Field(default=None, max_length=32)
+    source_id: str | None = Field(default=None, max_length=128)
+    history: list[ChatMessage] = Field(default_factory=list, max_length=50)
 
     @field_validator("question", mode="after")
     @classmethod

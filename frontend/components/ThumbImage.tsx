@@ -32,6 +32,7 @@ export function ThumbImage({
       alt={alt}
       loading="lazy"
       className={className}
+      referrerPolicy="no-referrer"
       onError={() => setFailed(true)}
     />
   );

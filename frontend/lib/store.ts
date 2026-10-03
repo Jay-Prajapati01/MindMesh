@@ -8,6 +8,7 @@ interface Settings {
   accentColor: "orange" | "purple" | "blue" | "green" | "rose";
   density: "comfortable" | "compact";
   animations: "enabled" | "reduced";
+  apiKey: string;
 }
 
 export interface Notification {
@@ -59,6 +60,7 @@ export const useAppStore = create<AppState>()(
         accentColor: "orange",
         density: "comfortable",
         animations: "enabled",
+        apiKey: "",
       },
       recentSearches: [],
       recentQuestions: [],

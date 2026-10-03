@@ -26,8 +26,11 @@ async def health() -> HealthResponse:
 async def health_detailed():
     """Detailed health check including service dependencies."""
     settings = get_settings()
+    # Exception text can include internal base URLs (qdrant/ollama) — only
+    # surface those details outside production (I-2).
+    show_details = settings.environment != "production"
     checks = {"app": "ok", "ollama": "unknown", "qdrant": "unknown"}
-    
+
     # Check Ollama
     try:
         async with httpx.AsyncClient(base_url=settings.ollama_url, timeout=5) as client:
@@ -35,10 +38,10 @@ async def health_detailed():
             if resp.status_code == 200:
                 checks["ollama"] = "ok"
             else:
-                checks["ollama"] = f"error: status {resp.status_code}"
+                checks["ollama"] = "error" if not show_details else f"error: status {resp.status_code}"
     except Exception as e:
-        checks["ollama"] = f"error: {str(e)[:100]}"
-    
+        checks["ollama"] = "error" if not show_details else f"error: {str(e)[:100]}"
+
     # Check Qdrant
     try:
         from app.services.vectorstore import get_client
@@ -46,17 +49,23 @@ async def health_detailed():
         collections = client.get_collections()
         checks["qdrant"] = "ok"
     except Exception as e:
-        checks["qdrant"] = f"error: {str(e)[:100]}"
-    
+        checks["qdrant"] = "error" if not show_details else f"error: {str(e)[:100]}"
+
     overall_status = "ok" if all(v == "ok" for v in checks.values()) else "degraded"
-    
-    return {
+
+    payload = {
         "status": overall_status,
         "app": settings.app_name,
         "environment": settings.environment,
         "version": __version__,
-        "llm_model": settings.llm_model,
-        "embedding_model": settings.embedding_model,
-        "collection": settings.qdrant_collection,
         "checks": checks,
     }
+    if show_details:
+        payload.update(
+            {
+                "llm_model": settings.llm_model,
+                "embedding_model": settings.embedding_model,
+                "collection": settings.qdrant_collection,
+            }
+        )
+    return payload

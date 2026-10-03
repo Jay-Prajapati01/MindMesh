@@ -35,19 +35,34 @@ export function InlineCitation({ index, sourceTitle, sourceType, snippet, url }:
             <span className="rounded-full bg-[#FF5C00]/15 px-1.5 py-0.5 text-[9px] font-semibold text-[#FF5C00] capitalize">
               {sourceType}
             </span>
-            {url && (url.startsWith("http") || url.startsWith("/")) && (
-              <a
-                href={
-                  url.startsWith("http")
-                    ? url
-                    : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${url}`
+            {url && (
+              (() => {
+                if (url.startsWith("/")) {
+                  return `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${url}`;
                 }
-                target={url.startsWith("http") ? "_blank" : "_self"}
-                rel="noopener noreferrer"
-                className="ml-auto flex items-center gap-0.5 text-[9px] text-[#B96A00] hover:text-[#B96A00] transition-colors"
-              >
-                Open <ExternalLink className="h-2.5 w-2.5" />
-              </a>
+                try {
+                  const u = new URL(url);
+                  if (u.protocol === "http:" || u.protocol === "https:") {
+                    return url;
+                  }
+                } catch {
+                  return null;
+                }
+                return null;
+              })() && (
+                <a
+                  href={
+                    url.startsWith("http")
+                      ? url
+                      : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${url}`
+                  }
+                  target={url.startsWith("http") ? "_blank" : "_self"}
+                  rel="noopener noreferrer"
+                  className="ml-auto flex items-center gap-0.5 text-[9px] text-[#B96A00] hover:text-[#B96A00] transition-colors"
+                >
+                  Open <ExternalLink className="h-2.5 w-2.5" />
+                </a>
+              )
             )}
           </div>
           <div className="mb-1 text-[11px] font-medium text-foreground">{sourceTitle}</div>
