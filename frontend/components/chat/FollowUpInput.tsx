@@ -44,8 +44,8 @@ export function FollowUpInput({ onSend, loading }: Props) {
       transition={{ delay: 0.3 }}
       className="space-y-3"
     >
-      <div className="rounded-[16px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-4">
-        <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[#71717A]">
+      <div className="rounded-[16px] border-2 border-ink bg-card p-4">
+        <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted">
           Ask More
         </div>
         <ChatInput
@@ -68,7 +68,7 @@ export function FollowUpInput({ onSend, loading }: Props) {
             whileHover={{ scale: 1.03, y: -1 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => onSend(chip.query)}
-            className="flex items-center gap-1.5 rounded-full border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.03)] px-3 py-1.5 text-[11px] text-[#A1A1AA] transition-all hover:border-[#6E56CF]/30 hover:bg-[#6E56CF]/10 hover:text-[#6E56CF]"
+            className="flex items-center gap-1.5 rounded-full border-2 border-ink bg-surface px-3 py-1.5 text-[11px] text-foreground-3 transition-all hover:border-[#FF5C00]/30 hover:bg-[#FF5C00]/10 hover:text-[#FF5C00]"
           >
             <chip.icon className="h-3 w-3" />
             {chip.label}

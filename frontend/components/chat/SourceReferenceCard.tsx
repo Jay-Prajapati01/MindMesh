@@ -31,13 +31,13 @@ function getSourceIcon(type: string) {
 
 function getSourceColor(type: string) {
   switch (type) {
-    case "youtube": return "#EF4444";
-    case "instagram": return "#E1306C";
-    case "pdf": return "#DC2626";
-    case "document": return "#7C3AED";
-    case "audio": return "#059669";
-    case "web": return "#0EA5E9";
-    default: return "#71717A";
+    case "youtube": return "#FF5C00";
+    case "instagram": return "#FF5C00";
+    case "pdf": return "#E14E00";
+    case "document": return "#E14E00";
+    case "audio": return "#E14E00";
+    case "web": return "#B96A00";
+    default: return "#6B5B4D";
   }
 }
 
@@ -81,13 +81,13 @@ export function SourceReferenceCard({ sources, visibleCount = 5 }: Props) {
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-[12px] font-semibold uppercase tracking-wider text-[#71717A]">
+        <h3 className="text-[12px] font-semibold uppercase tracking-wider text-muted">
           Sources
         </h3>
         {hasMore && (
           <button
             onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-1 text-[11px] text-[#6E56CF] hover:text-[#7C69E3] transition-colors"
+            className="flex items-center gap-1 text-[11px] text-[#FF5C00] hover:text-[#E14E00] transition-colors"
           >
             {expanded ? "Show less" : `View all ${sources.length} sources`}
             {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
@@ -113,7 +113,7 @@ export function SourceReferenceCard({ sources, visibleCount = 5 }: Props) {
                   href={url || "#"}
                   target={url?.startsWith("http") ? "_blank" : "_self"}
                   rel="noopener noreferrer"
-                  className="group relative block overflow-hidden rounded-[14px] border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)] p-3 transition-all duration-200 hover:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(255,255,255,0.04)]"
+                  className="group relative block overflow-hidden rounded-[14px] border-2 border-ink bg-surface p-3 transition-all duration-200 hover:border-border hover:bg-surface"
                 >
                   <div className="flex gap-3">
                     {source.thumbnail ? (
@@ -142,12 +142,12 @@ export function SourceReferenceCard({ sources, visibleCount = 5 }: Props) {
                           {source.source_type}
                         </span>
                         {source.score > 0 && (
-                          <span className="text-[10px] font-semibold text-[#22C55E]">
+                          <span className="text-[10px] font-semibold text-[#FF5C00]">
                             {(source.score * 100).toFixed(0)}%
                           </span>
                         )}
                       </div>
-                      <div className="truncate text-[11px] font-medium text-[#F5F5F5]">
+                      <div className="truncate text-[11px] font-medium text-foreground">
                         {source.title || source.source_id}
                       </div>
                       {url && (
@@ -160,7 +160,7 @@ export function SourceReferenceCard({ sources, visibleCount = 5 }: Props) {
                             <ExternalLink className="h-2.5 w-2.5" />
                           </span>
                           {source.source_type !== "youtube" && source.source_type !== "web" && source.source_type !== "instagram" && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-[rgba(255,255,255,0.06)] px-2 py-0.5 text-[9px] font-semibold text-[#A1A1AA] transition-colors hover:bg-[rgba(255,255,255,0.1)]">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-[9px] font-semibold text-foreground-3 transition-colors hover:bg-surface">
                               <Download className="h-2.5 w-2.5" />
                               Download
                             </span>

@@ -4,19 +4,31 @@ import { useState, useCallback, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { Sparkles, Search as SearchIcon, HelpCircle, MessageSquare } from "lucide-react";
-import { askChat, ChatResponse, ChatMessage, getStats, SourceItem } from "@/lib/api";
+import { Sparkles, HelpCircle, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  askChat,
+  ChatResponse,
+  ChatMessage,
+  getStats,
+  processPdf,
+  processDocument,
+  processAudio,
+} from "@/lib/api";
 import { useAppStore } from "@/lib/store";
 import {
   ChatInput,
   SourceFilterChips,
   AnswerCard,
   FollowUpInput,
-  ChatSidebar,
   ChatEmptyState,
   ChatLoadingState,
   ChatErrorState,
 } from "@/components/chat";
+
+type UploadStatus =
+  | { status: "uploading" | "done" | "error"; name: string; message?: string };
+
+const AUDIO_EXTENSIONS = ["mp3", "wav", "m4a", "aac", "flac", "ogg", "mp4", "webm"];
 
 export default function ChatPage() {
   // useSearchParams() requires a Suspense boundary for `next build`
@@ -46,9 +58,11 @@ function ChatPageInner() {
   });
   const [filter, setFilter] = useState(sourceParam);
   const [sourceId, setSourceId] = useState(sourceIdParam);
-  const [history, setHistory] = useState<(ChatResponse & { searchHits?: any[] })[]>([]);
+  const [history, setHistory] = useState<ChatResponse[]>([]);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [pendingQuestion, setPendingQuestion] = useState("");
+  const [upload, setUpload] = useState<UploadStatus | null>(null);
   const addQuestion = useAppStore((s) => s.addQuestion);
   const queryClient = useQueryClient();
 
@@ -61,8 +75,11 @@ function ChatPageInner() {
   const mutation = useMutation({
     mutationFn: (q: string) =>
       askChat(q, filter || undefined, sourceId || undefined, chatHistory),
+    onMutate: (q) => {
+      setPendingQuestion(q);
+    },
     onSuccess: (data) => {
-      setHistory((h) => [...h, { ...data, searchHits: [] }]);
+      setHistory((h) => [...h, data]);
       setChatHistory((h) => [
         ...h,
         { role: "user", content: data.question },
@@ -97,6 +114,35 @@ function ChatPageInner() {
     }
   }, [query, handleSend]);
 
+  const handleFile = useCallback(
+    async (file: File) => {
+      setUpload({ status: "uploading", name: file.name });
+      try {
+        const ext = file.name.split(".").pop()?.toLowerCase() || "";
+        if (ext === "pdf") {
+          await processPdf(file);
+        } else if (AUDIO_EXTENSIONS.includes(ext)) {
+          await processAudio(file);
+        } else {
+          await processDocument(file);
+        }
+        setUpload({ status: "done", name: file.name });
+        queryClient.invalidateQueries({ queryKey: ["stats"] });
+        queryClient.invalidateQueries({ queryKey: ["sources"] });
+        setTimeout(() => setUpload(null), 4000);
+      } catch (err: any) {
+        setUpload({
+          status: "error",
+          name: file.name,
+          message:
+            err?.response?.data?.detail || err?.message || "Upload failed. Please try again.",
+        });
+        setTimeout(() => setUpload(null), 8000);
+      }
+    },
+    [queryClient]
+  );
+
   // Auto-send when navigated from another page with context params.
   // Depends only on stable values: `mutation` (and therefore `handleSend`)
   // changes identity every render, which would cancel the timer forever.
@@ -120,15 +166,6 @@ function ChatPageInner() {
   const hasHistory = history.length > 0;
   const lastResponse = history[history.length - 1];
 
-  const relatedQuestions = [
-    "What are the key insights from this answer?",
-    "How does this connect to other sources?",
-    "What are the main arguments presented?",
-    "Can you compare this with my other content?",
-    "What evidence supports this answer?",
-    "What are the implications of this?",
-  ];
-
   return (
     <div className="min-h-screen">
       {/* Header */}
@@ -140,29 +177,29 @@ function ChatPageInner() {
       >
         <div className="min-w-0">
           <div className="flex items-center gap-3">
-            <h1 className="text-[24px] font-bold text-[#F5F5F5] tracking-tight">
+            <h1 className="text-[24px] font-bold text-foreground tracking-tight">
               Ask AI
             </h1>
-            <Sparkles className="h-5 w-5 text-[#6E56CF]" />
+            <Sparkles className="h-5 w-5 text-[#FF5C00]" />
           </div>
-          <p className="mt-1 text-[13px] text-[#71717A]">
-            One question, answered across everything you&apos;ve indexed. Grounded with citations.
+          <p className="mt-1 text-[13px] text-muted">
+            Chat with everything you&apos;ve indexed.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 rounded-md bg-[rgba(255,255,255,0.04)] px-2.5 py-1.5">
-            <Sparkles className="h-3 w-3 text-[#71717A]" />
-            <span className="text-[11px] font-medium text-[#71717A]">⌘K</span>
+          <div className="flex items-center gap-1 rounded-md bg-surface px-2.5 py-1.5">
+            <Sparkles className="h-3 w-3 text-muted" />
+            <span className="text-[11px] font-medium text-muted">⌘K</span>
           </div>
           {hasHistory && (
             <button
               onClick={handleClearHistory}
-              className="flex items-center gap-2 rounded-[12px] border border-[rgba(255,255,255,0.06)] bg-[#111318] px-4 py-2.5 text-[12px] font-medium text-[#A1A1AA] transition-all hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F5F5F5]"
+              className="flex items-center gap-2 rounded-[12px] border-2 border-ink bg-card px-4 py-2.5 text-[12px] font-medium text-foreground-3 transition-all hover:bg-surface hover:text-foreground"
             >
               New Chat
             </button>
           )}
-          <button className="flex items-center gap-2 rounded-[12px] border border-[rgba(255,255,255,0.06)] bg-[#111318] px-4 py-2.5 text-[12px] font-medium text-[#A1A1AA] transition-all hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F5F5F5]">
+          <button className="flex items-center gap-2 rounded-[12px] border-2 border-ink bg-card px-4 py-2.5 text-[12px] font-medium text-foreground-3 transition-all hover:bg-surface hover:text-foreground">
             <HelpCircle className="h-4 w-4" />
             Ask Tips
           </button>
@@ -185,130 +222,141 @@ function ChatPageInner() {
           setQuery={setQuery}
           onSend={handleDirectSend}
           loading={isLoading}
+          onFile={handleFile}
+          uploading={upload?.status === "uploading"}
         />
+        {upload && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-2 flex items-center gap-2 text-[12px]"
+          >
+            {upload.status === "uploading" && (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-[#FF5C00]" />
+                <span className="text-muted">
+                  Uploading &amp; indexing <span className="text-foreground">{upload.name}</span>…
+                </span>
+              </>
+            )}
+            {upload.status === "done" && (
+              <>
+                <CheckCircle2 className="h-3.5 w-3.5 text-[#FF5C00]" />
+                <span className="text-foreground">
+                  {upload.name} indexed — ask about it now.
+                </span>
+              </>
+            )}
+            {upload.status === "error" && (
+              <>
+                <AlertCircle className="h-3.5 w-3.5 text-red-500" />
+                <span className="text-red-500">
+                  {upload.name}: {upload.message}
+                </span>
+              </>
+            )}
+          </motion.div>
+        )}
       </div>
 
-      {/* Main Content Area: 70/30 (stacks vertically below lg) */}
-      <div className="flex flex-col gap-6 lg:flex-row">
-        {/* Left Column — 70% */}
-        <div className="min-w-0 flex-1 lg:flex-[0_0_68%]">
-          <AnimatePresence mode="wait">
-            {/* Loading State */}
-            {isLoading && (
-              <motion.div
-                key="loading"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                <ChatLoadingState />
-              </motion.div>
+      {/* Conversation */}
+      <AnimatePresence mode="wait">
+        {/* Loading State */}
+        {isLoading && (
+          <motion.div
+            key="loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="space-y-4"
+          >
+            {/* Show the question immediately, like a normal chatbot */}
+            {pendingQuestion && (
+              <div className="flex justify-end">
+                <div className="max-w-[80%] rounded-[16px] rounded-br-[4px] bg-[#FF5C00]/15 px-5 py-3 text-[13px] text-foreground">
+                  {pendingQuestion}
+                </div>
+              </div>
             )}
+            <ChatLoadingState />
+          </motion.div>
+        )}
 
-            {/* Error State */}
-            {!isLoading && error && (
-              <motion.div
-                key="error"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                <ChatErrorState
-                  error={error}
-                  onRetry={() => {
-                    setError(null);
-                    if (lastResponse) {
-                      mutation.mutate(lastResponse.question);
-                    }
-                  }}
-                  onBroaden={() => {
-                    setFilter("");
-                    if (lastResponse) {
-                      mutation.mutate(lastResponse.question);
-                    }
-                  }}
-                />
-              </motion.div>
-            )}
-
-            {/* Empty State */}
-            {!isLoading && !hasHistory && !error && (
-              <motion.div
-                key="empty"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                <ChatEmptyState onQuestionClick={handleSend} />
-              </motion.div>
-            )}
-
-            {/* Answer Results */}
-            {!isLoading && hasHistory && !error && (
-              <motion.div
-                key="results"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="space-y-6"
-              >
-                {history.map((item, i) => (
-                  <div key={i} className="space-y-4">
-                    {/* User Question */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="flex justify-end"
-                    >
-                      <div className="max-w-[80%] rounded-[16px] rounded-br-[4px] bg-[#6E56CF]/15 px-5 py-3 text-[13px] text-[#F5F5F5]">
-                        {item.question}
-                      </div>
-                    </motion.div>
-
-                    {/* AI Answer */}
-                    <AnswerCard
-                      response={item}
-                      stats={stats}
-                      searchHits={item.searchHits}
-                      index={i}
-                    />
-
-                    {/* Follow-up Input (only after last response) */}
-                    {i === history.length - 1 && !isLoading && (
-                      <FollowUpInput
-                        onSend={handleSend}
-                        loading={isLoading}
-                      />
-                    )}
-                  </div>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Right Sidebar — 30% (moves below the chat on small screens) */}
-        <div className="w-full min-w-0 lg:w-auto lg:flex-[0_0_32%]">
-          <div className="sticky top-4">
-            <ChatSidebar
-              stats={stats}
-              lastResponse={lastResponse ? {
-                chunksSearched: lastResponse.chunks_searched,
-                sourcesSearched: lastResponse.sources_searched,
-                citations: lastResponse.citations?.length ?? 0,
-                searchTimeMs: lastResponse.search_time_ms,
-              } : undefined}
-              relatedQuestions={hasHistory ? relatedQuestions : []}
-              onQuestionClick={handleSend}
-              onAction={(action) => {
+        {/* Error State */}
+        {!isLoading && error && (
+          <motion.div
+            key="error"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <ChatErrorState
+              error={error}
+              onRetry={() => {
+                setError(null);
                 if (lastResponse) {
-                  handleSend(`${action}: ${lastResponse.question}`);
+                  mutation.mutate(lastResponse.question);
+                }
+              }}
+              onBroaden={() => {
+                setFilter("");
+                if (lastResponse) {
+                  mutation.mutate(lastResponse.question);
                 }
               }}
             />
-          </div>
-        </div>
-      </div>
+          </motion.div>
+        )}
+
+        {/* Empty State */}
+        {!isLoading && !hasHistory && !error && (
+          <motion.div
+            key="empty"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <ChatEmptyState onQuestionClick={handleSend} />
+          </motion.div>
+        )}
+
+        {/* Answer Results */}
+        {!isLoading && hasHistory && !error && (
+          <motion.div
+            key="results"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="space-y-6"
+          >
+            {history.map((item, i) => (
+              <div key={i} className="space-y-4">
+                {/* User Question */}
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex justify-end"
+                >
+                  <div className="max-w-[80%] rounded-[16px] rounded-br-[4px] bg-[#FF5C00]/15 px-5 py-3 text-[13px] text-foreground">
+                    {item.question}
+                  </div>
+                </motion.div>
+
+                {/* AI Answer */}
+                <AnswerCard response={item} index={i} />
+
+                {/* Follow-up Input (only after last response) */}
+                {i === history.length - 1 && !isLoading && (
+                  <FollowUpInput
+                    onSend={handleSend}
+                    loading={isLoading}
+                  />
+                )}
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -19,13 +19,13 @@ interface Props {
 }
 
 const SOURCE_CONFIG: Record<string, { icon: typeof Youtube; label: string; color: string }> = {
-  "": { icon: Layers, label: "All Sources", color: "#6E56CF" },
-  youtube: { icon: Youtube, label: "YouTube", color: "#EF4444" },
-  instagram: { icon: Instagram, label: "Instagram", color: "#E1306C" },
-  pdf: { icon: FileText, label: "PDF", color: "#DC2626" },
-  document: { icon: Files, label: "Document", color: "#7C3AED" },
-  audio: { icon: Mic, label: "Audio", color: "#059669" },
-  web: { icon: Globe, label: "Web", color: "#0EA5E9" },
+  "": { icon: Layers, label: "All Sources", color: "#FF5C00" },
+  youtube: { icon: Youtube, label: "YouTube", color: "#FF5C00" },
+  instagram: { icon: Instagram, label: "Instagram", color: "#FF5C00" },
+  pdf: { icon: FileText, label: "PDF", color: "#E14E00" },
+  document: { icon: Files, label: "Document", color: "#E14E00" },
+  audio: { icon: Mic, label: "Audio", color: "#E14E00" },
+  web: { icon: Globe, label: "Web", color: "#B96A00" },
 };
 
 export function SourceFilterChips({ filter, setFilter, stats }: Props) {
@@ -50,8 +50,8 @@ export function SourceFilterChips({ filter, setFilter, stats }: Props) {
             whileTap={{ scale: 0.97 }}
             className={`flex items-center gap-2 rounded-full px-4 py-2 text-[12px] font-medium transition-all duration-200 ${
               active
-                ? "bg-[#6E56CF] text-white shadow-lg shadow-[#6E56CF]/20"
-                : "border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.03)] text-[#A1A1AA] hover:bg-[rgba(255,255,255,0.06)] hover:text-[#F5F5F5]"
+                ? "bg-[#FF5C00] text-ink shadow-lg shadow-[#FF5C00]/20"
+                : "border-2 border-ink bg-surface text-foreground-3 hover:bg-surface hover:text-foreground"
             }`}
           >
             <Icon
@@ -63,8 +63,8 @@ export function SourceFilterChips({ filter, setFilter, stats }: Props) {
               <span
                 className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
                   active
-                    ? "bg-white/20 text-white"
-                    : "bg-[rgba(255,255,255,0.06)] text-[#71717A]"
+                    ? "bg-surface text-ink"
+                    : "bg-surface text-muted"
                 }`}
               >
                 {count}

@@ -35,19 +35,19 @@ export function ChatSidebar({ stats, lastResponse, relatedQuestions, onQuestionC
       icon: Layers,
       label: "Chunks Searched",
       value: lastResponse?.chunksSearched != null ? lastResponse.chunksSearched : "—",
-      color: "#6E56CF",
+      color: "#FF5C00",
     },
     {
       icon: Database,
       label: "Sources Used",
       value: lastResponse?.sourcesSearched != null ? lastResponse.sourcesSearched : "—",
-      color: "#22C55E",
+      color: "#FF5C00",
     },
     {
       icon: Network,
       label: "Citations",
       value: lastResponse?.citations != null ? lastResponse.citations : "—",
-      color: "#0EA5E9",
+      color: "#B96A00",
     },
     {
       icon: Clock,
@@ -58,10 +58,10 @@ export function ChatSidebar({ stats, lastResponse, relatedQuestions, onQuestionC
             ? `${(lastResponse.searchTimeMs / 1000).toFixed(1)}s`
             : `${lastResponse.searchTimeMs}ms`
           : "—",
-      color: "#22C55E",
+      color: "#FF5C00",
     },
-    { icon: Layers, label: "Indexed Chunks", value: totalChunks, color: "#6E56CF" },
-    { icon: Database, label: "Total Sources", value: totalSources, color: "#71717A" },
+    { icon: Layers, label: "Indexed Chunks", value: totalChunks, color: "#FF5C00" },
+    { icon: Database, label: "Total Sources", value: totalSources, color: "#6B5B4D" },
   ];
 
   return (
@@ -71,17 +71,17 @@ export function ChatSidebar({ stats, lastResponse, relatedQuestions, onQuestionC
         initial={{ opacity: 0, x: 12 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.1 }}
-        className="rounded-[16px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-4"
+        className="rounded-[16px] border-2 border-ink bg-card p-4"
       >
-        <h3 className="mb-3 text-[12px] font-semibold text-[#F5F5F5]">Search Summary</h3>
+        <h3 className="mb-3 text-[12px] font-semibold text-foreground">Search Summary</h3>
         <div className="space-y-2.5">
           {rows.map((item) => (
             <div key={item.label} className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <item.icon className="h-3 w-3" style={{ color: item.color }} />
-                <span className="text-[11px] text-[#71717A]">{item.label}</span>
+                <span className="text-[11px] text-muted">{item.label}</span>
               </div>
-              <span className="text-[11px] font-semibold text-[#F5F5F5]">{item.value}</span>
+              <span className="text-[11px] font-semibold text-foreground">{item.value}</span>
             </div>
           ))}
         </div>
@@ -92,9 +92,9 @@ export function ChatSidebar({ stats, lastResponse, relatedQuestions, onQuestionC
         initial={{ opacity: 0, x: 12 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.2 }}
-        className="rounded-[16px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-4"
+        className="rounded-[16px] border-2 border-ink bg-card p-4"
       >
-        <h3 className="mb-3 text-[12px] font-semibold text-[#F5F5F5]">Related Questions</h3>
+        <h3 className="mb-3 text-[12px] font-semibold text-foreground">Related Questions</h3>
         <div className="space-y-2">
           {relatedQuestions.length > 0 ? (
             relatedQuestions.map((q, i) => (
@@ -105,9 +105,9 @@ export function ChatSidebar({ stats, lastResponse, relatedQuestions, onQuestionC
                 transition={{ delay: 0.3 + i * 0.04 }}
                 whileHover={{ x: 2 }}
                 onClick={() => onQuestionClick(q)}
-                className="flex w-full items-center gap-2 rounded-[10px] p-2.5 text-left text-[11px] text-[#A1A1AA] transition-colors hover:bg-[rgba(255,255,255,0.04)] hover:text-[#F5F5F5]"
+                className="flex w-full items-center gap-2 rounded-[10px] p-2.5 text-left text-[11px] text-foreground-3 transition-colors hover:bg-surface hover:text-foreground"
               >
-                <HelpCircle className="h-3 w-3 flex-shrink-0 text-[#52525B]" />
+                <HelpCircle className="h-3 w-3 flex-shrink-0 text-muted" />
                 <span className="line-clamp-2">{q}</span>
               </motion.button>
             ))
@@ -126,9 +126,9 @@ export function ChatSidebar({ stats, lastResponse, relatedQuestions, onQuestionC
                   transition={{ delay: 0.3 + i * 0.04 }}
                   whileHover={{ x: 2 }}
                   onClick={() => onQuestionClick(q)}
-                  className="flex w-full items-center gap-2 rounded-[10px] p-2.5 text-left text-[11px] text-[#A1A1AA] transition-colors hover:bg-[rgba(255,255,255,0.04)] hover:text-[#F5F5F5]"
+                  className="flex w-full items-center gap-2 rounded-[10px] p-2.5 text-left text-[11px] text-foreground-3 transition-colors hover:bg-surface hover:text-foreground"
                 >
-                  <HelpCircle className="h-3 w-3 flex-shrink-0 text-[#52525B]" />
+                  <HelpCircle className="h-3 w-3 flex-shrink-0 text-muted" />
                   <span className="line-clamp-2">{q}</span>
                 </motion.button>
               ))}
@@ -142,29 +142,29 @@ export function ChatSidebar({ stats, lastResponse, relatedQuestions, onQuestionC
         initial={{ opacity: 0, x: 12 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.3 }}
-        className="rounded-[16px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-4"
+        className="rounded-[16px] border-2 border-ink bg-card p-4"
       >
-        <h3 className="mb-3 text-[12px] font-semibold text-[#F5F5F5]">Knowledge Graph Preview</h3>
-        <div className="relative flex h-32 items-center justify-center overflow-hidden rounded-[12px] bg-[rgba(255,255,255,0.02)]">
+        <h3 className="mb-3 text-[12px] font-semibold text-foreground">Knowledge Graph Preview</h3>
+        <div className="relative flex h-32 items-center justify-center overflow-hidden rounded-[12px] bg-surface">
           <svg width="160" height="100" viewBox="0 0 160 100">
-            <circle cx="80" cy="50" r="8" fill="#6E56CF" opacity="0.9" />
-            <circle cx="40" cy="30" r="5" fill="#22C55E" opacity="0.7" />
-            <circle cx="120" cy="30" r="5" fill="#EF4444" opacity="0.7" />
-            <circle cx="40" cy="70" r="5" fill="#0EA5E9" opacity="0.7" />
-            <circle cx="120" cy="70" r="5" fill="#F59E0B" opacity="0.7" />
-            <circle cx="80" cy="15" r="4" fill="#E1306C" opacity="0.6" />
-            <circle cx="80" cy="85" r="4" fill="#059669" opacity="0.6" />
-            <line x1="80" y1="50" x2="40" y2="30" stroke="#6E56CF" strokeWidth="1" opacity="0.3" />
-            <line x1="80" y1="50" x2="120" y2="30" stroke="#6E56CF" strokeWidth="1" opacity="0.3" />
-            <line x1="80" y1="50" x2="40" y2="70" stroke="#6E56CF" strokeWidth="1" opacity="0.3" />
-            <line x1="80" y1="50" x2="120" y2="70" stroke="#6E56CF" strokeWidth="1" opacity="0.3" />
-            <line x1="80" y1="50" x2="80" y2="15" stroke="#6E56CF" strokeWidth="1" opacity="0.3" />
-            <line x1="80" y1="50" x2="80" y2="85" stroke="#6E56CF" strokeWidth="1" opacity="0.3" />
+            <circle cx="80" cy="50" r="8" fill="#FF5C00" opacity="0.9" />
+            <circle cx="40" cy="30" r="5" fill="#FF5C00" opacity="0.7" />
+            <circle cx="120" cy="30" r="5" fill="#E14E00" opacity="0.7" />
+            <circle cx="40" cy="70" r="5" fill="#B96A00" opacity="0.7" />
+            <circle cx="120" cy="70" r="5" fill="#B96A00" opacity="0.7" />
+            <circle cx="80" cy="15" r="4" fill="#FF5C00" opacity="0.6" />
+            <circle cx="80" cy="85" r="4" fill="#E14E00" opacity="0.6" />
+            <line x1="80" y1="50" x2="40" y2="30" stroke="#FF5C00" strokeWidth="1" opacity="0.3" />
+            <line x1="80" y1="50" x2="120" y2="30" stroke="#FF5C00" strokeWidth="1" opacity="0.3" />
+            <line x1="80" y1="50" x2="40" y2="70" stroke="#FF5C00" strokeWidth="1" opacity="0.3" />
+            <line x1="80" y1="50" x2="120" y2="70" stroke="#FF5C00" strokeWidth="1" opacity="0.3" />
+            <line x1="80" y1="50" x2="80" y2="15" stroke="#FF5C00" strokeWidth="1" opacity="0.3" />
+            <line x1="80" y1="50" x2="80" y2="85" stroke="#FF5C00" strokeWidth="1" opacity="0.3" />
           </svg>
         </div>
         <Link
           href="/graph"
-          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-[10px] bg-[#6E56CF]/10 py-2 text-[11px] font-medium text-[#6E56CF] transition-colors hover:bg-[#6E56CF]/20"
+          className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-[10px] bg-[#FF5C00]/10 py-2 text-[11px] font-medium text-[#FF5C00] transition-colors hover:bg-[#FF5C00]/20"
         >
           Open Knowledge Graph
           <ArrowRight className="h-3 w-3" />
