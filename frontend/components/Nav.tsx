@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
-  Brain,
   Home,
   Search,
   MessageSquare,
@@ -23,7 +23,7 @@ import {
 import { ThemeToggle } from "./ThemeToggle";
 
 const links = [
-  { href: "/", label: "Dashboard", icon: Home },
+  { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/workspace", label: "Workspace", icon: LayoutGrid },
   { href: "/youtube", label: "YouTube", icon: Youtube },
   { href: "/instagram", label: "Instagram", icon: Instagram },
@@ -43,12 +43,24 @@ const links = [
 export function Nav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   return (
-    <aside className="flex h-full w-56 shrink-0 flex-col overflow-y-auto border-r border-border bg-card text-foreground p-4">
+    <aside className="flex h-full w-56 shrink-0 flex-col overflow-y-auto border-r-2 border-ink bg-card text-foreground p-4">
       <div className="mb-8 flex items-center gap-2 px-2">
-        <Brain className="h-6 w-6 text-brand" />
-        <span className="text-lg font-semibold text-foreground">MindMesh</span>
+        <Link
+          href="/"
+          onClick={onNavigate}
+          title="Back to landing page"
+          className="flex items-center gap-2 rounded-lg"
+        >
+          <span className="grid h-9 w-9 place-items-center overflow-hidden rounded-lg border-2 border-ink bg-[#111]">
+            <Image src="/logo.png" alt="" width={36} height={36} className="h-full w-full object-contain p-1" />
+          </span>
+          <span className="text-lg font-extrabold tracking-tight text-foreground">MindMesh</span>
+        </Link>
+        <div className="ml-auto">
+          <ThemeToggle className="rounded-lg border-2 border-transparent p-1.5 text-foreground-3 transition-colors hover:border-ink hover:bg-surface hover:text-foreground" />
+        </div>
       </div>
-      <nav className="space-y-1">
+      <nav className="space-y-1.5">
         {links.map(({ href, label, icon: Icon }) => {
           const active = pathname === href;
           return (
@@ -56,10 +68,10 @@ export function Nav({ onNavigate }: { onNavigate?: () => void }) {
               key={href}
               href={href}
               onClick={onNavigate}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+              className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-bold transition-all ${
                 active
-                  ? "bg-brand text-white font-medium shadow-sm"
-                  : "text-foreground-3 hover:bg-surface hover:text-foreground"
+                  ? "brut-btn bg-brand text-ink font-extrabold"
+                  : "border-2 border-transparent text-foreground-3 hover:border-ink hover:bg-surface hover:text-foreground"
               }`}
             >
               <Icon className="h-4 w-4" />
@@ -68,9 +80,6 @@ export function Nav({ onNavigate }: { onNavigate?: () => void }) {
           );
         })}
       </nav>
-      <div className="mt-auto flex justify-end px-2 pt-4 border-t border-border/50">
-        <ThemeToggle className="rounded-lg p-2 text-foreground-3 transition-colors hover:bg-surface hover:text-foreground" />
-      </div>
     </aside>
   );
 }

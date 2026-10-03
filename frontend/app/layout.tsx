@@ -6,8 +6,9 @@ import { ThemeEffect } from "@/components/ThemeEffect";
 import { NotificationBridge } from "@/components/NotificationBridge";
 
 export const metadata: Metadata = {
-  title: "MindMesh — AI Personal Knowledge OS",
-  description: "AI Personal Knowledge Operating System",
+  title: "MindMesh -> Your buddy who remembers everything you save",
+  description:
+    "Your buddy that remembers everything you save — videos, PDFs, notes, links and more, all in one place you can talk to.",
 };
 
 export default function RootLayout({
