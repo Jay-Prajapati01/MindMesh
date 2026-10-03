@@ -57,12 +57,12 @@ export function ReasoningStrip({
       initial={{ opacity: 0, height: 0 }}
       animate={{ opacity: 1, height: "auto" }}
       exit={{ opacity: 0, height: 0 }}
-      className="overflow-hidden rounded-[14px] border border-[rgba(255,255,255,0.06)] bg-[#111318]"
+      className="overflow-hidden rounded-[14px] border-2 border-ink bg-card"
     >
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3">
         <div className="flex items-center gap-2">
-          <Brain className="h-4 w-4 text-[#6E56CF]" />
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-[#A1A1AA]">
+          <Brain className="h-4 w-4 text-[#FF5C00]" />
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-foreground-3">
             AI Pipeline
           </span>
         </div>
@@ -77,25 +77,25 @@ export function ReasoningStrip({
               <div key={step.label} className="flex items-center gap-1">
                 <div className="flex items-center gap-1.5">
                   {done ? (
-                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#22C55E]/15">
-                      <Check className="h-3 w-3 text-[#22C55E]" />
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#FF5C00]/15">
+                      <Check className="h-3 w-3 text-[#FF5C00]" />
                     </div>
                   ) : active ? (
                     <div className="flex h-5 w-5 items-center justify-center">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin text-[#6E56CF]" />
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-[#FF5C00]" />
                     </div>
                   ) : (
-                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[rgba(255,255,255,0.04)]">
-                      <Icon className="h-3 w-3 text-[#52525B]" />
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-surface">
+                      <Icon className="h-3 w-3 text-muted" />
                     </div>
                   )}
                   <span
                     className={`text-[11px] font-medium ${
                       done
-                        ? "text-[#22C55E]"
+                        ? "text-[#FF5C00]"
                         : active
-                        ? "text-[#6E56CF]"
-                        : "text-[#52525B]"
+                        ? "text-[#FF5C00]"
+                        : "text-muted"
                     }`}
                   >
                     {step.label}
@@ -104,7 +104,7 @@ export function ReasoningStrip({
                 {i < PIPELINE_STEPS.length - 1 && (
                   <div
                     className={`mx-1 h-px w-4 ${
-                      done ? "bg-[#22C55E]/30" : "bg-[rgba(255,255,255,0.06)]"
+                      done ? "bg-[#FF5C00]/30" : "bg-surface"
                     }`}
                   />
                 )}
@@ -119,23 +119,23 @@ export function ReasoningStrip({
             animate={{ opacity: 1 }}
             className="flex flex-wrap items-center gap-4 text-[11px]"
           >
-            <span className="text-[#71717A]">
+            <span className="text-muted">
               <AnimatedCounter value={chunksSearched} /> chunks
             </span>
-            <span className="text-[#71717A]">
+            <span className="text-muted">
               <AnimatedCounter value={sourcesSearched} /> sources
             </span>
-            <span className="text-[#71717A]">
+            <span className="text-muted">
               <AnimatedCounter value={embeddingsScanned} /> embeddings
             </span>
-            <span className="text-[#71717A]">
+            <span className="text-muted">
               Completed in <AnimatedCounter value={searchTimeMs} /> ms
             </span>
           </motion.div>
         )}
 
         {loading && (
-          <span className="text-[11px] text-[#71717A] animate-pulse">
+          <span className="text-[11px] text-muted animate-pulse">
             Processing...
           </span>
         )}

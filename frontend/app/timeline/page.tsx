@@ -29,7 +29,7 @@ export default function TimelinePage() {
       )}
 
       {data && data.groups.length === 0 && (
-        <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted">
+        <div className="rounded-xl border-2 border-ink bg-card p-8 text-center text-sm text-muted">
           Nothing indexed yet. Ingest content to build your memory timeline.
         </div>
       )}
@@ -40,14 +40,14 @@ export default function TimelinePage() {
             <h2 className="mb-3 text-sm font-semibold text-foreground-2">
               {group.label}
             </h2>
-            <div className="space-y-3 border-l border-border pl-4">
+            <div className="space-y-3 border-l-2 border-ink pl-4">
               {group.items.map((item) => {
                 const srcTheme = getSourceTheme(item.source_type);
                 const Icon = srcTheme.icon;
                 return (
                   <div
                     key={item.source_id}
-                    className="relative rounded-xl border border-border bg-card p-4 transition-all hover:border-brand/30 hover:shadow-card"
+                    className="relative rounded-xl border-2 border-ink bg-card p-4 transition-all hover:border-brand/30 hover:shadow-card"
                   >
                     <span
                       className="absolute -left-[21px] top-5 h-2.5 w-2.5 rounded-full ring-4 ring-background"

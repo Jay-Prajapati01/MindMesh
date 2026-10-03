@@ -114,16 +114,16 @@ function SearchPageInner() {
       >
         <div className="min-w-0">
           <div className="flex items-center gap-3">
-            <h1 className="text-[24px] font-bold text-[#F5F5F5] tracking-tight">
+            <h1 className="text-[24px] font-bold text-foreground tracking-tight">
               Semantic Search
             </h1>
-            <Sparkles className="h-5 w-5 text-[#6E56CF]" />
+            <Sparkles className="h-5 w-5 text-[#FF5C00]" />
           </div>
-          <p className="mt-1 text-[13px] text-[#71717A]">
+          <p className="mt-1 text-[13px] text-muted">
             Search across every chunk in your knowledge base.
           </p>
         </div>
-        <button className="flex items-center gap-2 rounded-[12px] border border-[rgba(255,255,255,0.06)] bg-[#111318] px-4 py-2.5 text-[12px] font-medium text-[#A1A1AA] transition-all hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F5F5F5]">
+        <button className="flex items-center gap-2 rounded-[12px] border-2 border-ink bg-card px-4 py-2.5 text-[12px] font-medium text-foreground-3 transition-all hover:bg-surface hover:text-foreground">
           <SearchIcon className="h-4 w-4" />
           Search Tips
         </button>
@@ -178,17 +178,17 @@ function SearchPageInner() {
               animate={{ opacity: 1 }}
               className="mb-4 flex items-center justify-between"
             >
-              <span className="text-[13px] text-[#71717A]">
+              <span className="text-[13px] text-muted">
                 Found{" "}
-                <span className="font-semibold text-[#F5F5F5]">{hits.length}</span>{" "}
+                <span className="font-semibold text-foreground">{hits.length}</span>{" "}
                 highly relevant results
               </span>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] text-[#52525B]">Sort by:</span>
+                <span className="text-[11px] text-muted">Sort by:</span>
                 <select
                   value={sort}
                   onChange={(e) => setSort(e.target.value as SortMode)}
-                  className="rounded-lg border border-[rgba(255,255,255,0.06)] bg-[#111318] px-3 py-1.5 text-[11px] text-[#A1A1AA] outline-none"
+                  className="rounded-lg border-2 border-ink bg-card px-3 py-1.5 text-[11px] text-foreground-3 outline-none"
                 >
                   <option value="relevance">Relevance</option>
                   <option value="score">Score</option>
@@ -211,7 +211,7 @@ function SearchPageInner() {
                   {Array.from({ length: 4 }).map((_, i) => (
                     <div
                       key={i}
-                      className="skeleton h-40 rounded-[18px] border border-[rgba(255,255,255,0.04)] bg-[#111318]"
+                      className="skeleton h-40 rounded-[18px] border-2 border-ink bg-card"
                       style={{ animationDelay: `${i * 100}ms` }}
                     />
                   ))}

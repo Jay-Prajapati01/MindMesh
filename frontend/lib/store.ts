@@ -5,7 +5,7 @@ interface Settings {
   topK: number;
   defaultSourceFilter: string;
   theme: "dark" | "light" | "system";
-  accentColor: "purple" | "blue" | "green" | "rose";
+  accentColor: "orange" | "purple" | "blue" | "green" | "rose";
   density: "comfortable" | "compact";
   animations: "enabled" | "reduced";
 }
@@ -55,8 +55,8 @@ export const useAppStore = create<AppState>()(
       settings: {
         topK: 5,
         defaultSourceFilter: "",
-        theme: "dark",
-        accentColor: "purple",
+        theme: "light",
+        accentColor: "orange",
         density: "comfortable",
         animations: "enabled",
       },

@@ -80,7 +80,7 @@ export function BackgroundTasks() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              className="rounded-[12px] border border-border bg-surface p-3"
+              className="rounded-[12px] border-2 border-ink bg-surface p-3"
             >
               <div className="flex items-center gap-2.5">
                 <div

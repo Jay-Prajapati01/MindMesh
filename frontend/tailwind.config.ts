@@ -17,6 +17,16 @@ const config: Config = {
         "surface-muted": "var(--surface-muted)",
         border: "var(--border)",
 
+        // Landing-page print-brutalism tokens
+        paper: "var(--paper)",
+        "paper-alt": "var(--paper-alt)",
+        "paper-card": "var(--paper-card)",
+        sheet: "var(--sheet)",
+        ink: "var(--ink)",
+        "ink-muted": "var(--ink-muted)",
+        orange: "var(--orange)",
+        "orange-hover": "var(--orange-hover)",
+
         foreground: "var(--foreground)",
         "foreground-2": "var(--foreground-2)",
         "foreground-3": "var(--foreground-3)",
@@ -44,9 +54,14 @@ const config: Config = {
         card: "var(--shadow-card)",
         elevated: "var(--shadow-elevated)",
         floating: "var(--shadow-floating)",
+        brut: "4px 4px 0 var(--ink)",
+        "brut-lg": "6px 6px 0 var(--ink)",
+        "brut-xl": "8px 8px 0 var(--ink)",
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
+        display: ["Anton", "Archivo Black", "sans-serif"],
+        mono: ["JetBrains Mono", "ui-monospace", "monospace"],
       },
       spacing: {
         page: "40px",

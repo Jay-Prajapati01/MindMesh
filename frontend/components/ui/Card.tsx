@@ -7,7 +7,7 @@ export function Card({
 }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`rounded-xl border border-border bg-card p-5 text-foreground shadow-card transition-all ${className}`}
+      className={`brut bg-card p-5 text-foreground transition-all ${className}`}
       {...props}
     >
       {children}

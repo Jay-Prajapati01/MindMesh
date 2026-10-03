@@ -4,10 +4,11 @@ import { useEffect } from "react";
 import { useAppStore } from "@/lib/store";
 
 const ACCENT_COLORS: Record<string, { brand: string; hover: string }> = {
-  purple: { brand: "#6E56CF", hover: "#7C69E3" },
-  blue: { brand: "#3B82F6", hover: "#60A5FA" },
-  green: { brand: "#22C55E", hover: "#4ADE80" },
-  rose: { brand: "#F43F5E", hover: "#FB7185" },
+  orange: { brand: "var(--orange)", hover: "var(--orange-hover)" },
+  purple: { brand: "var(--orange)", hover: "var(--orange-hover)" },
+  blue: { brand: "var(--orange)", hover: "var(--orange-hover)" },
+  green: { brand: "var(--orange)", hover: "var(--orange-hover)" },
+  rose: { brand: "var(--orange)", hover: "var(--orange-hover)" },
 };
 
 export function applyThemeToDOM(theme: string) {

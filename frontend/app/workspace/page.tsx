@@ -48,7 +48,7 @@ export default function WorkspacePage() {
           <Link
             key={t.href}
             href={t.href}
-            className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm font-medium transition hover:border-brand"
+            className="rounded-xl border-2 border-ink bg-surface p-4 text-sm font-medium transition hover:border-brand"
           >
             {t.label}
           </Link>
@@ -57,19 +57,19 @@ export default function WorkspacePage() {
 
       <h2 className="mb-3 text-sm font-semibold text-gray-300">Notes</h2>
 
-      <div className="mb-6 rounded-xl border border-white/10 bg-white/5 p-4">
+      <div className="mb-6 rounded-xl border-2 border-ink bg-surface p-4">
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Note title"
-          className="mb-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-brand"
+          className="mb-2 w-full rounded-lg border-2 border-ink bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
         />
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
           placeholder="Write something..."
           rows={3}
-          className="mb-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none focus:border-brand"
+          className="mb-2 w-full rounded-lg border-2 border-ink bg-surface px-3 py-2 text-sm outline-none focus:border-brand"
         />
         <button
           onClick={() => title && create.mutate()}
@@ -85,7 +85,7 @@ export default function WorkspacePage() {
         {notes?.map((n) => (
           <div
             key={n.id}
-            className="flex items-start justify-between rounded-xl border border-white/10 bg-white/5 p-4"
+            className="flex items-start justify-between rounded-xl border-2 border-ink bg-surface p-4"
           >
             <div>
               <h3 className="font-medium">{n.title}</h3>

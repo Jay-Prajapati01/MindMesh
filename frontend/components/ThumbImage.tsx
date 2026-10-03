@@ -21,7 +21,7 @@ export function ThumbImage({
     return (
       <div
         aria-hidden="true"
-        className={`flex items-center justify-center bg-surface border border-border ${className} ${fallbackClassName}`}
+        className={`flex items-center justify-center bg-surface border-2 border-ink ${className} ${fallbackClassName}`}
       />
     );
   }

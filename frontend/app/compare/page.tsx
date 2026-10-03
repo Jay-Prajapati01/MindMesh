@@ -24,38 +24,38 @@ function getSourceIcon(type: string, size: "sm" | "md" = "md") {
   const sizeClass = size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4";
   switch (type) {
     case "youtube":
-      return <Youtube className={`${sizeClass} text-[#FF0000]`} />;
+      return <Youtube className={`${sizeClass} text-brand`} />;
     case "instagram":
-      return <Instagram className={`${sizeClass} text-[#E1306C]`} />;
+      return <Instagram className={`${sizeClass} text-brand`} />;
     case "pdf":
-      return <FileText className={`${sizeClass} text-[#DC2626]`} />;
+      return <FileText className={`${sizeClass} text-brand`} />;
     case "document":
-      return <Files className={`${sizeClass} text-[#7C3AED]`} />;
+      return <Files className={`${sizeClass} text-brand`} />;
     case "audio":
-      return <Mic className={`${sizeClass} text-[#059669]`} />;
+      return <Mic className={`${sizeClass} text-brand`} />;
     case "web":
-      return <Globe className={`${sizeClass} text-[#0EA5E9]`} />;
+      return <Globe className={`${sizeClass} text-brand`} />;
     default:
-      return <FileText className={`${sizeClass} text-[#71717A]`} />;
+      return <FileText className={`${sizeClass} text-muted`} />;
   }
 }
 
 function getSourceColor(type: string) {
   switch (type) {
     case "youtube":
-      return { bg: "#FF000015", border: "#FF000030", text: "#FF0000" };
+      return { bg: "#FF5C0015", border: "#FF5C0030", text: "#FF5C00" };
     case "instagram":
-      return { bg: "#E1306C15", border: "#E1306C30", text: "#E1306C" };
+      return { bg: "#FF5C0015", border: "#FF5C0030", text: "#FF5C00" };
     case "pdf":
-      return { bg: "#DC262615", border: "#DC262630", text: "#DC2626" };
+      return { bg: "#E14E0015", border: "#E14E0030", text: "#E14E00" };
     case "document":
-      return { bg: "#7C3AED15", border: "#7C3AED30", text: "#7C3AED" };
+      return { bg: "#E14E0015", border: "#E14E0030", text: "#E14E00" };
     case "audio":
-      return { bg: "#05966915", border: "#05966930", text: "#059669" };
+      return { bg: "#E14E0015", border: "#E14E0030", text: "#E14E00" };
     case "web":
-      return { bg: "#0EA5E915", border: "#0EA5E930", text: "#0EA5E9" };
+      return { bg: "#B96A0015", border: "#B96A0030", text: "#B96A00" };
     default:
-      return { bg: "#71717A15", border: "#71717A30", text: "#71717A" };
+      return { bg: "#6B5B4D15", border: "#6B5B4D30", text: "#6B5B4D" };
   }
 }
 
@@ -158,7 +158,7 @@ function SourcePicker({ label, value, onChange, sources, excludeId }: SourcePick
 
   return (
     <div>
-      <label className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-[#71717A]">
+      <label className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-muted">
         {label}
       </label>
       <div className="relative" ref={dropdownRef}>
@@ -169,10 +169,10 @@ function SourcePicker({ label, value, onChange, sources, excludeId }: SourcePick
             setIsOpen(!isOpen);
             setSearch("");
           }}
-          className={`group flex w-full items-center justify-between rounded-[14px] border bg-[#171A22] px-4 py-3.5 text-[13px] transition-all duration-200 ${
+          className={`group flex w-full items-center justify-between rounded-[14px] border bg-surface px-4 py-3.5 text-[13px] transition-all duration-200 ${
             isOpen
-              ? "border-[#6E56CF]/50 ring-2 ring-[#6E56CF]/20"
-              : "border-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.12)]"
+              ? "border-[#FF5C00]/50 ring-2 ring-[#FF5C00]/20"
+              : "border-border hover:border-border"
           }`}
         >
           {selected ? (
@@ -184,19 +184,19 @@ function SourcePicker({ label, value, onChange, sources, excludeId }: SourcePick
                 {getSourceIcon(selected.source_type)}
               </div>
               <div className="text-left">
-                <div className="line-clamp-1 font-medium text-[#F5F5F5]">
+                <div className="line-clamp-1 font-medium text-foreground">
                   {selected.title || "Untitled"}
                 </div>
-                <div className="text-[10px] text-[#71717A]">
+                <div className="text-[10px] text-muted">
                   {getSourceLabel(selected.source_type)}
                 </div>
               </div>
             </div>
           ) : (
-            <span className="text-[#52525B]">Select a source...</span>
+            <span className="text-muted">Select a source...</span>
           )}
           <ChevronDown
-            className={`h-4 w-4 text-[#71717A] transition-transform duration-200 ${
+            className={`h-4 w-4 text-muted transition-transform duration-200 ${
               isOpen ? "rotate-180" : ""
             }`}
           />
@@ -210,12 +210,12 @@ function SourcePicker({ label, value, onChange, sources, excludeId }: SourcePick
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.96 }}
               transition={{ duration: 0.15, ease: "easeOut" }}
-              className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-[16px] border border-[rgba(255,255,255,0.1)] bg-[#171A22] shadow-2xl shadow-black/50 backdrop-blur-xl"
+              className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-[16px] border-2 border-ink bg-surface shadow-2xl shadow-black/50 backdrop-blur-xl"
             >
               {/* Search Input */}
-              <div className="border-b border-[rgba(255,255,255,0.06)] p-3">
+              <div className="border-b-2 border-ink p-3">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#71717A]" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
                   <input
                     ref={searchInputRef}
                     type="text"
@@ -223,12 +223,12 @@ function SourcePicker({ label, value, onChange, sources, excludeId }: SourcePick
                     onChange={(e) => setSearch(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="Search sources..."
-                    className="w-full rounded-[10px] border border-[rgba(255,255,255,0.06)] bg-[#09090B] py-2.5 pl-10 pr-4 text-[13px] text-[#F5F5F5] placeholder-[#52525B] outline-none transition-colors focus:border-[#6E56CF]/50"
+                    className="w-full rounded-[10px] border-2 border-ink bg-background py-2.5 pl-10 pr-4 text-[13px] text-foreground placeholder:text-muted outline-none transition-colors focus:border-[#FF5C00]/50"
                   />
                   {search && (
                     <button
                       onClick={() => setSearch("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#52525B] hover:text-[#F5F5F5]"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -237,7 +237,7 @@ function SourcePicker({ label, value, onChange, sources, excludeId }: SourcePick
               </div>
 
               {/* Options List */}
-              <div className="max-h-64 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-[#6E56CF]/30 scrollbar-track-transparent">
+              <div className="max-h-64 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-[#FF5C00]/30 scrollbar-track-transparent">
                 {filteredSources.length > 0 ? (
                   filteredSources.map((source, index) => {
                     const colors = getSourceColor(source.source_type);
@@ -255,16 +255,16 @@ function SourcePicker({ label, value, onChange, sources, excludeId }: SourcePick
                         onMouseEnter={() => setHighlightedIndex(index)}
                         className={`flex w-full items-center gap-3 rounded-[12px] px-3 py-3 text-left transition-all duration-150 ${
                           isHighlighted
-                            ? "bg-[#6E56CF]/10"
+                            ? "bg-brand-soft"
                             : isSelected
-                            ? "bg-[rgba(255,255,255,0.03)]"
-                            : "hover:bg-[rgba(255,255,255,0.03)]"
+                            ? "bg-surface"
+                            : "hover:bg-surface"
                         }`}
                       >
                         {/* Source Icon */}
                         <div
                           className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[12px] border transition-all duration-150 ${
-                            isHighlighted ? "border-[#6E56CF]/30" : "border-transparent"
+                            isHighlighted ? "border-[#FF5C00]/30" : "border-transparent"
                           }`}
                           style={{ backgroundColor: colors.bg }}
                         >
@@ -284,7 +284,7 @@ function SourcePicker({ label, value, onChange, sources, excludeId }: SourcePick
                               {getSourceLabel(source.source_type)}
                             </span>
                           </div>
-                          <div className="mt-1 line-clamp-1 text-[13px] font-medium text-[#F5F5F5]">
+                          <div className="mt-1 line-clamp-1 text-[13px] font-medium text-foreground">
                             {source.title || "Untitled"}
                           </div>
                           {source.key_topics && source.key_topics.length > 0 && (
@@ -292,14 +292,14 @@ function SourcePicker({ label, value, onChange, sources, excludeId }: SourcePick
                               {source.key_topics.slice(0, 2).map((topic, i) => (
                                 <span
                                   key={i}
-                                  className="text-[10px] text-[#71717A]"
+                                  className="text-[10px] text-muted"
                                 >
                                   {topic}
                                   {i < Math.min(source.key_topics.length, 2) - 1 && " ·"}
                                 </span>
                               ))}
                               {source.key_topics.length > 2 && (
-                                <span className="text-[10px] text-[#52525B]">
+                                <span className="text-[10px] text-muted">
                                   +{source.key_topics.length - 2} more
                                 </span>
                               )}
@@ -309,8 +309,8 @@ function SourcePicker({ label, value, onChange, sources, excludeId }: SourcePick
 
                         {/* Selected Check */}
                         {isSelected && (
-                          <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#6E56CF]">
-                            <Check className="h-3.5 w-3.5 text-white" />
+                          <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#FF5C00]">
+                            <Check className="h-3.5 w-3.5 text-ink" />
                           </div>
                         )}
                       </button>
@@ -318,30 +318,30 @@ function SourcePicker({ label, value, onChange, sources, excludeId }: SourcePick
                   })
                 ) : (
                   <div className="flex flex-col items-center justify-center px-4 py-8">
-                    <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[rgba(255,255,255,0.05)]">
-                      <Search className="h-5 w-5 text-[#71717A]" />
+                    <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-surface">
+                      <Search className="h-5 w-5 text-muted" />
                     </div>
-                    <p className="text-[12px] font-medium text-[#71717A]">No sources found</p>
-                    <p className="text-[10px] text-[#52525B]">Try a different search term</p>
+                    <p className="text-[12px] font-medium text-muted">No sources found</p>
+                    <p className="text-[10px] text-muted">Try a different search term</p>
                   </div>
                 )}
               </div>
 
               {/* Footer */}
-              <div className="border-t border-[rgba(255,255,255,0.06)] px-4 py-2.5">
-                <div className="flex items-center justify-between text-[10px] text-[#52525B]">
+              <div className="border-t-2 border-ink px-4 py-2.5">
+                <div className="flex items-center justify-between text-[10px] text-muted">
                   <span>{filteredSources.length} sources</span>
                   <div className="flex items-center gap-2">
                     <span className="flex items-center gap-1">
-                      <kbd className="rounded bg-[rgba(255,255,255,0.05)] px-1.5 py-0.5 text-[9px]">↑↓</kbd>
+                      <kbd className="rounded bg-surface px-1.5 py-0.5 text-[9px]">↑↓</kbd>
                       Navigate
                     </span>
                     <span className="flex items-center gap-1">
-                      <kbd className="rounded bg-[rgba(255,255,255,0.05)] px-1.5 py-0.5 text-[9px]">↵</kbd>
+                      <kbd className="rounded bg-surface px-1.5 py-0.5 text-[9px]">↵</kbd>
                       Select
                     </span>
                     <span className="flex items-center gap-1">
-                      <kbd className="rounded bg-[rgba(255,255,255,0.05)] px-1.5 py-0.5 text-[9px]">Esc</kbd>
+                      <kbd className="rounded bg-surface px-1.5 py-0.5 text-[9px]">Esc</kbd>
                       Close
                     </span>
                   </div>
@@ -379,32 +379,32 @@ export default function ComparePage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="mb-8 rounded-[24px] border border-[rgba(255,255,255,0.06)] bg-gradient-to-br from-[#111318] via-[#111318] to-[#6E56CF]/5 p-8"
+        className="mb-8 rounded-[24px] border-2 border-ink bg-gradient-to-br from-card via-card to-brand-soft p-8"
       >
         <div className="flex items-start gap-5">
-          <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-[20px] bg-[#6E56CF]/10 shadow-lg shadow-[#6E56CF]/5">
-            <GitCompare className="h-7 w-7 text-[#6E56CF]" />
+          <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-[20px] bg-brand-soft shadow-brut">
+            <GitCompare className="h-7 w-7 text-brand" />
           </div>
           <div className="flex-1">
-            <h1 className="text-[28px] font-bold text-[#F5F5F5] tracking-tight">
+            <h1 className="text-[28px] font-bold text-foreground tracking-tight">
               Cross-Source Intelligence
             </h1>
-            <p className="mt-2 text-[15px] text-[#A1A1AA] leading-relaxed max-w-2xl">
+            <p className="mt-2 text-[15px] text-foreground-3 leading-relaxed max-w-2xl">
               Compare two sources to discover similarities, differences, and
               contradictions across your knowledge base.
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#6E56CF]/10 px-3 py-1.5 text-[11px] font-medium text-[#6E56CF]">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1.5 text-[11px] font-medium text-brand">
                 <Sparkles className="h-3 w-3" />
                 AI Comparison
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(255,255,255,0.05)] px-3 py-1.5 text-[11px] font-medium text-[#71717A]">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[11px] font-medium text-muted">
                 Similarities
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(255,255,255,0.05)] px-3 py-1.5 text-[11px] font-medium text-[#71717A]">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[11px] font-medium text-muted">
                 Differences
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(255,255,255,0.05)] px-3 py-1.5 text-[11px] font-medium text-[#71717A]">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[11px] font-medium text-muted">
                 Contradictions
               </span>
             </div>
@@ -417,9 +417,9 @@ export default function ComparePage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="mb-6 rounded-[20px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-6"
+        className="mb-6 rounded-[20px] border-2 border-ink bg-card p-6"
       >
-        <h3 className="mb-4 text-[13px] font-semibold text-[#F5F5F5]">
+        <h3 className="mb-4 text-[13px] font-semibold text-foreground">
           Select Sources to Compare
         </h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -444,7 +444,7 @@ export default function ComparePage() {
           <button
             onClick={() => a && b && mutation.mutate()}
             disabled={mutation.isPending || !a || !b || a === b}
-            className="flex items-center gap-2 rounded-[14px] bg-gradient-to-r from-[#6E56CF] to-[#7C69E3] px-6 py-3.5 text-[13px] font-semibold text-white transition-all hover:from-[#7C69E3] hover:to-[#8B7CF6] disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-[#6E56CF]/20 hover:shadow-[#6E56CF]/30"
+            className="flex items-center gap-2 brut-btn bg-brand px-6 py-3.5 text-[13px] font-bold text-ink transition-all hover:bg-brand-hover disabled:cursor-not-allowed"
           >
             {mutation.isPending ? (
               <>
@@ -460,7 +460,7 @@ export default function ComparePage() {
           </button>
 
           {a === b && a !== "" && (
-            <p className="text-[12px] text-[#F59E0B]">
+            <p className="text-[12px] text-brand">
               Please select two different sources to compare.
             </p>
           )}
@@ -474,17 +474,17 @@ export default function ComparePage() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="mb-6 rounded-[20px] border border-[#EF4444]/20 bg-[#EF4444]/[0.05] p-5"
+            className="mb-6 rounded-[20px] border border-danger/30 bg-danger/5 p-5"
           >
             <div className="flex items-start gap-3">
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#EF4444]/10">
-                <X className="h-4 w-4 text-[#EF4444]" />
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-danger/10">
+                <X className="h-4 w-4 text-danger" />
               </div>
               <div>
-                <p className="text-[13px] font-medium text-[#EF4444]">
+                <p className="text-[13px] font-medium text-danger">
                   Comparison Failed
                 </p>
-                <p className="mt-1 text-[12px] text-[#EF4444]/70">
+                <p className="mt-1 text-[12px] text-muted">
                   Unable to compare the selected sources. Please try again.
                 </p>
               </div>
@@ -500,36 +500,36 @@ export default function ComparePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="rounded-[20px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-6"
+            className="rounded-[20px] border-2 border-ink bg-card p-6"
           >
             <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-[#22C55E]/10">
-                <GitCompare className="h-5 w-5 text-[#22C55E]" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-brand-soft">
+                <GitCompare className="h-5 w-5 text-brand" />
               </div>
               <div>
-                <h3 className="text-[14px] font-semibold text-[#F5F5F5]">
+                <h3 className="text-[14px] font-semibold text-foreground">
                   Comparison Results
                 </h3>
-                <p className="text-[11px] text-[#71717A]">
+                <p className="text-[11px] text-muted">
                   AI-powered analysis of similarities and differences
                 </p>
               </div>
             </div>
 
-            <div className="rounded-[14px] border border-[rgba(255,255,255,0.04)] bg-[#171A22] p-5">
-              <div className="whitespace-pre-wrap text-[13px] leading-relaxed text-[#A1A1AA]">
+            <div className="rounded-[14px] border-2 border-ink bg-surface p-5">
+              <div className="whitespace-pre-wrap text-[13px] leading-relaxed text-foreground-3">
                 {mutation.data.analysis}
               </div>
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-4 text-[11px] text-[#71717A]">
+            <div className="mt-4 flex flex-wrap items-center gap-4 text-[11px] text-muted">
               <span className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[#6E56CF]" />
+                <span className="h-2 w-2 rounded-full bg-[#FF5C00]" />
                 Source A: {selectedA?.title || selectedA?.source_id}
               </span>
               <span>•</span>
               <span className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[#22C55E]" />
+                <span className="h-2 w-2 rounded-full bg-[#FF5C00]" />
                 Source B: {selectedB?.title || selectedB?.source_id}
               </span>
             </div>

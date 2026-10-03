@@ -29,33 +29,33 @@ interface PipelineTimelineProps {
 }
 
 const STEP_ICONS: Record<string, { emoji: string; color: string }> = {
-  link: { emoji: "🔗", color: "#38BDF8" },
-  info: { emoji: "📋", color: "#A78BFA" },
-  subtitles: { emoji: "💬", color: "#38BDF8" },
-  brain: { emoji: "🧠", color: "#C084FC" },
+  link: { emoji: "🔗", color: "#B96A00" },
+  info: { emoji: "📋", color: "#FF5C00" },
+  subtitles: { emoji: "💬", color: "#B96A00" },
+  brain: { emoji: "🧠", color: "#FF5C00" },
   scissors: { emoji: "✂️", color: "#F59E0B" },
-  vector: { emoji: "📊", color: "#6E56CF" },
-  database: { emoji: "💾", color: "#22C55E" },
-  play: { emoji: "▶️", color: "#EF4444" },
+  vector: { emoji: "📊", color: "#FF5C00" },
+  database: { emoji: "💾", color: "#FF5C00" },
+  play: { emoji: "▶️", color: "#FF5C00" },
   headphones: { emoji: "🎧", color: "#F59E0B" },
-  globe: { emoji: "🌐", color: "#38BDF8" },
-  upload: { emoji: "📤", color: "#A78BFA" },
+  globe: { emoji: "🌐", color: "#B96A00" },
+  upload: { emoji: "📤", color: "#FF5C00" },
   scan: { emoji: "🔍", color: "#F59E0B" },
-  file: { emoji: "📄", color: "#71717A" },
-  search: { emoji: "🔎", color: "#38BDF8" },
-  load: { emoji: "⏳", color: "#71717A" },
+  file: { emoji: "📄", color: "#6B5B4D" },
+  search: { emoji: "🔎", color: "#B96A00" },
+  load: { emoji: "⏳", color: "#6B5B4D" },
   mic: { emoji: "🎤", color: "#F59E0B" },
-  document: { emoji: "📝", color: "#A78BFA" },
+  document: { emoji: "📝", color: "#FF5C00" },
 };
 
 function StepIcon({ icon, status }: { icon: string; status: StepState["status"] }) {
-  const cfg = STEP_ICONS[icon] || { emoji: "⚙️", color: "#71717A" };
+  const cfg = STEP_ICONS[icon] || { emoji: "⚙️", color: "#6B5B4D" };
 
   if (status === "complete") {
     return (
       <div className="relative flex h-10 w-10 items-center justify-center">
-        <div className="absolute inset-0 rounded-full bg-[#22C55E]/20" />
-        <svg className="relative h-5 w-5 text-[#22C55E] animate-check-pop" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+        <div className="absolute inset-0 rounded-full bg-[#FF5C00]/20" />
+        <svg className="relative h-5 w-5 text-[#FF5C00] animate-check-pop" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
         </svg>
       </div>
@@ -65,8 +65,8 @@ function StepIcon({ icon, status }: { icon: string; status: StepState["status"] 
   if (status === "active") {
     return (
       <div className="relative flex h-10 w-10 items-center justify-center">
-        <div className="absolute inset-0 rounded-full bg-[#6E56CF]/20 pulse-ring" />
-        <div className="absolute inset-0 rounded-full bg-[#6E56CF]/10" />
+        <div className="absolute inset-0 rounded-full bg-[#FF5C00]/20 pulse-ring" />
+        <div className="absolute inset-0 rounded-full bg-[#FF5C00]/10" />
         <span className="relative text-lg">{cfg.emoji}</span>
       </div>
     );
@@ -75,8 +75,8 @@ function StepIcon({ icon, status }: { icon: string; status: StepState["status"] 
   if (status === "error") {
     return (
       <div className="relative flex h-10 w-10 items-center justify-center">
-        <div className="absolute inset-0 rounded-full bg-[#EF4444]/20" />
-        <svg className="relative h-5 w-5 text-[#EF4444]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+        <div className="absolute inset-0 rounded-full bg-danger/20" />
+        <svg className="relative h-5 w-5 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </div>
@@ -84,7 +84,7 @@ function StepIcon({ icon, status }: { icon: string; status: StepState["status"] 
   }
 
   return (
-    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(255,255,255,0.06)] bg-[#171A22]">
+    <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-ink bg-surface">
       <span className="text-sm opacity-40">{cfg.emoji}</span>
     </div>
   );
@@ -95,16 +95,16 @@ function ConnectorLine({ status, isIdle, isLast }: { status: StepState["status"]
 
   return (
     <div className="relative mx-auto h-6 w-px">
-      <div className="absolute inset-0 bg-[rgba(255,255,255,0.06)]" />
+      <div className="absolute inset-0 bg-surface" />
       <div
         className={`absolute inset-x-0 top-0 transition-all duration-700 ease-out ${
           status === "complete"
-            ? "bg-[#22C55E] h-full"
+            ? "bg-[#FF5C00] h-full"
             : status === "active"
-            ? "bg-gradient-to-b from-[#6E56CF] to-transparent h-full"
+            ? "bg-gradient-to-b from-[#FF5C00] to-transparent h-full"
             : isIdle
-            ? "bg-[rgba(255,255,255,0.04)] h-full"
-            : "bg-[rgba(255,255,255,0.06)] h-0"
+            ? "bg-surface h-full"
+            : "bg-surface h-0"
         }`}
       />
     </div>
@@ -129,7 +129,7 @@ function StepPreview({ preview, stepId }: { preview: Record<string, any>; stepId
     <div className="mt-2 animate-fade-in">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex w-full items-center justify-between rounded-lg bg-[#171A22] px-3 py-2 text-[11px] text-[#A1A1AA] transition hover:bg-[rgba(255,255,255,0.06)]"
+        className="flex w-full items-center justify-between rounded-lg bg-surface px-3 py-2 text-[11px] text-foreground-3 transition hover:bg-surface"
       >
         <span>Preview</span>
         <svg className={`h-3 w-3 transition-transform ${expanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -139,29 +139,29 @@ function StepPreview({ preview, stepId }: { preview: Record<string, any>; stepId
       {expanded && (
         <div className="mt-1 animate-expand overflow-hidden">
           {stepId === "metadata" && preview.thumbnail && (
-            <div className="flex gap-3 rounded-lg bg-[#171A22] p-3">
+            <div className="flex gap-3 rounded-lg bg-surface p-3">
               <img src={preview.thumbnail} alt="" className="h-16 w-28 rounded-lg object-cover" />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[12px] font-medium text-[#F5F5F5]">{preview.title}</p>
-                <p className="text-[11px] text-[#71717A]">{preview.channel}</p>
-                {preview.duration && <p className="text-[11px] text-[#71717A]">{Math.floor(preview.duration / 60)}:{(preview.duration % 60).toString().padStart(2, "0")}</p>}
+                <p className="truncate text-[12px] font-medium text-foreground">{preview.title}</p>
+                <p className="text-[11px] text-muted">{preview.channel}</p>
+                {preview.duration && <p className="text-[11px] text-muted">{Math.floor(preview.duration / 60)}:{(preview.duration % 60).toString().padStart(2, "0")}</p>}
               </div>
             </div>
           )}
           {preview.text && (
-            <div className="rounded-lg bg-[#171A22] p-3">
-              <p className="max-h-32 overflow-y-auto text-[11px] leading-relaxed text-[#A1A1AA] whitespace-pre-wrap">{preview.text}</p>
+            <div className="rounded-lg bg-surface p-3">
+              <p className="max-h-32 overflow-y-auto text-[11px] leading-relaxed text-foreground-3 whitespace-pre-wrap">{preview.text}</p>
             </div>
           )}
           {preview.chars !== undefined && !preview.text && (
-            <div className="rounded-lg bg-[#171A22] p-3">
-              <span className="text-[11px] tabular-nums text-[#71717A]">{preview.chars.toLocaleString()} characters</span>
+            <div className="rounded-lg bg-surface p-3">
+              <span className="text-[11px] tabular-nums text-muted">{preview.chars.toLocaleString()} characters</span>
             </div>
           )}
           {preview.chunk_count !== undefined && (
             <div className="flex gap-2 mt-1">
-              <span className="rounded-full bg-[#171A22] px-2.5 py-1 text-[10px] tabular-nums text-[#A1A1AA]">{preview.chunk_count} chunks</span>
-              {preview.vectors_count !== undefined && <span className="rounded-full bg-[#171A22] px-2.5 py-1 text-[10px] tabular-nums text-[#A1A1AA]">{preview.vectors_count} vectors</span>}
+              <span className="rounded-full bg-surface px-2.5 py-1 text-[10px] tabular-nums text-foreground-3">{preview.chunk_count} chunks</span>
+              {preview.vectors_count !== undefined && <span className="rounded-full bg-surface px-2.5 py-1 text-[10px] tabular-nums text-foreground-3">{preview.vectors_count} vectors</span>}
             </div>
           )}
         </div>
@@ -172,10 +172,10 @@ function StepPreview({ preview, stepId }: { preview: Record<string, any>; stepId
 
 function StepRow({ step, state, isLast, isIdle, index }: { step: StepConfig; state: StepState; isLast: boolean; isIdle: boolean; index: number }) {
   const borderColor = {
-    complete: "border-[#22C55E]/15 bg-[#22C55E]/[0.02]",
-    active: "border-[#6E56CF]/25 bg-[#6E56CF]/[0.04] shadow-[0_0_20px_rgba(110,86,207,0.08)]",
-    error: "border-[#EF4444]/20 bg-[#EF4444]/[0.03]",
-    pending: isIdle ? "border-[rgba(255,255,255,0.04)] bg-transparent" : "border-[rgba(255,255,255,0.06)] bg-[#111318]",
+    complete: "border-[#FF5C00]/15 bg-[#FF5C00]/[0.02]",
+    active: "border-[#FF5C00]/25 bg-[#FF5C00]/[0.04] shadow-[0_0_20px_rgba(255,92,0,0.08)]",
+    error: "border-danger/20 bg-danger/5",
+    pending: isIdle ? "border-border bg-transparent" : "border-border bg-card",
   }[state.status];
 
   return (
@@ -192,65 +192,65 @@ function StepRow({ step, state, isLast, isIdle, index }: { step: StepConfig; sta
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className={`text-[13px] font-semibold ${
-              isIdle ? "text-[#71717A]"
-                : state.status === "complete" ? "text-[#22C55E]"
-                : state.status === "active" ? "text-[#F5F5F5]"
-                : state.status === "error" ? "text-[#EF4444]"
-                : "text-[#A1A1AA]"
+              isIdle ? "text-muted"
+                : state.status === "complete" ? "text-[#FF5C00]"
+                : state.status === "active" ? "text-foreground"
+                : state.status === "error" ? "text-danger"
+                : "text-foreground-3"
             }`}>
               {step.name}
             </span>
           </div>
           <div className="flex items-center gap-2">
             {state.status === "active" && state.progress !== undefined && (
-              <span className="text-[11px] tabular-nums font-semibold text-[#6E56CF]">{state.progress}%</span>
+              <span className="text-[11px] tabular-nums font-semibold text-[#FF5C00]">{state.progress}%</span>
             )}
             {state.status === "active" && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#6E56CF]/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#6E56CF]">
-                <span className="h-1 w-1 rounded-full bg-[#6E56CF] animate-pulse" />
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#FF5C00]/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#FF5C00]">
+                <span className="h-1 w-1 rounded-full bg-[#FF5C00] animate-pulse" />
                 Running
               </span>
             )}
             {state.status === "complete" && state.durationMs !== undefined && (
-              <span className="text-[11px] tabular-nums text-[#71717A]">{(state.durationMs / 1000).toFixed(1)}s</span>
+              <span className="text-[11px] tabular-nums text-muted">{(state.durationMs / 1000).toFixed(1)}s</span>
             )}
             {state.status === "complete" && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#22C55E]/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#22C55E]">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#FF5C00]/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#FF5C00]">
                 ✓ Done
               </span>
             )}
             {state.status === "error" && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#EF4444]/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#EF4444]">
+              <span className="inline-flex items-center gap-1 rounded-full bg-danger/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-danger">
                 ✕ Failed
               </span>
             )}
             {state.status === "pending" && (
-              <span className="text-[11px] text-[#71717A]">—</span>
+              <span className="text-[11px] text-muted">—</span>
             )}
           </div>
         </div>
 
         {/* Description (active or idle only) */}
         {(state.status === "active" || isIdle) && (
-          <p className="mt-1 text-[11px] text-[#71717A]">{step.description}</p>
+          <p className="mt-1 text-[11px] text-muted">{step.description}</p>
         )}
 
         {/* Progress bar (active) */}
         {state.status === "active" && state.progress !== undefined && (
           <div className="mt-2.5">
-            <div className="h-[4px] overflow-hidden rounded-full bg-[#171A22]">
+            <div className="h-[4px] overflow-hidden rounded-full bg-surface">
               <div
-                className="h-full rounded-full bg-[#6E56CF] transition-all duration-500 progress-stripes"
+                className="h-full rounded-full bg-[#FF5C00] transition-all duration-500 progress-stripes"
                 style={{ width: `${state.progress}%` }}
               />
             </div>
-            {state.subText && <p className="mt-1.5 text-[10px] text-[#71717A]">{state.subText}</p>}
+            {state.subText && <p className="mt-1.5 text-[10px] text-muted">{state.subText}</p>}
           </div>
         )}
 
         {/* Error */}
         {state.status === "error" && state.error && (
-          <p className="mt-1.5 text-[11px] text-[#EF4444]">{state.error}</p>
+          <p className="mt-1.5 text-[11px] text-danger">{state.error}</p>
         )}
 
         {/* Expandable preview */}

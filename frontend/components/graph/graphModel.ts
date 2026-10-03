@@ -1,12 +1,12 @@
 import type { GraphEdge, GraphNode } from "@/lib/api";
 
 export const SOURCE_COLORS: Record<string, string> = {
-  youtube: "#EF4444",
-  instagram: "#E1306C",
-  pdf: "#DC2626",
-  document: "#7C3AED",
-  audio: "#059669",
-  web: "#0EA5E9",
+  youtube: "#FF5C00",
+  instagram: "#FF5C00",
+  pdf: "#E14E00",
+  document: "#E14E00",
+  audio: "#E14E00",
+  web: "#B96A00",
 };
 
 export const SOURCE_LABELS: Record<string, string> = {
@@ -18,7 +18,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   web: "Web",
 };
 
-export const BRAND_COLOR = "#6E56CF";
+export const BRAND_COLOR = "#FF5C00";
 
 export const sourceColor = (type?: string): string =>
   (type && SOURCE_COLORS[type]) || BRAND_COLOR;

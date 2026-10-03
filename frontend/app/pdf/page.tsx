@@ -62,28 +62,28 @@ export default function PdfPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="mb-8 rounded-[24px] border border-[rgba(255,255,255,0.06)] bg-gradient-to-br from-[#111318] via-[#111318] to-[#DC2626]/5 p-8">
+      <div className="mb-8 rounded-[24px] border-2 border-ink bg-gradient-to-br from-card via-card to-brand-soft p-8">
         <div className="flex items-start gap-5">
-          <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-[20px] bg-[#DC2626]/10 shadow-lg shadow-[#DC2626]/5">
-            <FileText className="h-7 w-7 text-[#DC2626]" />
+          <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-[20px] bg-brand-soft shadow-brut">
+            <FileText className="h-7 w-7 text-brand" />
           </div>
           <div className="flex-1">
-            <h1 className="text-[28px] font-bold text-[#F5F5F5] tracking-tight">PDF Intelligence</h1>
-            <p className="mt-2 text-[15px] text-[#A1A1AA] leading-relaxed max-w-2xl">
+            <h1 className="text-[28px] font-bold text-foreground tracking-tight">PDF Intelligence</h1>
+            <p className="mt-2 text-[15px] text-foreground-3 leading-relaxed max-w-2xl">
               Transform books, papers, and notes into queryable knowledge. Docling document intelligence, PaddleOCR for scanned pages, table extraction, and semantic chunking.
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#DC2626]/10 px-3 py-1.5 text-[11px] font-medium text-[#DC2626]">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#DC2626]" />
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1.5 text-[11px] font-medium text-brand">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand" />
                 PDF
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(255,255,255,0.05)] px-3 py-1.5 text-[11px] font-medium text-[#71717A]">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[11px] font-medium text-muted">
                 Docling
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(255,255,255,0.05)] px-3 py-1.5 text-[11px] font-medium text-[#71717A]">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[11px] font-medium text-muted">
                 PaddleOCR
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(255,255,255,0.05)] px-3 py-1.5 text-[11px] font-medium text-[#71717A]">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[11px] font-medium text-muted">
                 Tables & Headings
               </span>
             </div>
@@ -92,14 +92,14 @@ export default function PdfPage() {
       </div>
 
       {/* Upload Section */}
-      <div className="mb-6 rounded-[20px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-5">
-        <label className="mb-3 block text-[11px] font-bold uppercase tracking-wider text-[#71717A]">Upload PDF</label>
+      <div className="mb-6 rounded-[20px] border-2 border-ink bg-card p-5">
+        <label className="mb-3 block text-[11px] font-bold uppercase tracking-wider text-muted">Upload PDF</label>
         <UploadZone file={file} accept="application/pdf" label="Click to choose a PDF or drag & drop" onSelect={setFile} disabled={isStreaming} />
         <div className="mt-4 flex items-center gap-3">
           {isStreaming ? (
             <button
               onClick={cancel}
-              className="flex items-center gap-2 rounded-[14px] border border-[#EF4444]/30 bg-[#EF4444]/10 px-6 py-3.5 text-[13px] font-semibold text-[#EF4444] transition-all hover:bg-[#EF4444]/20 hover:border-[#EF4444]/40"
+              className="flex items-center gap-2 brut-btn bg-danger px-6 py-3.5 text-[13px] font-bold text-card transition-all"
             >
               <Loader2 className="h-4 w-4 animate-spin" />
               Cancel Processing
@@ -108,21 +108,21 @@ export default function PdfPage() {
             <button
               onClick={handleProcess}
               disabled={!file}
-              className="flex items-center gap-2 rounded-[14px] bg-gradient-to-r from-[#DC2626] to-[#B91C1C] px-6 py-3.5 text-[13px] font-semibold text-white transition-all hover:from-[#EF4444] hover:to-[#DC2626] disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-[#DC2626]/10 hover:shadow-[#DC2626]/20"
+              className="flex items-center gap-2 brut-btn bg-brand px-6 py-3.5 text-[13px] font-bold text-ink transition-all hover:bg-brand-hover disabled:cursor-not-allowed"
             >
               <Upload className="h-4 w-4" />
               Process PDF
             </button>
           )}
           {file && (
-            <div className="flex items-center gap-2 rounded-[12px] bg-[#171A22] px-4 py-2.5">
-              <FileText className="h-4 w-4 text-[#DC2626]" />
-              <span className="text-[12px] text-[#A1A1AA] max-w-[200px] truncate">{file.name}</span>
-              <span className="text-[11px] text-[#52525B]">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+            <div className="flex items-center gap-2 rounded-[12px] bg-surface px-4 py-2.5">
+              <FileText className="h-4 w-4 text-brand" />
+              <span className="text-[12px] text-foreground-3 max-w-[200px] truncate">{file.name}</span>
+              <span className="text-[11px] text-muted">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
             </div>
           )}
         </div>
-        <p className="mt-3 text-[12px] text-[#52525B]">
+        <p className="mt-3 text-[12px] text-muted">
           Supports books, research papers, lecture notes, and scanned documents. OCR will be used for image-based pages.
         </p>
       </div>
@@ -149,10 +149,10 @@ export default function PdfPage() {
       {/* Three-column layout */}
       <div className="grid grid-cols-12 gap-5">
         <div className="col-span-12 lg:col-span-5">
-          <div className="rounded-[20px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-5">
+          <div className="rounded-[20px] border-2 border-ink bg-card p-5">
             <div className="mb-4 flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#71717A]">Pipeline Progress</span>
-              {!isIdle && <span className="rounded-full bg-[#DC2626]/10 px-2.5 py-1 text-[10px] font-semibold tabular-nums text-[#DC2626]">{completedSteps}/{PDF_STEPS.length}</span>}
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted">Pipeline Progress</span>
+              {!isIdle && <span className="rounded-full bg-brand-soft px-2.5 py-1 text-[10px] font-semibold tabular-nums text-brand">{completedSteps}/{PDF_STEPS.length}</span>}
             </div>
             <PipelineTimeline steps={PDF_STEPS} events={events} isStreaming={isStreaming} error={error} isIdle={isIdle} />
           </div>
@@ -166,14 +166,14 @@ export default function PdfPage() {
       </div>
 
       {error && !isStreaming && (
-        <div className="mt-6 rounded-[20px] border border-[#EF4444]/20 bg-[#EF4444]/[0.05] p-5">
+        <div className="mt-6 rounded-[20px] border border-danger/30 bg-danger/5 p-5">
           <div className="flex items-start gap-3">
-            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#EF4444]/10">
-              <X className="h-4 w-4 text-[#EF4444]" />
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-danger/10">
+              <X className="h-4 w-4 text-danger" />
             </div>
             <div>
-              <p className="text-[13px] font-medium text-[#EF4444]">Processing Error</p>
-              <p className="mt-1 text-[12px] text-[#EF4444]/70">{error}</p>
+              <p className="text-[13px] font-medium text-danger">Processing Error</p>
+              <p className="mt-1 text-[12px] text-muted">{error}</p>
             </div>
           </div>
         </div>

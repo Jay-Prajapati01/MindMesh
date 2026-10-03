@@ -64,7 +64,7 @@ export function ActiveProcessesBanner() {
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              className="rounded-[16px] border border-border bg-card/95 backdrop-blur-xl shadow-floating p-3 text-foreground"
+              className="rounded-[16px] border-2 border-ink bg-card/95 backdrop-blur-xl shadow-floating p-3 text-foreground"
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px]" style={{ backgroundColor: srcTheme.softDark }}>

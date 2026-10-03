@@ -23,7 +23,7 @@ import {
 import { SearchHit, Stats } from "@/lib/api";
 import { AnimatedCounter } from "./AnimatedCounter";
 
-const PIE_COLORS = ["#EF4444", "#E1306C", "#DC2626", "#7C3AED", "#059669", "#0EA5E9"];
+const PIE_COLORS = ["#FF5C00", "#E14E00", "#FF8A3D", "#B96A00", "#C64A00", "#6B5B4D"];
 
 interface Props {
   hits: SearchHit[];
@@ -69,7 +69,7 @@ export function IntelligenceSidebar({ hits, stats, query = "", chunksSearched = 
           type === "document" ? PIE_COLORS[3] :
           type === "audio" ? PIE_COLORS[4] :
           type === "web" ? PIE_COLORS[5] :
-          "#71717A",
+          "#6B5B4D",
       }))
       .sort((a, b) => b.value - a.value);
   }, [hits]);
@@ -114,14 +114,14 @@ export function IntelligenceSidebar({ hits, stats, query = "", chunksSearched = 
       {/* Top Stats */}
       <div className="grid grid-cols-2 gap-3">
         {[
-          { label: "Indexed Chunks", value: totalChunks, icon: Layers, color: "#6E56CF", suffix: "" },
-          { label: "Sources", value: totalSources, icon: Database, color: "#22C55E", suffix: "" },
+          { label: "Indexed Chunks", value: totalChunks, icon: Layers, color: "#FF5C00", suffix: "" },
+          { label: "Sources", value: totalSources, icon: Database, color: "#FF5C00", suffix: "" },
           { label: "Results", value: hits.length, icon: Target, color: "#F59E0B", suffix: "" },
-          { label: "Avg Score", value: Math.round(avgRelevance * 100), icon: TrendingUp, color: "#0EA5E9", suffix: "%" },
+          { label: "Avg Score", value: Math.round(avgRelevance * 100), icon: TrendingUp, color: "#B96A00", suffix: "%" },
         ].map((stat) => (
           <div
             key={stat.label}
-            className="rounded-[14px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-3"
+            className="rounded-[14px] border-2 border-ink bg-card p-3"
           >
             <div className="mb-2 flex items-center gap-2">
               <div
@@ -130,16 +130,16 @@ export function IntelligenceSidebar({ hits, stats, query = "", chunksSearched = 
               >
                 <stat.icon className="h-3 w-3" style={{ color: stat.color }} />
               </div>
-              <span className="text-[10px] text-[#71717A]">{stat.label}</span>
+              <span className="text-[10px] text-muted">{stat.label}</span>
             </div>
-            <div className="text-[18px] font-bold text-[#F5F5F5]">
+            <div className="text-[18px] font-bold text-foreground">
               {loading ? (
-                <div className="h-5 w-12 animate-pulse rounded bg-[rgba(255,255,255,0.05)]" />
+                <div className="h-5 w-12 animate-pulse rounded bg-surface" />
               ) : (
                 <AnimatedCounter value={stat.value} />
               )}
               {stat.suffix && !loading && (
-                <span className="text-[12px] text-[#71717A]">{stat.suffix}</span>
+                <span className="text-[12px] text-muted">{stat.suffix}</span>
               )}
             </div>
           </div>
@@ -147,22 +147,22 @@ export function IntelligenceSidebar({ hits, stats, query = "", chunksSearched = 
       </div>
 
       {/* Result Scores */}
-      <div className="rounded-[14px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-4">
+      <div className="rounded-[14px] border-2 border-ink bg-card p-4">
         <div className="mb-2 flex items-center justify-between">
-          <span className="text-[11px] font-semibold text-[#F5F5F5]">
+          <span className="text-[11px] font-semibold text-foreground">
             Result Scores
           </span>
-          <span className="text-[13px] font-bold text-[#6E56CF]">
+          <span className="text-[13px] font-bold text-[#FF5C00]">
             {scoreRange ? scoreRange.max.toFixed(2) : "—"}
           </span>
         </div>
-        <div className="relative h-1.5 overflow-hidden rounded-full bg-[rgba(255,255,255,0.06)]">
+        <div className="relative h-1.5 overflow-hidden rounded-full bg-surface">
           <div
-            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[#6E56CF] to-[#7C69E3]"
+            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[#FF5C00] to-[#E14E00]"
             style={{ width: `${Math.max(0, Math.min(100, Math.round(avgRelevance * 100)))}%` }}
           />
         </div>
-        <p className="mt-2 text-[10px] text-[#71717A]">
+        <p className="mt-2 text-[10px] text-muted">
           {scoreRange
             ? `Cosine similarity ${scoreRange.min.toFixed(2)}–${scoreRange.max.toFixed(2)} · avg ${avgRelevance.toFixed(2)}`
             : "Run a search to see similarity scores"}
@@ -171,8 +171,8 @@ export function IntelligenceSidebar({ hits, stats, query = "", chunksSearched = 
 
       {/* Source Distribution */}
       {hasResults && (
-        <div className="rounded-[14px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-4">
-          <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[#71717A]">
+        <div className="rounded-[14px] border-2 border-ink bg-card p-4">
+          <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted">
             Sources Distribution
           </h3>
           <div className="flex items-center gap-4">
@@ -195,20 +195,20 @@ export function IntelligenceSidebar({ hits, stats, query = "", chunksSearched = 
                   </Pie>
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "#171A22",
-                      border: "1px solid rgba(255,255,255,0.1)",
+                      backgroundColor: "var(--surface)",
+                      border: "1px solid var(--border)",
                       borderRadius: "10px",
                       fontSize: "11px",
                     }}
-                    labelStyle={{ color: "#F5F5F5" }}
+                    labelStyle={{ color: "var(--foreground)" }}
                   />
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-[16px] font-bold text-[#F5F5F5]">
+                <span className="text-[16px] font-bold text-foreground">
                   {hits.length}
                 </span>
-                <span className="text-[9px] text-[#71717A]">Results</span>
+                <span className="text-[9px] text-muted">Results</span>
               </div>
             </div>
             <div className="space-y-2">
@@ -218,11 +218,11 @@ export function IntelligenceSidebar({ hits, stats, query = "", chunksSearched = 
                     className="h-2.5 w-2.5 rounded-full"
                     style={{ backgroundColor: item.color }}
                   />
-                  <span className="text-[10px] text-[#A1A1AA]">{item.name}</span>
-                  <span className="ml-auto text-[10px] font-medium text-[#F5F5F5]">
+                  <span className="text-[10px] text-foreground-3">{item.name}</span>
+                  <span className="ml-auto text-[10px] font-medium text-foreground">
                     {item.value}
                   </span>
-                  <span className="text-[9px] text-[#52525B]">
+                  <span className="text-[9px] text-muted">
                     ({item.percentage}%)
                   </span>
                 </div>
@@ -233,20 +233,20 @@ export function IntelligenceSidebar({ hits, stats, query = "", chunksSearched = 
       )}
 
       {/* Search Insights */}
-      <div className="rounded-[14px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-4">
-        <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[#71717A]">
+      <div className="rounded-[14px] border-2 border-ink bg-card p-4">
+        <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted">
           Search Insights
         </h3>
         <div className="space-y-2.5">
           {[
-            { icon: TrendingUp, label: "Average relevance score", value: avgRelevance.toFixed(2), color: "#6E56CF" },
+            { icon: TrendingUp, label: "Average relevance score", value: avgRelevance.toFixed(2), color: "#FF5C00" },
             ...(searchTimeMs
-              ? [{ icon: Clock, label: "Search completed in", value: `${searchTimeMs}ms`, color: "#22C55E" }]
+              ? [{ icon: Clock, label: "Search completed in", value: `${searchTimeMs}ms`, color: "#FF5C00" }]
               : []),
             ...(chunksSearched
-              ? [{ icon: Layers, label: `Searched ${chunksSearched} chunks`, value: "", color: "#0EA5E9" }]
+              ? [{ icon: Layers, label: `Searched ${chunksSearched} chunks`, value: "", color: "#B96A00" }]
               : []),
-            { icon: Target, label: `${hits.length} results matched`, value: "", color: "#EF4444" },
+            { icon: Target, label: `${hits.length} results matched`, value: "", color: "#FF5C00" },
           ].map((item) => (
             <div key={item.label} className="flex items-center gap-2.5">
               <div
@@ -255,9 +255,9 @@ export function IntelligenceSidebar({ hits, stats, query = "", chunksSearched = 
               >
                 <item.icon className="h-3 w-3" style={{ color: item.color }} />
               </div>
-              <span className="flex-1 text-[11px] text-[#A1A1AA]">{item.label}</span>
+              <span className="flex-1 text-[11px] text-foreground-3">{item.label}</span>
               {item.value && (
-                <span className="text-[11px] font-semibold text-[#F5F5F5]">
+                <span className="text-[11px] font-semibold text-foreground">
                   {item.value}
                 </span>
               )}
@@ -268,8 +268,8 @@ export function IntelligenceSidebar({ hits, stats, query = "", chunksSearched = 
 
       {/* Related Topics */}
       {relatedTopics.length > 0 && (
-        <div className="rounded-[14px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-4">
-          <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[#71717A]">
+        <div className="rounded-[14px] border-2 border-ink bg-card p-4">
+          <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted">
             Related Topics
           </h3>
           <div className="flex flex-wrap gap-1.5">
@@ -278,7 +278,7 @@ export function IntelligenceSidebar({ hits, stats, query = "", chunksSearched = 
                 key={topic}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="cursor-pointer rounded-full border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.03)] px-2.5 py-1 text-[10px] text-[#A1A1AA] transition-all hover:border-[#6E56CF]/30 hover:bg-[#6E56CF]/10 hover:text-[#6E56CF]"
+                className="cursor-pointer rounded-full border-2 border-ink bg-surface px-2.5 py-1 text-[10px] text-foreground-3 transition-all hover:border-[#FF5C00]/30 hover:bg-[#FF5C00]/10 hover:text-[#FF5C00]"
               >
                 {topic}
               </motion.span>
@@ -286,7 +286,7 @@ export function IntelligenceSidebar({ hits, stats, query = "", chunksSearched = 
           </div>
           <button
             onClick={() => setShowAllTopics((v) => !v)}
-            className="mt-2.5 flex items-center gap-1 text-[10px] text-[#6E56CF] hover:text-[#7C69E3] transition-colors"
+            className="mt-2.5 flex items-center gap-1 text-[10px] text-[#FF5C00] hover:text-[#E14E00] transition-colors"
           >
             {showAllTopics ? "Show fewer topics" : "View all topics"}
             <ArrowRight className="h-3 w-3" />
@@ -296,28 +296,28 @@ export function IntelligenceSidebar({ hits, stats, query = "", chunksSearched = 
 
       {/* Related Memories */}
       {relatedMemories.length > 0 && (
-        <div className="rounded-[14px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-4">
-          <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[#71717A]">
+        <div className="rounded-[14px] border-2 border-ink bg-card p-4">
+          <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted">
             Related Memories
           </h3>
           <div className="space-y-2">
             {relatedMemories.map((memory) => (
               <div
                 key={memory.title}
-                className="flex items-center gap-2.5 rounded-lg p-2 transition-colors hover:bg-[rgba(255,255,255,0.03)] cursor-pointer"
+                className="flex items-center gap-2.5 rounded-lg p-2 transition-colors hover:bg-surface cursor-pointer"
               >
-                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[rgba(255,255,255,0.04)]">
-                  <Brain className="h-3 w-3 text-[#71717A]" />
+                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-surface">
+                  <Brain className="h-3 w-3 text-muted" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="break-words text-[11px] font-medium text-[#F5F5F5]">
+                  <div className="break-words text-[11px] font-medium text-foreground">
                     {memory.title}
                   </div>
-                  <div className="text-[9px] text-[#52525B] capitalize">
+                  <div className="text-[9px] text-muted capitalize">
                     {memory.type}
                   </div>
                 </div>
-                <span className="text-[10px] font-semibold text-[#6E56CF]">
+                <span className="text-[10px] font-semibold text-[#FF5C00]">
                   {memory.score.toFixed(2)}
                 </span>
               </div>
@@ -331,7 +331,7 @@ export function IntelligenceSidebar({ hits, stats, query = "", chunksSearched = 
         whileHover={{ scale: 1.01 }}
         whileTap={{ scale: 0.99 }}
         onClick={() => router.push(`/chat?q=${encodeURIComponent(query)}`)}
-        className="flex w-full items-center justify-center gap-3 rounded-[16px] bg-gradient-to-r from-[#6E56CF] to-[#7C69E3] px-5 py-4 text-[13px] font-semibold text-white shadow-lg shadow-[#6E56CF]/20 transition-all hover:shadow-xl hover:shadow-[#6E56CF]/30"
+        className="flex w-full items-center justify-center gap-3 rounded-[16px] bg-gradient-to-r from-[#FF5C00] to-[#E14E00] px-5 py-4 text-[13px] font-semibold text-ink shadow-lg shadow-[#FF5C00]/20 transition-all hover:shadow-xl hover:shadow-[#FF5C00]/30"
       >
         <MessageSquare className="h-4 w-4" />
         Ask AI about these results

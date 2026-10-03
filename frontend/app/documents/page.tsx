@@ -56,28 +56,28 @@ export default function DocumentsPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="mb-8 rounded-[24px] border border-[rgba(255,255,255,0.06)] bg-gradient-to-br from-[#111318] via-[#111318] to-[#7C3AED]/5 p-8">
+      <div className="mb-8 rounded-[24px] border-2 border-ink bg-gradient-to-br from-card via-card to-brand-soft p-8">
         <div className="flex items-start gap-5">
-          <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-[20px] bg-[#7C3AED]/10 shadow-lg shadow-[#7C3AED]/5">
-            <FileStack className="h-7 w-7 text-[#7C3AED]" />
+          <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-[20px] bg-brand-soft shadow-brut">
+            <FileStack className="h-7 w-7 text-brand" />
           </div>
           <div className="flex-1">
-            <h1 className="text-[28px] font-bold text-[#F5F5F5] tracking-tight">Document Intelligence</h1>
-            <p className="mt-2 text-[15px] text-[#A1A1AA] leading-relaxed max-w-2xl">
+            <h1 className="text-[28px] font-bold text-foreground tracking-tight">Document Intelligence</h1>
+            <p className="mt-2 text-[15px] text-foreground-3 leading-relaxed max-w-2xl">
               Transform any document into searchable knowledge. DOCX, PPTX, TXT, Markdown, CSV, and Excel files supported.
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#7C3AED]/10 px-3 py-1.5 text-[11px] font-medium text-[#7C3AED]">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#7C3AED]" />
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1.5 text-[11px] font-medium text-brand">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand" />
                 Multi-Format
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(255,255,255,0.05)] px-3 py-1.5 text-[11px] font-medium text-[#71717A]">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[11px] font-medium text-muted">
                 DOCX + PPTX
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(255,255,255,0.05)] px-3 py-1.5 text-[11px] font-medium text-[#71717A]">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[11px] font-medium text-muted">
                 TXT + Markdown
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(255,255,255,0.05)] px-3 py-1.5 text-[11px] font-medium text-[#71717A]">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[11px] font-medium text-muted">
                 CSV + Excel
               </span>
             </div>
@@ -86,14 +86,14 @@ export default function DocumentsPage() {
       </div>
 
       {/* Upload Section */}
-      <div className="mb-6 rounded-[20px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-5">
-        <label className="mb-3 block text-[11px] font-bold uppercase tracking-wider text-[#71717A]">Upload Document</label>
+      <div className="mb-6 rounded-[20px] border-2 border-ink bg-card p-5">
+        <label className="mb-3 block text-[11px] font-bold uppercase tracking-wider text-muted">Upload Document</label>
         <UploadZone file={file} accept={ACCEPT} label="Click to choose a document or drag & drop" onSelect={setFile} disabled={isStreaming} />
         <div className="mt-4 flex items-center gap-3">
           {isStreaming ? (
             <button
               onClick={cancel}
-              className="flex items-center gap-2 rounded-[14px] border border-[#EF4444]/30 bg-[#EF4444]/10 px-6 py-3.5 text-[13px] font-semibold text-[#EF4444] transition-all hover:bg-[#EF4444]/20 hover:border-[#EF4444]/40"
+              className="flex items-center gap-2 brut-btn bg-danger px-6 py-3.5 text-[13px] font-bold text-card transition-all hover:bg-danger"
             >
               <Loader2 className="h-4 w-4 animate-spin" />
               Cancel Processing
@@ -102,27 +102,27 @@ export default function DocumentsPage() {
             <button
               onClick={handleProcess}
               disabled={!file}
-              className="flex items-center gap-2 rounded-[14px] bg-gradient-to-r from-[#7C3AED] to-[#6D28D9] px-6 py-3.5 text-[13px] font-semibold text-white transition-all hover:from-[#8B5CF6] hover:to-[#7C3AED] disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-[#7C3AED]/10 hover:shadow-[#7C3AED]/20"
+              className="flex items-center gap-2 brut-btn bg-brand px-6 py-3.5 text-[13px] font-bold text-ink transition-all hover:bg-brand-hover disabled:cursor-not-allowed"
             >
               <Upload className="h-4 w-4" />
               Process Document
             </button>
           )}
           {file && (
-            <div className="flex items-center gap-2 rounded-[12px] bg-[#171A22] px-4 py-2.5">
-              <FileStack className="h-4 w-4 text-[#7C3AED]" />
-              <span className="text-[12px] text-[#A1A1AA] max-w-[200px] truncate">{file.name}</span>
-              <span className="text-[11px] text-[#52525B]">({(file.size / 1024).toFixed(1)} KB)</span>
+            <div className="flex items-center gap-2 rounded-[12px] border-2 border-ink bg-surface px-4 py-2.5">
+              <FileStack className="h-4 w-4 text-brand" />
+              <span className="text-[12px] text-foreground-3 max-w-[200px] truncate">{file.name}</span>
+              <span className="text-[11px] text-muted">({(file.size / 1024).toFixed(1)} KB)</span>
             </div>
           )}
         </div>
-        <p className="mt-3 text-[12px] text-[#52525B]">
+        <p className="mt-3 text-[12px] text-muted">
           Perfect for meeting notes, research papers, presentations, spreadsheets, and markdown documentation.
         </p>
 
         {/* Accepted document types */}
-        <div className="mt-4 rounded-[14px] border border-[rgba(255,255,255,0.05)] bg-[#0C0D12] p-4">
-          <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-[#71717A]">Accepted documents</p>
+        <div className="mt-4 rounded-[14px] border-2 border-ink bg-card p-4">
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-muted">Accepted documents</p>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {[
               { ext: "DOCX", desc: "Word reports, resumes, notes — headings & tables preserved" },
@@ -132,18 +132,18 @@ export default function DocumentsPage() {
               { ext: "TXT", desc: "Plain text notes, transcripts, logs" },
               { ext: "MD", desc: "Markdown docs — existing headings used for chunking" },
             ].map((t) => (
-              <div key={t.ext} className="flex items-start gap-2.5 rounded-[10px] bg-[#111318] px-3 py-2.5">
-                <span className="mt-0.5 rounded-md bg-[#7C3AED]/15 px-1.5 py-0.5 text-[10px] font-bold text-[#A78BFA]">
+              <div key={t.ext} className="flex items-start gap-2.5 rounded-[10px] bg-card px-3 py-2.5">
+                <span className="mt-0.5 rounded-md bg-brand-soft px-1.5 py-0.5 text-[10px] font-bold text-brand">
                   {t.ext}
                 </span>
-                <span className="text-[11px] leading-snug text-[#71717A]">{t.desc}</span>
+                <span className="text-[11px] leading-snug text-muted">{t.desc}</span>
               </div>
             ))}
           </div>
-          <p className="mt-3 text-[11px] text-[#52525B]">
+          <p className="mt-3 text-[11px] text-muted">
             Headings, tables and section structure are preserved and fed to the AI for summaries,
             semantic chunking and grounded answers. PDFs are handled by Docling on the{" "}
-            <a href="/pdf" className="text-[#A78BFA] underline-offset-2 hover:underline">PDF page</a>.
+            <a href="/pdf" className="text-brand underline-offset-2 hover:underline">PDF page</a>.
           </p>
         </div>
       </div>
@@ -170,10 +170,10 @@ export default function DocumentsPage() {
       {/* Three-column layout */}
       <div className="grid grid-cols-12 gap-5">
         <div className="col-span-12 lg:col-span-5">
-          <div className="rounded-[20px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-5">
+          <div className="rounded-[20px] border-2 border-ink bg-card p-5">
             <div className="mb-4 flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#71717A]">Pipeline Progress</span>
-              {!isIdle && <span className="rounded-full bg-[#7C3AED]/10 px-2.5 py-1 text-[10px] font-semibold tabular-nums text-[#7C3AED]">{completedSteps}/{DOCUMENT_STEPS.length}</span>}
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted">Pipeline Progress</span>
+              {!isIdle && <span className="rounded-full bg-brand-soft px-2.5 py-1 text-[10px] font-semibold tabular-nums text-brand">{completedSteps}/{DOCUMENT_STEPS.length}</span>}
             </div>
             <PipelineTimeline steps={DOCUMENT_STEPS} events={events} isStreaming={isStreaming} error={error} isIdle={isIdle} />
           </div>
@@ -187,14 +187,14 @@ export default function DocumentsPage() {
       </div>
 
       {error && !isStreaming && (
-        <div className="mt-6 rounded-[20px] border border-[#EF4444]/20 bg-[#EF4444]/[0.05] p-5">
+        <div className="mt-6 rounded-[20px] border-2 border-danger/30 bg-danger/5 p-5">
           <div className="flex items-start gap-3">
-            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#EF4444]/10">
-              <X className="h-4 w-4 text-[#EF4444]" />
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-danger/10">
+              <X className="h-4 w-4 text-danger" />
             </div>
             <div>
-              <p className="text-[13px] font-medium text-[#EF4444]">Processing Error</p>
-              <p className="mt-1 text-[12px] text-[#EF4444]/70">{error}</p>
+              <p className="text-[13px] font-medium text-danger">Processing Error</p>
+              <p className="text-[12px] text-muted">{error}</p>
             </div>
           </div>
         </div>

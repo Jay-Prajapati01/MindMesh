@@ -37,7 +37,7 @@ interface CommandItem {
 }
 
 const NAVIGATION_ITEMS: Omit<CommandItem, "category">[] = [
-  { id: "dashboard", label: "Dashboard", description: "Mission Control Center", icon: Home, color: "var(--brand)", href: "/", shortcut: "⌘1" },
+  { id: "dashboard", label: "Dashboard", description: "Mission Control Center", icon: Home, color: "var(--brand)", href: "/dashboard", shortcut: "⌘1" },
   { id: "workspace", label: "Workspace", description: "Notes and tools", icon: LayoutGrid, color: "var(--brand)", href: "/workspace" },
   { id: "search", label: "Semantic Search", description: "Explore your knowledge", icon: Search, color: "var(--brand)", href: "/search" },
   { id: "chat", label: "Ask AI", description: "Chat with your knowledge", icon: MessageSquare, color: "var(--brand)", href: "/chat" },
@@ -49,12 +49,12 @@ const NAVIGATION_ITEMS: Omit<CommandItem, "category">[] = [
 ];
 
 const ACTION_ITEMS: Omit<CommandItem, "category">[] = [
-  { id: "add-youtube", label: "Add YouTube Video", description: "Extract & summarize video content", icon: Youtube, color: "#EF4444", href: "/youtube" },
-  { id: "add-instagram", label: "Add Instagram Reel", description: "Extract captions and on-screen text", icon: Instagram, color: "#E1306C", href: "/instagram" },
-  { id: "add-pdf", label: "Upload PDF", description: "Extract text and analyze", icon: FileText, color: "#DC2626", href: "/pdf" },
-  { id: "add-document", label: "Upload Document", description: "Process document files", icon: Files, color: "#7C3AED", href: "/documents" },
-  { id: "add-audio", label: "Upload Audio", description: "Transcribe with Whisper AI", icon: Mic, color: "#059669", href: "/audio" },
-  { id: "add-web", label: "Add Website", description: "Parse and index web content", icon: Globe, color: "#0EA5E9", href: "/web" },
+  { id: "add-youtube", label: "Add YouTube Video", description: "Extract & summarize video content", icon: Youtube, color: "#FF5C00", href: "/youtube" },
+  { id: "add-instagram", label: "Add Instagram Reel", description: "Extract captions and on-screen text", icon: Instagram, color: "#FF5C00", href: "/instagram" },
+  { id: "add-pdf", label: "Upload PDF", description: "Extract text and analyze", icon: FileText, color: "#E14E00", href: "/pdf" },
+  { id: "add-document", label: "Upload Document", description: "Process document files", icon: Files, color: "#E14E00", href: "/documents" },
+  { id: "add-audio", label: "Upload Audio", description: "Transcribe with Whisper AI", icon: Mic, color: "#E14E00", href: "/audio" },
+  { id: "add-web", label: "Add Website", description: "Parse and index web content", icon: Globe, color: "#B96A00", href: "/web" },
 ];
 
 export function CommandPalette() {
@@ -114,20 +114,6 @@ export function CommandPalette() {
     }
   }, [open]);
 
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        setOpen(!open);
-      }
-      if (e.key === "Escape" && open) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [open, setOpen]);
-
   const executeItem = useCallback(
     (item: CommandItem) => {
       if (item.action) {
@@ -139,6 +125,28 @@ export function CommandPalette() {
     },
     [router, setOpen]
   );
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setOpen(!open);
+      }
+      if (e.key === "Escape" && open) {
+        setOpen(false);
+      }
+      // Numeric shortcuts shown on items (e.g. ⌘1) work while the palette is open
+      if ((e.metaKey || e.ctrlKey) && /^[1-9]$/.test(e.key) && open) {
+        const item = flatFiltered.find((i) => i.shortcut === `⌘${e.key}`);
+        if (item) {
+          e.preventDefault();
+          executeItem(item);
+        }
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [open, setOpen, flatFiltered, executeItem]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
@@ -153,7 +161,9 @@ export function CommandPalette() {
   };
 
   useEffect(() => {
-    const el = listRef.current?.children[selectedIndex] as HTMLElement;
+    const el = listRef.current?.querySelector(
+      `[data-cmd-item="${selectedIndex}"]`
+    );
     el?.scrollIntoView({ block: "nearest" });
   }, [selectedIndex]);
 
@@ -175,9 +185,9 @@ export function CommandPalette() {
           exit={{ opacity: 0, scale: 0.96, y: -10 }}
           transition={{ duration: 0.15 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-[560px] overflow-hidden rounded-[16px] border border-border bg-card shadow-floating text-foreground"
+          className="relative w-full max-w-[560px] overflow-hidden rounded-[16px] border-2 border-ink bg-card shadow-floating text-foreground"
         >
-          <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+          <div className="flex items-center gap-3 border-b-2 border-ink px-4 py-3">
             <Search className="h-4 w-4 text-muted" />
             <input
               ref={inputRef}
@@ -212,6 +222,7 @@ export function CommandPalette() {
                   return (
                     <button
                       key={item.id}
+                      data-cmd-item={flatIndex}
                       onClick={() => executeItem(item)}
                       onMouseEnter={() => setSelectedIndex(flatIndex)}
                       className={`flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-left transition-colors ${
@@ -252,6 +263,7 @@ export function CommandPalette() {
                   return (
                     <button
                       key={item.id}
+                      data-cmd-item={flatIndex}
                       onClick={() => executeItem(item)}
                       onMouseEnter={() => setSelectedIndex(flatIndex)}
                       className={`flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-left transition-colors ${
@@ -289,6 +301,7 @@ export function CommandPalette() {
                   return (
                     <button
                       key={item.id}
+                      data-cmd-item={flatIndex}
                       onClick={() => executeItem(item)}
                       onMouseEnter={() => setSelectedIndex(flatIndex)}
                       className={`flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-left transition-colors ${
@@ -310,7 +323,7 @@ export function CommandPalette() {
             )}
           </div>
 
-          <div className="flex items-center gap-4 border-t border-border px-4 py-2.5 text-subtle">
+          <div className="flex items-center gap-4 border-t-2 border-ink px-4 py-2.5 text-subtle">
             <span className="flex items-center gap-1.5 text-[10px]">
               <span className="rounded bg-surface px-1.5 py-0.5 font-mono">↑↓</span>
               Navigate

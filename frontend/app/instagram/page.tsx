@@ -59,28 +59,28 @@ export default function InstagramPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="mb-8 rounded-[24px] border border-[rgba(255,255,255,0.06)] bg-gradient-to-br from-[#111318] via-[#111318] to-[#E1306C]/5 p-8">
+      <div className="mb-8 rounded-[24px] border-2 border-ink bg-gradient-to-br from-card via-card to-brand-soft p-8">
         <div className="flex items-start gap-5">
-          <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-[20px] bg-gradient-to-br from-[#F77737]/20 via-[#E1306C]/20 to-[#C13584]/20 shadow-lg shadow-[#E1306C]/10">
-            <Camera className="h-7 w-7 text-[#E1306C]" />
+          <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-[20px] bg-brand-soft shadow-lg shadow-brut">
+            <Camera className="h-7 w-7 text-brand" />
           </div>
           <div className="flex-1">
-            <h1 className="text-[28px] font-bold text-[#F5F5F5] tracking-tight">Instagram Intelligence</h1>
-            <p className="mt-2 text-[15px] text-[#A1A1AA] leading-relaxed max-w-2xl">
+            <h1 className="text-[28px] font-bold text-foreground tracking-tight">Instagram Intelligence</h1>
+            <p className="mt-2 text-[15px] text-foreground-3 leading-relaxed max-w-2xl">
               Extract insights from Reels, Posts, and Stories. OCR text from images, transcribe audio, and build searchable knowledge.
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E1306C]/10 px-3 py-1.5 text-[11px] font-medium text-[#E1306C]">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#E1306C]" />
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1.5 text-[11px] font-medium text-brand">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#FF5C00]" />
                 Instagram
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(255,255,255,0.05)] px-3 py-1.5 text-[11px] font-medium text-[#71717A]">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[11px] font-medium text-muted">
                 Playwright Browser
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(255,255,255,0.05)] px-3 py-1.5 text-[11px] font-medium text-[#71717A]">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[11px] font-medium text-muted">
                 OCR + Whisper
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(255,255,255,0.05)] px-3 py-1.5 text-[11px] font-medium text-[#71717A]">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[11px] font-medium text-muted">
                 No Login Required
               </span>
             </div>
@@ -89,21 +89,21 @@ export default function InstagramPage() {
       </div>
 
       {/* Input Section */}
-      <div className="mb-6 rounded-[20px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-5">
-        <label className="mb-3 block text-[11px] font-bold uppercase tracking-wider text-[#71717A]">Post or Reel URL</label>
+      <div className="mb-6 rounded-[20px] border-2 border-ink bg-card p-5">
+        <label className="mb-3 block text-[11px] font-bold uppercase tracking-wider text-muted">Post or Reel URL</label>
         <div className="flex gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#71717A]" />
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
             <input
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="https://instagram.com/reel/..."
               disabled={isStreaming}
-              className="w-full rounded-[14px] border border-[rgba(255,255,255,0.08)] bg-[#171A22] py-3.5 pl-11 pr-11 text-[14px] text-[#F5F5F5] placeholder-[#52525B] outline-none transition-all focus:border-[#E1306C]/50 focus:ring-2 focus:ring-[#E1306C]/10 disabled:opacity-50"
+              className="w-full rounded-[14px] border-2 border-ink bg-surface py-3.5 pl-11 pr-11 text-[14px] text-foreground placeholder:text-muted outline-none transition-all focus:border-[#FF5C00]/50 focus:ring-2 focus:ring-[#FF5C00]/10 disabled:opacity-50"
             />
             {url && !isStreaming && (
-              <button onClick={() => setUrl("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#52525B] hover:text-[#F5F5F5] transition-colors">
+              <button onClick={() => setUrl("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors">
                 <X className="h-4 w-4" />
               </button>
             )}
@@ -111,7 +111,7 @@ export default function InstagramPage() {
           {isStreaming ? (
             <button
               onClick={cancel}
-              className="flex items-center gap-2 rounded-[14px] border border-[#EF4444]/30 bg-[#EF4444]/10 px-6 py-3.5 text-[13px] font-semibold text-[#EF4444] transition-all hover:bg-[#EF4444]/20 hover:border-[#EF4444]/40"
+              className="flex items-center gap-2 brut-btn bg-danger px-6 py-3.5 text-[13px] font-bold text-card transition-all"
             >
               <Loader2 className="h-4 w-4 animate-spin" />
               Cancel
@@ -120,14 +120,14 @@ export default function InstagramPage() {
             <button
               onClick={handleProcess}
               disabled={!url}
-              className="flex items-center gap-2 rounded-[14px] bg-gradient-to-r from-[#F77737] via-[#E1306C] to-[#C13584] px-6 py-3.5 text-[13px] font-semibold text-white transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-[#E1306C]/10 hover:shadow-[#E1306C]/20"
+              className="flex items-center gap-2 brut-btn bg-brand px-6 py-3.5 text-[13px] font-bold text-ink transition-all hover:bg-brand-hover disabled:cursor-not-allowed"
             >
               <Camera className="h-4 w-4" />
               Process Post
             </button>
           )}
         </div>
-        <p className="mt-3 text-[12px] text-[#52525B]">
+        <p className="mt-3 text-[12px] text-muted">
           Works with public posts, Reels, and carousel images. No login required. Playwright renders the page to extract content.
         </p>
       </div>
@@ -154,10 +154,10 @@ export default function InstagramPage() {
       {/* Three-column layout */}
       <div className="grid grid-cols-12 gap-5">
         <div className="col-span-12 lg:col-span-5">
-          <div className="rounded-[20px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-5">
+          <div className="rounded-[20px] border-2 border-ink bg-card p-5">
             <div className="mb-4 flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#71717A]">Pipeline Progress</span>
-              {!isIdle && <span className="rounded-full bg-[#E1306C]/10 px-2.5 py-1 text-[10px] font-semibold tabular-nums text-[#E1306C]">{completedSteps}/{INSTAGRAM_STEPS.length}</span>}
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted">Pipeline Progress</span>
+              {!isIdle && <span className="rounded-full bg-brand-soft px-2.5 py-1 text-[10px] font-semibold tabular-nums text-brand">{completedSteps}/{INSTAGRAM_STEPS.length}</span>}
             </div>
             <PipelineTimeline steps={INSTAGRAM_STEPS} events={events} isStreaming={isStreaming} error={error} isIdle={isIdle} />
           </div>
@@ -171,14 +171,14 @@ export default function InstagramPage() {
       </div>
 
       {error && !isStreaming && (
-        <div className="mt-6 rounded-[20px] border border-[#EF4444]/20 bg-[#EF4444]/[0.05] p-5">
+        <div className="mt-6 rounded-[20px] border border-danger/30 bg-danger/5 p-5">
           <div className="flex items-start gap-3">
-            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#EF4444]/10">
-              <X className="h-4 w-4 text-[#EF4444]" />
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-danger/10">
+              <X className="h-4 w-4 text-danger" />
             </div>
             <div>
-              <p className="text-[13px] font-medium text-[#EF4444]">Processing Error</p>
-              <p className="mt-1 text-[12px] text-[#EF4444]/70">{error}</p>
+              <p className="text-[13px] font-medium text-danger">Processing Error</p>
+              <p className="mt-1 text-[12px] text-muted">{error}</p>
             </div>
           </div>
         </div>

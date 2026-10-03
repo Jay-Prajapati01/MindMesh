@@ -52,9 +52,9 @@ export function GraphDetailPanel({
       exit={{ opacity: 0, x: 24 }}
       transition={{ duration: 0.22, ease: "easeOut" }}
       aria-label={`Details for ${label}`}
-      className="absolute inset-x-2 bottom-2 z-30 flex max-h-[62%] flex-col rounded-xl border border-border bg-card text-foreground shadow-floating sm:static sm:inset-auto sm:max-h-none sm:w-[340px] sm:shrink-0 sm:rounded-xl"
+      className="absolute inset-x-2 bottom-2 z-30 flex max-h-[62%] flex-col rounded-xl border-2 border-ink bg-card text-foreground shadow-floating sm:static sm:inset-auto sm:max-h-none sm:w-[340px] sm:shrink-0 sm:rounded-xl"
     >
-      <div className="flex items-start gap-2 border-b border-border p-4">
+      <div className="flex items-start gap-2 border-b-2 border-ink p-4">
         <span
           aria-hidden
           className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full"
@@ -66,7 +66,7 @@ export function GraphDetailPanel({
             {types.map((t) => (
               <span
                 key={t}
-                className="flex items-center gap-1 rounded-full border border-border bg-surface px-1.5 py-0.5 text-[10px] text-muted"
+                className="flex items-center gap-1 rounded-full border-2 border-ink bg-surface px-1.5 py-0.5 text-[10px] text-muted"
               >
                 <span
                   aria-hidden
@@ -87,7 +87,7 @@ export function GraphDetailPanel({
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-px border-b border-border bg-border">
+      <div className="grid grid-cols-3 gap-px border-b-2 border-ink bg-border">
         {stats.map((s) => (
           <div key={s.label} className="bg-card px-2 py-2.5 text-center">
             <div className="text-base font-semibold tabular-nums" style={{ color }}>
@@ -98,17 +98,17 @@ export function GraphDetailPanel({
         ))}
       </div>
 
-      <div className="flex gap-2 border-b border-border p-3">
+      <div className="flex gap-2 border-b-2 border-ink p-3">
         <Link
           href={`/search?q=${encodeURIComponent(label)}`}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface px-2 py-2 text-[11px] font-medium text-foreground-3 transition-colors hover:bg-surface-muted hover:text-foreground"
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border-2 border-ink bg-surface px-2 py-2 text-[11px] font-medium text-foreground-3 transition-colors hover:bg-surface-muted hover:text-foreground"
         >
           <Search className="h-3.5 w-3.5" />
           Search
         </Link>
         <Link
           href={`/chat?q=${encodeURIComponent(label)}`}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[11px] font-medium text-white transition-opacity hover:opacity-90 shadow-sm"
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[11px] font-medium text-ink transition-opacity hover:opacity-90 shadow-sm"
           style={{ background: color }}
         >
           <MessageSquare className="h-3.5 w-3.5" />
@@ -169,7 +169,7 @@ export function GraphDetailPanel({
         </ul>
       </div>
 
-      <p className="border-t border-border px-4 py-2.5 text-[10px] text-subtle">
+      <p className="border-t-2 border-ink px-4 py-2.5 text-[10px] text-subtle">
         Click a connection to keep exploring →
       </p>
     </motion.aside>

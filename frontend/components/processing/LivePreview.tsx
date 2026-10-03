@@ -96,13 +96,13 @@ export function LivePreview({ events, isStreaming, isIdle, sourceType }: LivePre
 
   if (isIdle) {
     return (
-      <div className="flex h-full min-h-[400px] items-center justify-center rounded-[20px] border border-[rgba(255,255,255,0.06)] bg-[#111318]">
+      <div className="flex h-full min-h-[400px] items-center justify-center rounded-[20px] border-2 border-ink bg-card">
         <div className="text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#171A22]">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-surface">
             <span className="text-xl">👁️</span>
           </div>
-          <p className="text-[13px] font-medium text-[#A1A1AA]">Live Preview</p>
-          <p className="mt-1 text-[11px] text-[#71717A]">Content appears here during processing</p>
+          <p className="text-[13px] font-medium text-foreground-3">Live Preview</p>
+          <p className="mt-1 text-[11px] text-muted">Content appears here during processing</p>
         </div>
       </div>
     );
@@ -110,9 +110,9 @@ export function LivePreview({ events, isStreaming, isIdle, sourceType }: LivePre
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2 rounded-[12px] border border-[rgba(255,255,255,0.06)] bg-[#111318] px-3 py-2">
-        <span className={`h-1.5 w-1.5 rounded-full ${isComplete ? "bg-[#22C55E]" : hasFailed ? "bg-[#EF4444]" : "bg-[#6E56CF] animate-pulse"}`} />
-        <span className="text-[11px] font-medium text-[#A1A1AA]">
+      <div className="flex items-center gap-2 rounded-[12px] border-2 border-ink bg-card px-3 py-2">
+        <span className={`h-1.5 w-1.5 rounded-full ${isComplete ? "bg-[#FF5C00]" : hasFailed ? "bg-danger" : "bg-[#FF5C00] animate-pulse"}`} />
+        <span className="text-[11px] font-medium text-foreground-3">
           {currentStage === "waiting" ? "Initializing..." :
            currentStage === "connecting" ? "Connecting..." :
            currentStage === "done" ? "Complete" :
@@ -122,57 +122,57 @@ export function LivePreview({ events, isStreaming, isIdle, sourceType }: LivePre
       </div>
 
       {thumbnail && (
-        <div className="animate-fade-in overflow-hidden rounded-[20px] border border-[rgba(255,255,255,0.06)] bg-[#111318]">
+        <div className="animate-fade-in overflow-hidden rounded-[20px] border-2 border-ink bg-card">
           <div className="relative">
             <img src={thumbnail} alt={title} className="h-40 w-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#111318] via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
             {duration && (
-              <span className="absolute bottom-2 right-2 rounded-[8px] bg-black/70 px-2 py-0.5 text-[10px] tabular-nums font-semibold text-white">
+              <span className="absolute bottom-2 right-2 rounded-[8px] bg-black/70 px-2 py-0.5 text-[10px] tabular-nums font-semibold text-paper">
                 {Math.floor(duration / 60)}:{(duration % 60).toString().padStart(2, "0")}
               </span>
             )}
           </div>
           <div className="p-3.5">
-            <h3 className="text-[13px] font-semibold text-[#F5F5F5] line-clamp-2 leading-tight">{title}</h3>
-            {channel && <p className="mt-1 text-[11px] text-[#71717A]">{channel}</p>}
+            <h3 className="text-[13px] font-semibold text-foreground line-clamp-2 leading-tight">{title}</h3>
+            {channel && <p className="mt-1 text-[11px] text-muted">{channel}</p>}
           </div>
         </div>
       )}
 
       {!thumbnail && title && (
-        <div className="animate-fade-in rounded-[20px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-3.5">
-          <h3 className="text-[13px] font-semibold text-[#F5F5F5] line-clamp-2 leading-tight">{title}</h3>
-          {previewChars != null && previewChars > 0 && <p className="mt-1 text-[11px] text-[#71717A]">{previewChars.toLocaleString()} characters extracted</p>}
+        <div className="animate-fade-in rounded-[20px] border-2 border-ink bg-card p-3.5">
+          <h3 className="text-[13px] font-semibold text-foreground line-clamp-2 leading-tight">{title}</h3>
+          {previewChars != null && previewChars > 0 && <p className="mt-1 text-[11px] text-muted">{previewChars.toLocaleString()} characters extracted</p>}
         </div>
       )}
 
       {transcript && (
-        <div className="animate-fade-in rounded-[20px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-3.5">
+        <div className="animate-fade-in rounded-[20px] border-2 border-ink bg-card p-3.5">
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#71717A]">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted">
               {isVideo ? "Transcript" : "Extracted Content"}
             </span>
-            <span className="text-[10px] tabular-nums text-[#71717A]">{transcript.length.toLocaleString()} chars</span>
+            <span className="text-[10px] tabular-nums text-muted">{transcript.length.toLocaleString()} chars</span>
           </div>
-          <div className="max-h-36 overflow-y-auto rounded-[10px] bg-[#171A22] p-3">
-            <p className="text-[11px] leading-relaxed text-[#A1A1AA] whitespace-pre-wrap">{transcript}</p>
+          <div className="max-h-36 overflow-y-auto rounded-[10px] bg-surface p-3">
+            <p className="text-[11px] leading-relaxed text-foreground-3 whitespace-pre-wrap">{transcript}</p>
           </div>
         </div>
       )}
 
       {displaySummary && (
-        <div className="animate-fade-in rounded-[20px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-3.5">
+        <div className="animate-fade-in rounded-[20px] border-2 border-ink bg-card p-3.5">
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#71717A]">AI Summary</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted">AI Summary</span>
             {isStreamingSummary && (
-              <span className="inline-flex items-center gap-1 text-[10px] text-[#6E56CF]">
-                <span className="h-1 w-1 rounded-full bg-[#6E56CF] animate-pulse" />
+              <span className="inline-flex items-center gap-1 text-[10px] text-[#FF5C00]">
+                <span className="h-1 w-1 rounded-full bg-[#FF5C00] animate-pulse" />
                 Streaming
               </span>
             )}
           </div>
-          <div ref={summaryRef} className="max-h-48 overflow-y-auto rounded-[10px] bg-[#171A22] p-3">
-            <p className={`text-[12px] leading-relaxed text-[#A1A1AA] whitespace-pre-wrap ${isStreamingSummary ? "streaming-cursor" : ""}`}>
+          <div ref={summaryRef} className="max-h-48 overflow-y-auto rounded-[10px] bg-surface p-3">
+            <p className={`text-[12px] leading-relaxed text-foreground-3 whitespace-pre-wrap ${isStreamingSummary ? "streaming-cursor" : ""}`}>
               {displaySummary}
             </p>
           </div>
@@ -180,21 +180,21 @@ export function LivePreview({ events, isStreaming, isIdle, sourceType }: LivePre
       )}
 
       {topics.length > 0 && (
-        <div className="animate-fade-in rounded-[20px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-3.5">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[#71717A]">Key Topics</span>
+        <div className="animate-fade-in rounded-[20px] border-2 border-ink bg-card p-3.5">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted">Key Topics</span>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {topics.map((t) => (
-              <span key={t} className="rounded-full bg-[#6E56CF]/10 px-2.5 py-1 text-[10px] font-medium text-[#6E56CF]">{t}</span>
+              <span key={t} className="rounded-full bg-[#FF5C00]/10 px-2.5 py-1 text-[10px] font-medium text-[#FF5C00]">{t}</span>
             ))}
           </div>
         </div>
       )}
 
       {!thumbnail && !title && !transcript && !displaySummary && isStreaming && (
-        <div className="flex h-48 items-center justify-center rounded-[20px] border border-[rgba(255,255,255,0.06)] bg-[#111318]">
+        <div className="flex h-48 items-center justify-center rounded-[20px] border-2 border-ink bg-card">
           <div className="text-center">
-            <div className="mx-auto mb-2 h-5 w-5 rounded-full border-2 border-[#6E56CF] border-t-transparent animate-spin" />
-            <p className="text-[11px] text-[#71717A]">
+            <div className="mx-auto mb-2 h-5 w-5 rounded-full border-2 border-[#FF5C00] border-t-transparent animate-spin" />
+            <p className="text-[11px] text-muted">
               {currentStage === "connecting" ? "Connecting to server..." : "Waiting for content..."}
             </p>
           </div>
@@ -202,22 +202,22 @@ export function LivePreview({ events, isStreaming, isIdle, sourceType }: LivePre
       )}
 
       {isComplete && !thumbnail && !transcript && !displaySummary && (
-        <div className="flex h-48 items-center justify-center rounded-[20px] border border-[rgba(255,255,255,0.06)] bg-[#111318]">
+        <div className="flex h-48 items-center justify-center rounded-[20px] border-2 border-ink bg-card">
           <div className="text-center">
-            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#22C55E]/20">
-              <svg className="h-5 w-5 text-[#22C55E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#FF5C00]/20">
+              <svg className="h-5 w-5 text-[#FF5C00]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <p className="text-[12px] font-medium text-[#A1A1AA]">Content processed</p>
-            <p className="mt-1 text-[11px] text-[#71717A]">Indexed and ready for search</p>
+            <p className="text-[12px] font-medium text-foreground-3">Content processed</p>
+            <p className="mt-1 text-[11px] text-muted">Indexed and ready for search</p>
           </div>
         </div>
       )}
 
       {hasFailed && (thumbnail || transcript || displaySummary) && (
-        <div className="flex items-start gap-2.5 rounded-[12px] border border-[#EF4444]/30 bg-[#EF4444]/10 px-3 py-2.5">
-          <svg className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#EF4444]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <div className="flex items-start gap-2.5 rounded-[12px] border border-danger/30 bg-danger/10 px-3 py-2.5">
+          <svg className="mt-0.5 h-3.5 w-3.5 shrink-0 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
           </svg>
           <div className="text-[11px] leading-relaxed text-[#FCA5A5]">
@@ -227,15 +227,15 @@ export function LivePreview({ events, isStreaming, isIdle, sourceType }: LivePre
       )}
 
       {hasFailed && !thumbnail && !transcript && !displaySummary && (
-        <div className="flex h-48 items-center justify-center rounded-[20px] border border-[rgba(255,255,255,0.06)] bg-[#111318]">
+        <div className="flex h-48 items-center justify-center rounded-[20px] border-2 border-ink bg-card">
           <div className="text-center">
-            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#EF4444]/20">
-              <svg className="h-5 w-5 text-[#EF4444]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-danger/20">
+              <svg className="h-5 w-5 text-danger" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
-            <p className="text-[12px] font-medium text-[#A1A1AA]">Processing failed</p>
-            <p className="mt-1 text-[11px] text-[#71717A]">Check error details below</p>
+            <p className="text-[12px] font-medium text-foreground-3">Processing failed</p>
+            <p className="mt-1 text-[11px] text-muted">Check error details below</p>
           </div>
         </div>
       )}

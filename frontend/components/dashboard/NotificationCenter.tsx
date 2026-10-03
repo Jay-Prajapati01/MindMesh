@@ -114,7 +114,7 @@ export function NotificationCenter() {
         onClick={() => setDrawerOpen(!drawerOpen)}
         aria-label="Notifications"
         aria-expanded={drawerOpen}
-        className="relative flex h-10 w-10 items-center justify-center rounded-[12px] border border-border bg-card text-foreground-3 transition-all hover:bg-surface hover:text-foreground"
+        className="relative flex h-10 w-10 items-center justify-center rounded-[12px] border-2 border-ink bg-card text-foreground-3 transition-all hover:bg-surface hover:text-foreground"
       >
         <Bell className="h-4 w-4" />
         {unreadCount > 0 && (
@@ -123,7 +123,7 @@ export function NotificationCenter() {
             animate={{ scale: 1 }}
             className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand px-1"
           >
-            <span className="text-[9px] font-bold text-white">{unreadCount > 9 ? "9+" : unreadCount}</span>
+            <span className="text-[9px] font-bold text-ink">{unreadCount > 9 ? "9+" : unreadCount}</span>
           </motion.div>
         )}
       </button>
@@ -135,9 +135,9 @@ export function NotificationCenter() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.98 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 bottom-full z-50 mb-2 w-[380px] overflow-hidden rounded-[16px] border border-border bg-card text-foreground shadow-floating"
+            className="absolute right-0 top-full z-50 mt-2 w-[380px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[16px] border-2 border-ink bg-card text-foreground shadow-floating"
           >
-            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <div className="flex items-center justify-between border-b-2 border-ink px-4 py-3">
               <div className="flex items-center gap-2">
                 <h3 className="text-[13px] font-semibold text-foreground">Notifications</h3>
                 {unreadCount > 0 && (

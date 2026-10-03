@@ -17,10 +17,10 @@ interface Props {
 }
 
 const SUGGESTED_SEARCHES = [
-  { icon: Brain, label: "What are the key insights from my notes?", color: "#6E56CF" },
-  { icon: Sparkles, label: "Summarize my latest YouTube videos", color: "#EF4444" },
-  { icon: FileText, label: "What topics appear most in my PDFs?", color: "#DC2626" },
-  { icon: Globe, label: "Find connections between my web articles", color: "#0EA5E9" },
+  { icon: Brain, label: "What are the key insights from my notes?", color: "#FF5C00" },
+  { icon: Sparkles, label: "Summarize my latest YouTube videos", color: "#FF5C00" },
+  { icon: FileText, label: "What topics appear most in my PDFs?", color: "#E14E00" },
+  { icon: Globe, label: "Find connections between my web articles", color: "#B96A00" },
 ];
 
 const POPULAR_TOPICS = [
@@ -53,22 +53,22 @@ export function SearchEmptyState({ onSearch }: Props) {
       transition={{ duration: 0.5 }}
       className="flex flex-col items-center py-12"
     >
-      <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-[20px] bg-gradient-to-br from-[#6E56CF]/15 to-[#6E56CF]/5">
-        <Brain className="h-10 w-10 text-[#6E56CF]" />
+      <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-[20px] bg-gradient-to-br from-[#FF5C00]/15 to-[#FF5C00]/5">
+        <Brain className="h-10 w-10 text-[#FF5C00]" />
       </div>
 
-      <h2 className="mb-2 text-[20px] font-bold text-[#F5F5F5]">
+      <h2 className="mb-2 text-[20px] font-bold text-foreground">
         Explore Your Intelligence
       </h2>
-      <p className="mb-8 max-w-md text-center text-[13px] text-[#71717A]">
+      <p className="mb-8 max-w-md text-center text-[13px] text-muted">
         Search across all your knowledge sources. Ask questions, find connections,
         and discover insights hidden in your data.
       </p>
 
       {/* Suggested Searches */}
       <div className="mb-8 w-full max-w-2xl">
-        <h3 className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[#71717A]">
-          <Sparkles className="h-3.5 w-3.5 text-[#6E56CF]" />
+        <h3 className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
+          <Sparkles className="h-3.5 w-3.5 text-[#FF5C00]" />
           Suggested Searches
         </h3>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -78,7 +78,7 @@ export function SearchEmptyState({ onSearch }: Props) {
               whileHover={{ scale: 1.01, y: -1 }}
               whileTap={{ scale: 0.99 }}
               onClick={() => onSearch(suggestion.label)}
-              className="flex items-center gap-3 rounded-[14px] border border-[rgba(255,255,255,0.06)] bg-[#111318] p-3.5 text-left transition-all hover:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(255,255,255,0.03)]"
+              className="flex items-center gap-3 rounded-[14px] border-2 border-ink bg-card p-3.5 text-left transition-all hover:border-border hover:bg-surface"
             >
               <div
                 className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px]"
@@ -89,7 +89,7 @@ export function SearchEmptyState({ onSearch }: Props) {
                   style={{ color: suggestion.color }}
                 />
               </div>
-              <span className="text-[12px] text-[#A1A1AA]">{suggestion.label}</span>
+              <span className="text-[12px] text-foreground-3">{suggestion.label}</span>
             </motion.button>
           ))}
         </div>
@@ -98,7 +98,7 @@ export function SearchEmptyState({ onSearch }: Props) {
       {/* Recent Searches */}
       {recentSearches.length > 0 && (
         <div className="mb-8 w-full max-w-2xl">
-          <h3 className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[#71717A]">
+          <h3 className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
             <Clock className="h-3.5 w-3.5" />
             Recently Searched
           </h3>
@@ -107,9 +107,9 @@ export function SearchEmptyState({ onSearch }: Props) {
               <button
                 key={search}
                 onClick={() => onSearch(search)}
-                className="flex items-center gap-2 rounded-full border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.03)] px-3.5 py-1.5 text-[11px] text-[#A1A1AA] transition-all hover:bg-[rgba(255,255,255,0.06)] hover:text-[#F5F5F5]"
+                className="flex items-center gap-2 rounded-full border-2 border-ink bg-surface px-3.5 py-1.5 text-[11px] text-foreground-3 transition-all hover:bg-surface hover:text-foreground"
               >
-                <Clock className="h-3 w-3 text-[#52525B]" />
+                <Clock className="h-3 w-3 text-muted" />
                 {search}
               </button>
             ))}
@@ -119,7 +119,7 @@ export function SearchEmptyState({ onSearch }: Props) {
 
       {/* Popular Topics */}
       <div className="mb-8 w-full max-w-2xl">
-        <h3 className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[#71717A]">
+        <h3 className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
           <TrendingUp className="h-3.5 w-3.5" />
           Popular Topics
         </h3>
@@ -128,7 +128,7 @@ export function SearchEmptyState({ onSearch }: Props) {
             <button
               key={topic}
               onClick={() => onSearch(topic)}
-              className="rounded-full bg-[rgba(255,255,255,0.04)] px-3.5 py-1.5 text-[11px] text-[#71717A] transition-all hover:bg-[#6E56CF]/10 hover:text-[#6E56CF]"
+              className="rounded-full bg-surface px-3.5 py-1.5 text-[11px] text-muted transition-all hover:bg-[#FF5C00]/10 hover:text-[#FF5C00]"
             >
               {topic}
             </button>
@@ -138,7 +138,7 @@ export function SearchEmptyState({ onSearch }: Props) {
 
       {/* Trending Entities */}
       <div className="w-full max-w-2xl">
-        <h3 className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[#71717A]">
+        <h3 className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
           <Zap className="h-3.5 w-3.5" />
           Trending Entities
         </h3>
@@ -147,7 +147,7 @@ export function SearchEmptyState({ onSearch }: Props) {
             <button
               key={entity}
               onClick={() => onSearch(entity)}
-              className="flex items-center gap-1.5 rounded-full border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.03)] px-3.5 py-1.5 text-[11px] text-[#A1A1AA] transition-all hover:border-[#6E56CF]/30 hover:bg-[#6E56CF]/10 hover:text-[#6E56CF]"
+              className="flex items-center gap-1.5 rounded-full border-2 border-ink bg-surface px-3.5 py-1.5 text-[11px] text-foreground-3 transition-all hover:border-[#FF5C00]/30 hover:bg-[#FF5C00]/10 hover:text-[#FF5C00]"
             >
               <Zap className="h-3 w-3 text-[#F59E0B]" />
               {entity}

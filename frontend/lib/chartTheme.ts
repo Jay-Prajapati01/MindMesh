@@ -18,33 +18,33 @@ export function getChartTheme(resolvedTheme: "dark" | "light" | string): ChartTh
 
   if (isDark) {
     return {
-      background: "#111318",
-      text: "#F5F5F5",
-      mutedText: "#71717A",
-      grid: "rgba(255, 255, 255, 0.08)",
-      tooltipBackground: "#171A22",
-      tooltipBorder: "rgba(255, 255, 255, 0.12)",
-      tooltipText: "#F5F5F5",
-      brand: "#6E56CF",
-      success: "#22C55E",
-      warning: "#F59E0B",
-      danger: "#EF4444",
-      info: "#38BDF8",
+      background: "#241A12",
+      text: "#F5EEDD",
+      mutedText: "#BCA88F",
+      grid: "rgba(245, 238, 221, 0.12)",
+      tooltipBackground: "#241A12",
+      tooltipBorder: "#F5EEDD",
+      tooltipText: "#F5EEDD",
+      brand: "#FF6B00",
+      success: "#FF6B00",
+      warning: "#E8930C",
+      danger: "#C62828",
+      info: "#BCA88F",
     };
   }
 
   return {
     background: "#FFFFFF",
-    text: "#111827",
-    mutedText: "#8A93A3",
-    grid: "rgba(15, 23, 42, 0.08)",
+    text: "#1A120B",
+    mutedText: "#6B5B4D",
+    grid: "rgba(26, 18, 11, 0.10)",
     tooltipBackground: "#FFFFFF",
-    tooltipBorder: "rgba(15, 23, 42, 0.12)",
-    tooltipText: "#111827",
-    brand: "#6046C8",
+    tooltipBorder: "#1A120B",
+    tooltipText: "#1A120B",
+    brand: "#FF5C00",
     success: "#168A4A",
     warning: "#B96A00",
     danger: "#C62828",
-    info: "#087EA4",
+    info: "#6B5B4D",
   };
 }

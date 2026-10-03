@@ -29,15 +29,15 @@ function ConceptNodeInner({ data, selected }: NodeProps<ConceptData>) {
         count > 1 ? ` · mentioned ${count}×` : ""
       }`}
       aria-label={`Concept: ${clean}, ${degree} connections`}
-      className={`flex items-center gap-1.5 overflow-hidden rounded-full border px-2.5 py-1.5 transition-[border-color,box-shadow] duration-150 ${
+      className={`flex items-center gap-1.5 overflow-hidden rounded-full border-2 px-2.5 py-1.5 transition-[border-color,box-shadow] duration-150 ${
         hub ? "max-w-[320px] text-[15px]" : "max-w-[290px] text-[14px]"
       } ${on ? "font-medium" : "font-normal"}`}
       style={{
         borderColor: on ? color : `${color}80`,
         background: hub
-          ? `linear-gradient(135deg, ${color}59 0%, rgba(26,28,40,0.96) 65%)`
-          : `linear-gradient(135deg, ${color}30 0%, rgba(24,26,38,0.95) 65%)`,
-        color: "#F5F5F5",
+          ? `linear-gradient(135deg, ${color}59 0%, var(--card) 65%)`
+          : `linear-gradient(135deg, ${color}30 0%, var(--card) 65%)`,
+        color: "var(--foreground)",
         boxShadow: on
           ? `0 0 0 3px ${color}33, 0 0 22px ${color}66`
           : hub

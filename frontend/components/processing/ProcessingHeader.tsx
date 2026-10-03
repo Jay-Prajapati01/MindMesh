@@ -80,45 +80,45 @@ export function ProcessingHeader({
   }, [title, sourceType]);
 
   return (
-    <div className="rounded-[20px] border border-[rgba(255,255,255,0.08)] bg-[#111318] p-5">
+    <div className="rounded-[20px] border-2 border-ink bg-card p-5">
       {/* Top row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           {/* Icon */}
           <div className={`relative flex h-11 w-11 items-center justify-center rounded-[14px] transition-all duration-500 ${
-            isComplete ? "bg-[#22C55E]/20" : isFailed ? "bg-[#EF4444]/20" : "bg-[#6E56CF]/20"
+            isComplete ? "bg-[#FF5C00]/20" : isFailed ? "bg-danger/20" : "bg-[#FF5C00]/20"
           }`}>
             <Icon className={`h-5 w-5 transition-colors duration-500 ${
-              isComplete ? "text-[#22C55E]" : isFailed ? "text-[#EF4444]" : "text-[#6E56CF]"
+              isComplete ? "text-[#FF5C00]" : isFailed ? "text-danger" : "text-[#FF5C00]"
             }`} />
             {isStreaming && (
               <span className="absolute -right-1 -top-1 flex h-3 w-3">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#6E56CF] opacity-40" />
-                <span className="relative inline-flex h-3 w-3 rounded-full bg-[#6E56CF]" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#FF5C00] opacity-40" />
+                <span className="relative inline-flex h-3 w-3 rounded-full bg-[#FF5C00]" />
               </span>
             )}
           </div>
           {/* Title & meta */}
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-[15px] font-bold text-[#F5F5F5] tracking-tight">
+              <h2 className="text-[15px] font-bold text-foreground tracking-tight">
                 {isComplete ? "Processing Complete" : isFailed ? "Processing Failed" : "Processing"} {displayTitle}
               </h2>
               {isStreaming && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#6E56CF]/15 px-2 py-0.5 text-[10px] font-semibold text-[#6E56CF]">
-                  <span className="h-1 w-1 rounded-full bg-[#6E56CF] animate-pulse" />
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#FF5C00]/15 px-2 py-0.5 text-[10px] font-semibold text-[#FF5C00]">
+                  <span className="h-1 w-1 rounded-full bg-[#FF5C00] animate-pulse" />
                   LIVE
                 </span>
               )}
               {isComplete && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-[#22C55E]/15 px-2 py-0.5 text-[10px] font-semibold text-[#22C55E]">
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#FF5C00]/15 px-2 py-0.5 text-[10px] font-semibold text-[#FF5C00]">
                   ✓ DONE
                 </span>
               )}
             </div>
-            <div className="mt-0.5 flex items-center gap-3 text-[12px] text-[#71717A]">
+            <div className="mt-0.5 flex items-center gap-3 text-[12px] text-muted">
               <span>{formatElapsed(elapsed)} elapsed</span>
-              <span className="text-[rgba(255,255,255,0.08)]">·</span>
+              <span className="text-foreground-3">·</span>
               {isStreaming ? (
                 <ETA elapsed={elapsed} completed={completedSteps} total={totalSteps} />
               ) : isComplete ? (
@@ -126,8 +126,8 @@ export function ProcessingHeader({
               ) : (
                 <span>{completedSteps}/{totalSteps} steps</span>
               )}
-              <span className="text-[rgba(255,255,255,0.08)]">·</span>
-              <span className={isStreaming ? "text-[#6E56CF]" : isFailed ? "text-[#EF4444]" : isComplete ? "text-[#22C55E]" : "text-[#71717A]"}>
+              <span className="text-foreground-3">·</span>
+              <span className={isStreaming ? "text-[#FF5C00]" : isFailed ? "text-danger" : isComplete ? "text-[#FF5C00]" : "text-muted"}>
                 {isStreaming ? activeStepName || "Starting..." : isFailed ? `Failed at step ${failedStep}` : isComplete ? "All steps done" : "Idle"}
               </span>
             </div>
@@ -139,7 +139,7 @@ export function ProcessingHeader({
           {isStreaming && (
             <button
               onClick={onCancel}
-              className="flex items-center gap-2 rounded-[14px] border border-[#EF4444]/30 bg-[#EF4444]/10 px-4 py-2 text-[13px] font-medium text-[#EF4444] transition-all hover:bg-[#EF4444]/20 hover:border-[#EF4444]/50"
+              className="flex items-center gap-2 brut-btn bg-danger px-4 py-2 text-[13px] font-bold text-card transition-all"
             >
               <X className="h-3.5 w-3.5" />
               Cancel
@@ -150,36 +150,36 @@ export function ProcessingHeader({
 
       {/* Progress bar */}
       <div className="mt-4">
-        <div className="relative h-[6px] overflow-hidden rounded-full bg-[#171A22]">
+        <div className="relative h-[6px] overflow-hidden rounded-full bg-surface">
           <div
             className={`absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out ${
-              isFailed ? "bg-[#EF4444]" : isComplete ? "bg-[#22C55E]" : "bg-[#6E56CF]"
+              isFailed ? "bg-danger" : isComplete ? "bg-[#FF5C00]" : "bg-[#FF5C00]"
             } ${isStreaming && !isComplete && !isFailed ? "progress-stripes" : ""}`}
             style={{ width: `${overallProgress}%` }}
           />
         </div>
         <div className="mt-2 flex items-center justify-between">
           <div className="flex items-center gap-4 text-[11px]">
-            <span className="tabular-nums font-semibold text-[#F5F5F5]">{overallProgress}%</span>
-            <span className="text-[#71717A]">{completedSteps}/{totalSteps} steps</span>
+            <span className="tabular-nums font-semibold text-foreground">{overallProgress}%</span>
+            <span className="text-muted">{completedSteps}/{totalSteps} steps</span>
           </div>
-          <div className="flex items-center gap-1.5 text-[11px] text-[#71717A]">
+          <div className="flex items-center gap-1.5 text-[11px] text-muted">
             {isStreaming && (
               <>
-                <span className="h-1.5 w-1.5 rounded-full bg-[#6E56CF] animate-pulse" />
+                <span className="h-1.5 w-1.5 rounded-full bg-[#FF5C00] animate-pulse" />
                 <span>Processing</span>
               </>
             )}
             {isComplete && (
               <>
-                <span className="h-1.5 w-1.5 rounded-full bg-[#22C55E]" />
-                <span className="text-[#22C55E]">Complete</span>
+                <span className="h-1.5 w-1.5 rounded-full bg-[#FF5C00]" />
+                <span className="text-[#FF5C00]">Complete</span>
               </>
             )}
             {isFailed && (
               <>
-                <span className="h-1.5 w-1.5 rounded-full bg-[#EF4444]" />
-                <span className="text-[#EF4444]">Failed</span>
+                <span className="h-1.5 w-1.5 rounded-full bg-danger" />
+                <span className="text-danger">Failed</span>
               </>
             )}
           </div>
@@ -193,10 +193,10 @@ export function ProcessingHeader({
             key={i}
             className={`h-1 flex-1 rounded-full transition-all duration-500 ${
               i < completedSteps
-                ? "bg-[#22C55E]"
+                ? "bg-[#FF5C00]"
                 : i === completedSteps && isStreaming
-                ? "bg-[#6E56CF] animate-pulse"
-                : "bg-[#171A22]"
+                ? "bg-[#FF5C00] animate-pulse"
+                : "bg-surface"
             }`}
           />
         ))}

@@ -69,7 +69,7 @@ export function LiveSystemStatus() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 * i }}
-            className="rounded-[12px] border border-border bg-surface p-3"
+            className="rounded-[12px] border-2 border-ink bg-surface p-3"
           >
             <div className="mb-2 flex items-center justify-between">
               <div

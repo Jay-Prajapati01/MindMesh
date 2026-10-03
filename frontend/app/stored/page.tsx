@@ -84,7 +84,7 @@ export default function StoredPage() {
               onClick={() => { setFilter(f); setPage(1); }}
               className={`rounded-full px-3 py-1 text-xs capitalize transition border ${
                 active
-                  ? "bg-brand border-brand text-white font-medium shadow-sm"
+                  ? "bg-brand border-brand text-ink font-medium shadow-sm"
                   : "bg-surface border-border text-muted hover:bg-surface-muted hover:text-foreground"
               }`}
             >
@@ -188,7 +188,7 @@ export default function StoredPage() {
                     href={getOpenUrl(s) ?? undefined}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1 rounded-lg bg-surface border border-border px-3 py-1.5 text-xs text-muted hover:bg-surface-muted hover:text-foreground transition"
+                    className="flex items-center gap-1 rounded-lg bg-surface border-2 border-ink px-3 py-1.5 text-xs text-muted hover:bg-surface-muted hover:text-foreground transition"
                   >
                     <ExternalLink className="h-3 w-3" />
                     Open
@@ -214,7 +214,7 @@ export default function StoredPage() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="flex items-center gap-1 rounded-lg border border-border bg-surface px-3 py-2 text-xs text-muted hover:bg-surface-muted hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition"
+            className="flex items-center gap-1 rounded-lg border-2 border-ink bg-surface px-3 py-2 text-xs text-muted hover:bg-surface-muted hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition"
           >
             <ChevronLeft className="h-3 w-3" />
             Previous
@@ -225,7 +225,7 @@ export default function StoredPage() {
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="flex items-center gap-1 rounded-lg border border-border bg-surface px-3 py-2 text-xs text-muted hover:bg-surface-muted hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition"
+            className="flex items-center gap-1 rounded-lg border-2 border-ink bg-surface px-3 py-2 text-xs text-muted hover:bg-surface-muted hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition"
           >
             Next
             <ChevronRight className="h-3 w-3" />

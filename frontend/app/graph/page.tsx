@@ -53,7 +53,7 @@ function Chip({ active, color, label, count, onClick }: ChipProps) {
       aria-pressed={active}
       className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] transition-all ${
         active
-          ? "bg-surface border border-border font-medium text-foreground shadow-sm"
+          ? "bg-surface border-2 border-ink font-medium text-foreground shadow-sm"
           : "text-muted hover:bg-surface hover:text-foreground"
       }`}
       style={active ? { boxShadow: `inset 0 0 0 1px ${color}99` } : undefined}
@@ -417,7 +417,7 @@ export default function GraphPage() {
             onClick={fitWholeGraph}
             aria-label="Fit whole graph to view"
             title="Fit whole graph to view"
-            className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-foreground-3 transition-colors hover:bg-surface-muted hover:text-foreground"
+            className="flex items-center gap-1.5 rounded-lg border-2 border-ink bg-surface px-2.5 py-1.5 text-xs text-foreground-3 transition-colors hover:bg-surface-muted hover:text-foreground"
           >
             <Maximize2 className="h-3.5 w-3.5" />
             Fit
@@ -428,7 +428,7 @@ export default function GraphPage() {
       {/* Canvas + detail panel */}
       <div ref={canvasRef} className="relative flex min-h-0 flex-1 gap-3">
         <div
-          className={`relative min-w-0 flex-1 overflow-hidden rounded-xl border border-border bg-card shadow-card ${
+          className={`relative min-w-0 flex-1 overflow-hidden rounded-xl border-2 border-ink bg-card shadow-card ${
             activeId !== null ? " graph-has-active" : ""
           }`}
           style={{ backgroundColor: graphTheme.canvas }}
@@ -461,7 +461,7 @@ export default function GraphPage() {
               position="bottom-right"
               pannable
               zoomable
-              className="hidden sm:block border border-border rounded-lg overflow-hidden"
+              className="hidden sm:block border-2 border-ink rounded-lg overflow-hidden"
               style={{ background: graphTheme.minimapBackground }}
               maskColor={graphTheme.minimapMask}
               nodeColor={(n) => (n.data as ConceptData | undefined)?.color ?? "var(--brand)"}
@@ -469,7 +469,7 @@ export default function GraphPage() {
             />
             {selectedId === null && (
               <Panel position="top-left" className="!m-3">
-                <div className="rounded-full border border-border bg-card/90 backdrop-blur-md px-3 py-1.5 text-[12px] text-muted shadow-sm">
+                <div className="rounded-full border-2 border-ink bg-card/90 backdrop-blur-md px-3 py-1.5 text-[12px] text-muted shadow-sm">
                   💡 Click a concept to explore its connections
                 </div>
               </Panel>
@@ -496,7 +496,7 @@ export default function GraphPage() {
               {filterType && (
                 <button
                   onClick={() => setFilterType("")}
-                  className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs text-foreground transition-colors hover:bg-surface-muted"
+                  className="flex items-center gap-1.5 rounded-lg border-2 border-ink bg-surface px-3 py-1.5 text-xs text-foreground transition-colors hover:bg-surface-muted"
                 >
                   <Layers className="h-3.5 w-3.5" />
                   Show all sources

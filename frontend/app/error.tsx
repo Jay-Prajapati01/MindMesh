@@ -24,16 +24,16 @@ export default function Error({
         <AlertTriangle className="h-8 w-8 text-red-500" />
       </div>
       
-      <h2 className="mb-2 text-xl font-semibold text-[#F5F5F5]">
+      <h2 className="mb-2 text-xl font-semibold text-foreground">
         Something went wrong
       </h2>
       
-      <p className="mb-2 max-w-md text-sm text-[#A1A1AA]">
+      <p className="mb-2 max-w-md text-sm text-foreground-3">
         {error.message || "An unexpected error occurred."}
       </p>
       
       {error.digest && (
-        <p className="mb-4 text-xs text-[#52525B]">
+        <p className="mb-4 text-xs text-muted">
           Error ID: {error.digest}
         </p>
       )}
@@ -47,7 +47,7 @@ export default function Error({
       <div className="flex items-center gap-3">
         <button
           onClick={reset}
-          className="flex items-center gap-2 rounded-[12px] bg-[#6E56CF] px-5 py-2.5 text-[13px] font-medium text-white transition-all hover:bg-[#7C69E3]"
+          className="flex items-center gap-2 rounded-[12px] bg-[#FF5C00] border-2 border-ink px-5 py-2.5 text-[13px] font-medium text-ink transition-all hover:bg-[#E14E00]"
         >
           <RefreshCw className="h-4 w-4" />
           Try again
@@ -55,7 +55,7 @@ export default function Error({
         
         <Link
           href="/"
-          className="flex items-center gap-2 rounded-[12px] border border-[rgba(255,255,255,0.06)] bg-[#111318] px-5 py-2.5 text-[13px] font-medium text-[#A1A1AA] transition-all hover:bg-[rgba(255,255,255,0.05)] hover:text-[#F5F5F5]"
+          className="flex items-center gap-2 rounded-[12px] border-2 border-ink bg-card px-5 py-2.5 text-[13px] font-medium text-foreground-3 transition-all hover:bg-surface hover:text-foreground"
         >
           <Home className="h-4 w-4" />
           Go home

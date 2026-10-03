@@ -72,14 +72,14 @@ function StepCard({ step, state, isLast, isIdle = false }: { step: StepConfig; s
     ),
     complete: (
       <div className="flex h-5 w-5 items-center justify-center rounded-full bg-success">
-        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+        <svg className="h-3 w-3 text-ink" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
         </svg>
       </div>
     ),
     error: (
       <div className="flex h-5 w-5 items-center justify-center rounded-full bg-danger">
-        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+        <svg className="h-3 w-3 text-ink" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </div>
@@ -177,7 +177,7 @@ function StepCard({ step, state, isLast, isIdle = false }: { step: StepConfig; s
 function PreviewCard({ preview, stepId }: { preview: Record<string, any>; stepId: string }) {
   if (stepId === "metadata" && preview.thumbnail) {
     return (
-      <div className="mt-2 rounded-lg border border-border bg-surface p-2">
+      <div className="mt-2 rounded-lg border-2 border-ink bg-surface p-2">
         <div className="flex gap-3">
           <img
             src={preview.thumbnail}
@@ -200,7 +200,7 @@ function PreviewCard({ preview, stepId }: { preview: Record<string, any>; stepId
 
   if (preview.text) {
     return (
-      <div className="mt-2 rounded-lg border border-border bg-surface p-2">
+      <div className="mt-2 rounded-lg border-2 border-ink bg-surface p-2">
         <p className="text-xs leading-relaxed text-foreground-2 line-clamp-3">
           {preview.text}
         </p>
