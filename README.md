@@ -28,7 +28,7 @@ Stop remembering *where* you saw something — just ask MindMesh naturally.
 
 <br/>
 
-**[🚀 Quick Start](#-quick-start) · [✨ Features](#-features) · [🏗 Architecture](#-architecture) · [📦 API](#-api-overview) · [🧪 QA Report](docs/QA_REPORT.md)**
+**[Quick Start](#-quick-start) · [Features](#-features) · [Architecture](#-architecture) · [API](#-api-overview) · [QA Report](docs/QA_REPORT.md)**
 
 </div>
 
@@ -306,10 +306,10 @@ npm run dev
 </details>
 
 <details>
-<summary><b>🧪 Full regression suite</b></summary>
+<summary><b>Full regression suite</b></summary>
 
 ```powershell
-# Backend unit/API tests — 223 passing (contract, SSRF, jobs, rate-limit, auth, …)
+# Backend unit and API tests
 cd backend
 python -m pytest -q
 
@@ -328,16 +328,9 @@ powershell -File scripts\qa\run_all.ps1
 
 </details>
 
-| Check | Status |
-|-------|--------|
-| Backend pytest suite | ✅ **223 passed** |
-| Ruff lint | ✅ clean |
-| Frontend `tsc --noEmit` | ✅ clean |
-| Live L1 probes (8/8) | ✅ health, CORS preflight, rate-limit envelope, cancel→409, view filename |
-| Browser sweep (17 routes) | ✅ nav, theme persistence, 404, extension statics |
-
-> 📋 Full QA history: **[docs/QA_REPORT.md](docs/QA_REPORT.md)** ·
-> Audit + test-plan execution: **[mindmesh_execution_report.md](mindmesh_execution_report.md)**
+The GitHub Actions workflow runs backend tests and lint checks, plus frontend
+type-checking, linting, and a production build for pushes and pull requests.
+See [docs/QA_REPORT.md](docs/QA_REPORT.md) for the maintained QA overview.
 
 ---
 
@@ -371,7 +364,7 @@ MindMesh/
 │   │   ├── core/         Config, logging, security, ratelimit, backend_config
 │   │   ├── models/       Pydantic schemas
 │   │   └── services/     Business logic (RAG, Graph, Ingestion, Jobs, LLM)
-│   ├── tests/            Pytest suite (223 tests)
+│   ├── tests/            Pytest suite
 │   └── requirements.txt
 ├── frontend/             🎨 Next.js 15 Dashboard
 │   ├── app/              App Router pages
@@ -386,7 +379,8 @@ MindMesh/
 ├── scripts/              🛠️  ops scripts (purge_tenant.py, migrate_cloud.py, qa/)
 ├── docs/                 📚 Architecture, security, runbooks, QA, screenshots
 ├── docker-compose.yml    🐳 Full stack orchestration
-└── .gitlab-ci.yml        🔄 CI/CD pipeline
+├── .github/workflows/    GitHub Actions checks
+└── .gitlab-ci.yml        GitLab CI pipeline
 ```
 
 ---
@@ -427,25 +421,18 @@ Edit **`backend/.env`**:
 | [NORMALIZATION_PLAN.md](docs/NORMALIZATION_PLAN.md) | 🗃️ State normalization cutover (backfill, dual-write, rollback) |
 | [MODAL_DEPLOYMENT.md](docs/MODAL_DEPLOYMENT.md) | 🧠 Cloud AI workers on Modal + Supabase |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | ☁️ Production VM deployment (Caddy, TLS, backups) |
-| [mindmesh_audit_production.md](mindmesh_audit_production.md) | 📝 Production audit (P0/P1 findings) |
-| [mindmest_test_cases.md](mindmest_test_cases.md) | 🧪 Test plan (112 cases across 8 lanes) |
-| [mindmesh_execution_report.md](mindmesh_execution_report.md) | 📊 Audit + test execution report with per-file scores |
 | [scripts/qa/](scripts/qa/) | Runnable regression checks |
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are what make the open-source community amazing! 🚀
+Contributions are welcome. Read the [contribution guide](CONTRIBUTING.md) before
+opening a pull request, and follow the [Code of Conduct](CODE_OF_CONDUCT.md).
+Report security issues privately using the process in [SECURITY.md](SECURITY.md).
 
-1. 🍴 Fork the repository
-2. 🌿 Create your feature branch — `git checkout -b feature/amazing-feature`
-3. ✅ Run the regression suite — `powershell -File scripts\qa\run_all.ps1`
-4. 💾 Commit your changes — `git commit -m 'Add amazing feature'`
-5. 📤 Push to the branch — `git push origin feature/amazing-feature`
-6. 🔀 Open a **Pull Request**
-
-> 🐛 Found a bug? Open an [issue](https://github.com/Jay-Prajapati01/MindMesh/issues).
+For bugs and feature requests, use the project's
+[GitHub Issues](https://github.com/Jay-Prajapati01/MindMesh/issues).
 
 ---
 
@@ -465,4 +452,3 @@ Released under the [MIT License](LICENSE). ✅
 ⭐ **If MindMesh helps you, consider giving it a star!** ⭐
 
 </div>
-
