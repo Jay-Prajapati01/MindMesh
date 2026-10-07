@@ -9,7 +9,7 @@ instagram, ...) only needs to extract text + metadata, then call
 from __future__ import annotations
 
 import json
-from typing import Any, Awaitable, Callable
+from typing import Any, Callable
 
 from app.core.logging import get_logger
 from app.models.schemas import SourceItem
@@ -41,6 +41,8 @@ async def ingest_text(
     file_name: str | None = None,
     file_size: int | None = None,
     mime_type: str | None = None,
+    structured_chunks: list[dict] | None = None,
+    page_count: int | None = None,
     on_progress: ProgressCallback | None = None,
 ) -> SourceItem:
     """Run the full pipeline for a piece of text and return the stored item.
@@ -56,7 +58,7 @@ async def ingest_text(
                 await result
 
     # ── Step 4: Generate Summary (streaming tokens) ──────────────────
-    await emit("step_start", {"step": 4, "total_steps": 7, "name": "Generating Summary", "description": "AI summarizing content using Ollama..."})
+    await emit("step_start", {"step": 4, "total_steps": 7, "name": "Generating Summary", "description": "AI summarizing content..."})
 
     summary_tokens: list[str] = []
     try:
@@ -82,7 +84,7 @@ async def ingest_text(
     # ── Step 5: Chunk Content ─────────────────────────────────────────
     await emit("step_start", {"step": 5, "total_steps": 7, "name": "Chunking Content", "description": "Splitting text into indexable chunks..."})
 
-    chunks = chunking.chunk_text(text)
+    chunks = [chunk["text"] for chunk in structured_chunks] if structured_chunks else chunking.chunk_text(text)
     if not chunks:
         raise ValueError("No indexable text content")
 
@@ -92,16 +94,15 @@ async def ingest_text(
     await emit("step_start", {"step": 6, "total_steps": 7, "name": "Creating Embeddings", "description": "Generating vector embeddings..."})
 
     vectors: list[list[float]] = []
-    for i, chunk in enumerate(chunks):
-        vec = await embeddings.embed_text(chunk)
-        vectors.append(vec)
-        pct = int(((i + 1) / len(chunks)) * 100)
-        await emit("step_progress", {"step": 6, "progress": pct, "sub_text": f"Chunk {i + 1}/{len(chunks)}"})
+    for offset in range(0, len(chunks), 32):
+        vectors.extend(await embeddings.embed_texts(chunks[offset:offset + 32]))
+        await emit("step_progress", {"step": 6, "progress": int(len(vectors) / len(chunks) * 100)})
 
     await emit("step_complete", {"step": 6, "duration_ms": 0, "vectors_count": len(vectors)})
 
     payloads = [
         {
+            **({k: v for k, v in structured_chunks[i].items() if k != "text"} if structured_chunks else {}),
             "text": chunk,
             "source_id": source_id,
             "source_type": source_type,
@@ -127,6 +128,9 @@ async def ingest_text(
         if deleted > 0:
             logger.info("Deleted %d existing chunks for %s before re-indexing", deleted, source_id)
     except Exception as exc:
+        from app.core.tenant import cloud
+        if cloud():
+            raise
         logger.warning("Failed to cleanup old chunks for %s: %s", source_id, exc)
     
     indexed = vectorstore.upsert_chunks(vectors, payloads)
@@ -134,8 +138,11 @@ async def ingest_text(
     # Best-effort knowledge graph extraction (non-fatal).
     try:
         triples = await graph.extract_relations(text)
-        graph.add_triples(triples, source_id, source_type, title)
+        graph.replace_triples(triples, source_id, source_type, title)
     except Exception as exc:  # noqa: BLE001
+        from app.core.tenant import cloud
+        if cloud():
+            raise
         logger.warning("Graph extraction failed for %s: %s", source_id, exc)
 
     await emit("step_complete", {"step": 7, "duration_ms": 0})
@@ -154,6 +161,7 @@ async def ingest_text(
         file_name=file_name,
         file_size=file_size,
         mime_type=mime_type,
+        page_count=page_count,
     )
     store.add_source(item)
     logger.info("Ingested %s:%s (%d chunks)", source_type, source_id, indexed)

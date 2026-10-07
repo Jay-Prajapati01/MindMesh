@@ -1,6 +1,8 @@
 """Endpoints to browse ingested sources (stored videos, PDFs, etc.)."""
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
+from app.core.tenant import cloud
+from app.services import cloud_storage
 
 from app.core.logging import get_logger
 from app.core.security import require_key
@@ -9,6 +11,16 @@ from app.services import file_storage, graph, store, vectorstore
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/sources", tags=["sources"])
+
+
+@router.get("/{source_id}/link")
+async def source_link(source_id: str):
+    if not cloud():
+        raise HTTPException(404, "Cloud links are unavailable in local mode")
+    for item in store.list_sources():
+        if item.get("source_id") == source_id and item.get("file_path"):
+            return {"url": cloud_storage.signed_url(item["file_path"]), "expires_in": 60}
+    raise HTTPException(404, "File not found")
 
 
 @router.get("", response_model=dict)
@@ -51,6 +63,8 @@ async def download_source(source_id: str):
             file_path = s.get("file_path")
             if not file_path:
                 raise HTTPException(status_code=404, detail="No original file stored for this source")
+            if cloud():
+                return RedirectResponse(cloud_storage.signed_url(file_path), status_code=307)
             resolved = file_storage.get_file_path(file_path)
             if not resolved:
                 raise HTTPException(status_code=404, detail="File not found on disk")
@@ -71,11 +85,14 @@ async def view_source(source_id: str):
             file_path = s.get("file_path")
             if not file_path:
                 raise HTTPException(status_code=404, detail="No original file stored for this source")
+            if cloud():
+                return RedirectResponse(cloud_storage.signed_url(file_path), status_code=307)
             resolved = file_storage.get_file_path(file_path)
             if not resolved:
                 raise HTTPException(status_code=404, detail="File not found on disk")
             return FileResponse(
                 path=str(resolved),
+                filename=s.get("file_name") or resolved.name,
                 media_type=s.get("mime_type") or "application/octet-stream",
                 content_disposition_type="inline",
             )
@@ -105,16 +122,18 @@ async def delete_source(source_id: str):
     try:
         vectorstore.delete_by_source_id(source_id)
     except Exception as e:
+        if cloud():
+            raise HTTPException(503, "Source deletion incomplete; retry shortly") from None
         logger.warning("Failed to delete Qdrant chunks for %s: %s", source_id, e)
     
-    # 3. Delete from store
-    store.delete_source(source_id)
-
     # 4. Remove orphaned knowledge-graph nodes/edges
     try:
         graph.remove_source(source_id)
     except Exception as e:
+        if cloud():
+            raise HTTPException(503, "Source deletion incomplete; retry shortly") from None
         logger.warning("Failed to clean graph for %s: %s", source_id, e)
 
+    store.delete_source(source_id)
     logger.info("Deleted source: %s", source_id)
     return {"deleted": source_id, "message": "Source deleted successfully"}

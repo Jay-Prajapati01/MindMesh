@@ -87,6 +87,10 @@ async def embed_texts(texts: list[str]) -> list[list[float]]:
     if not texts:
         return []
 
+    if get_settings().mindmesh_execution_mode == "modal":
+        from app.services.modal_client import embed
+        return await embed(texts)
+
     keys = [_key(t) for t in texts]
     results: list[list[float] | None] = [_cache_get(k) for k in keys]
     missing_idx = [i for i, v in enumerate(results) if v is None]

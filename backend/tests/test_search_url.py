@@ -47,8 +47,8 @@ async def test_search_url_resolution():
     ]
 
     with patch("app.services.embeddings.embed_text", new_callable=AsyncMock) as mock_embed, \
-         patch("app.services.vectorstore.search", return_value=mock_hits) as mock_search, \
-         patch("app.services.store.add_search") as mock_add_search:
+         patch("app.services.vectorstore.search", return_value=mock_hits), \
+         patch("app.services.store.add_search"):
          
         mock_embed.return_value = [0.1] * 384
         

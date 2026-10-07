@@ -124,7 +124,7 @@ export function AnswerCard({ response, index }: Props) {
                       sourceTitle={part.citation.title || part.citation.source_id}
                       sourceType={part.citation.source_type}
                       snippet={part.citation.snippet}
-                      url={part.citation.url}
+                      url={["pdf", "document", "audio"].includes(part.citation.source_type) ? `/source/${encodeURIComponent(part.citation.source_id)}` : part.citation.url}
                     />
                   )
                 )}

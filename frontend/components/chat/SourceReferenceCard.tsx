@@ -42,6 +42,7 @@ function getSourceColor(type: string) {
 }
 
 function getSourceUrl(source: SearchHit): string | null {
+  if (["pdf", "document", "audio"].includes(source.source_type)) return `/source/${encodeURIComponent(source.source_id)}`;
   if (source.url) {
     // Absolute API paths like "/api/sources/x/download" are valid;
     // anything else (channel names etc.) must NOT become a URL.

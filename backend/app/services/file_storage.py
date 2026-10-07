@@ -5,10 +5,11 @@ Production: swap this module for S3/R2 client (same interface).
 """
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 from app.core.config import get_settings
+from app.core.tenant import cloud
+from app.services import cloud_storage
 from app.core.logging import get_logger, safe_log_str
 
 logger = get_logger(__name__)
@@ -37,6 +38,8 @@ def _dir_for(source_type: str) -> Path:
 def save_file(source_id: str, data: bytes, source_type: str, filename: str) -> str:
     """Save file bytes to disk. Returns relative path from data_dir."""
     ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else "bin"
+    if cloud():
+        return cloud_storage.put(f"files/{source_type}/{source_id}.{ext}", data)
     dir_path = _dir_for(source_type)
     fname = f"{source_id}.{ext}"
     file_path = dir_path / fname
@@ -68,6 +71,8 @@ def get_file_path(relative_path: str) -> Path | None:
 
 def delete_file(relative_path: str) -> bool:
     """Delete a file by relative path. Returns True if deleted."""
+    if cloud():
+        return cloud_storage.delete(relative_path)
     full = _safe_path(relative_path)
     if full is not None and full.exists():
         full.unlink()
@@ -98,6 +103,10 @@ def cleanup_if_unreferenced(relative_path: str, source_id: str | None = None) ->
 
 def storage_stats() -> tuple[int, int]:
     """Return (file_count, total_bytes) across all stored files."""
+    if cloud():
+        from app.services import store
+        files = [s for s in store.list_sources() if s.get("file_path")]
+        return len(files), sum(s.get("file_size") or 0 for s in files)
     base = _base_dir()
     count = 0
     total = 0

@@ -4,6 +4,7 @@ import { Providers } from "./providers";
 import { Shell } from "@/components/Shell";
 import { ThemeEffect } from "@/components/ThemeEffect";
 import { NotificationBridge } from "@/components/NotificationBridge";
+import { CloudAuthGate } from "@/components/CloudAuthGate";
 
 export const metadata: Metadata = {
   title: "MindMesh -> Your buddy who remembers everything you save",
@@ -22,7 +23,7 @@ export default function RootLayout({
         <ThemeEffect />
         <NotificationBridge />
         <Providers>
-          <Shell>{children}</Shell>
+          <CloudAuthGate><Shell>{children}</Shell></CloudAuthGate>
         </Providers>
       </body>
     </html>

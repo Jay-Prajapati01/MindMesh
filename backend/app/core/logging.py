@@ -1,6 +1,7 @@
 """Structured application logging."""
 import logging
 import sys
+import json
 
 from app.core.config import get_settings
 
@@ -16,11 +17,32 @@ def configure_logging() -> None:
             datefmt="%Y-%m-%d %H:%M:%S",
         )
     )
+    if settings.mindmesh_execution_mode == "modal":
+        handler.setFormatter(CloudFormatter())
 
     root = logging.getLogger()
     root.handlers.clear()
     root.addHandler(handler)
     root.setLevel(level)
+
+
+class CloudFormatter(logging.Formatter):
+    """Allowlisted JSON fields only; suppress legacy exceptions, URLs and content."""
+    def format(self, record):
+        from app.core.tenant import current_scope
+        owner = current_scope.get()
+        data = {"level": record.levelname, "logger": record.name}
+        if owner:
+            data.update(tenant_id=owner.tenant_id, user_id=owner.user_id,
+                        job_id=owner.job_id, resource_id=owner.resource_id)
+        try:
+            if record.name != "app.services.job_runner":
+                raise ValueError("Unstructured event")
+            event = json.loads(record.getMessage())
+            data.update({k: event[k] for k in ("worker", "operation", "status", "duration_ms", "error") if k in event})
+        except (ValueError, TypeError):
+            data["event"] = "service_event"
+        return json.dumps(data)
 
 
 def get_logger(name: str) -> logging.Logger:

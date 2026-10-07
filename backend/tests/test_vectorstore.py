@@ -1,14 +1,21 @@
 """Tests for vectorstore operations."""
-import pytest
 from unittest.mock import MagicMock, patch
+
 from app.services.vectorstore import delete_by_source_id
+
+
+def _mock_client(points):
+    mock_client = MagicMock()
+    mock_client.scroll.return_value = (points, None)
+    # delete_by_source_id counts matching points before deleting.
+    mock_client.count.return_value = MagicMock(count=len(points))
+    return mock_client
 
 
 def test_delete_by_source_id_no_points():
     """Test delete when no points exist."""
-    mock_client = MagicMock()
-    mock_client.scroll.return_value = ([], None)
-    
+    mock_client = _mock_client([])
+
     with patch("app.services.vectorstore.get_client", return_value=mock_client):
         with patch("app.services.vectorstore.get_settings") as mock_settings:
             mock_settings.return_value.qdrant_collection = "test_collection"
@@ -22,10 +29,9 @@ def test_delete_by_source_id_with_points():
     mock_point1.id = "id1"
     mock_point2 = MagicMock()
     mock_point2.id = "id2"
-    
-    mock_client = MagicMock()
-    mock_client.scroll.return_value = ([mock_point1, mock_point2], None)
-    
+
+    mock_client = _mock_client([mock_point1, mock_point2])
+
     with patch("app.services.vectorstore.get_client", return_value=mock_client):
         with patch("app.services.vectorstore.get_settings") as mock_settings:
             mock_settings.return_value.qdrant_collection = "test_collection"

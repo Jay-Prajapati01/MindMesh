@@ -6,7 +6,7 @@ sections. Each chunk carries metadata for better retrieval.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from app.core.config import get_settings
 from app.core.logging import get_logger

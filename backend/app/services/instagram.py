@@ -176,7 +176,6 @@ def _extract_data_from_page(html: str, body_text: str, shortcode: str) -> dict |
 
 def _fetch_via_playwright(shortcode: str, original_url: str) -> dict | None:
     """Fetch Instagram post data using Playwright headless browser."""
-    import re as _re
 
     # Determine the URL type
     if "/reel/" in original_url or "/reels/" in original_url:
@@ -196,6 +195,8 @@ def _fetch_via_playwright(shortcode: str, original_url: str) -> dict | None:
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
                 viewport={"width": 1920, "height": 1080},
             )
+            from app.core.browser_guard import protect_context
+            await protect_context(context)
             page = await context.new_page()
 
             try:

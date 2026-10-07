@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { Sparkles, HelpCircle, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import {
+  api,
   askChat,
   ChatResponse,
   ChatMessage,
@@ -58,6 +59,7 @@ function ChatPageInner() {
   });
   const [filter, setFilter] = useState(sourceParam);
   const [sourceId, setSourceId] = useState(sourceIdParam);
+  const [conversationId, setConversationId] = useState<string | undefined>();
   const [history, setHistory] = useState<ChatResponse[]>([]);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -72,13 +74,28 @@ function ChatPageInner() {
     refetchInterval: 10000,
   });
 
+  useEffect(() => {
+    const id = sessionStorage.getItem("mindmesh-chat-id");
+    if (!id || sourceIdParam || qParam) return;
+    api.get(`/chat/conversations/${encodeURIComponent(id)}`).then(({ data }) => {
+      setConversationId(id);
+      const responses: ChatResponse[] = data.turns.map((t: { response: ChatResponse }) => t.response);
+      setHistory(responses);
+      setChatHistory(responses.flatMap(r => [{ role: "user" as const, content: r.question }, { role: "assistant" as const, content: r.answer }]));
+    }).catch(() => sessionStorage.removeItem("mindmesh-chat-id"));
+  }, [sourceIdParam, qParam]);
+
   const mutation = useMutation({
     mutationFn: (q: string) =>
-      askChat(q, filter || undefined, sourceId || undefined, chatHistory),
+      askChat(q, filter || undefined, sourceId || undefined, chatHistory, undefined, conversationId),
     onMutate: (q) => {
       setPendingQuestion(q);
     },
     onSuccess: (data) => {
+      if (data.conversation_id) {
+        setConversationId(data.conversation_id);
+        sessionStorage.setItem("mindmesh-chat-id", data.conversation_id);
+      }
       setHistory((h) => [...h, data]);
       setChatHistory((h) => [
         ...h,
@@ -160,6 +177,8 @@ function ChatPageInner() {
   const handleClearHistory = useCallback(() => {
     setHistory([]);
     setChatHistory([]);
+    setConversationId(undefined);
+    sessionStorage.removeItem("mindmesh-chat-id");
   }, []);
 
   const isLoading = mutation.isPending;

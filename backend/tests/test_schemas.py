@@ -1,6 +1,4 @@
 """Tests for Pydantic schemas."""
-import pytest
-from datetime import datetime, timezone
 from app.models.schemas import (
     ChatMessage,
     ChatRequest,
@@ -9,7 +7,6 @@ from app.models.schemas import (
     SourceItem,
     StatsResponse,
     SearchRequest,
-    SearchResponse,
 )
 
 

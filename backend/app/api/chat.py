@@ -1,10 +1,10 @@
 """RAG chat endpoint."""
 import json
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
-from app.models.schemas import ChatRequest, ChatResponse
+from app.models.schemas import ChatRequest, ChatResponse, ChatMessage
 from app.services import rag, store
 
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -16,6 +16,17 @@ EMPTY_QUESTION_ANSWER = (
 
 @router.post("", response_model=ChatResponse)
 async def chat(payload: ChatRequest) -> ChatResponse:
+    import uuid
+    from app.core.tenant import cloud, scope
+    conversation_id = payload.conversation_id or str(
+        uuid.uuid5(uuid.NAMESPACE_URL, scope().job_id) if cloud() else uuid.uuid4())
+    conversation = store.get_conversation(conversation_id)
+    history = payload.history
+    if conversation:
+        history = [message for turn in conversation["turns"][-20:] for message in (
+            ChatMessage(role="user", content=turn["response"]["question"]),
+            ChatMessage(role="assistant", content=turn["response"]["answer"]),
+        )]
     # Blank questions get a graceful reply: no retrieval, no citations,
     # and nothing written to recent questions.
     if not payload.question:
@@ -34,16 +45,27 @@ async def chat(payload: ChatRequest) -> ChatResponse:
         payload.top_k,
         source_type=payload.source_type,
         source_id=payload.source_id,
-        history=payload.history,
+        history=history,
     )
-    return ChatResponse(
+    response = ChatResponse(
         question=payload.question,
+        conversation_id=conversation_id,
         answer=answer,
         citations=citations,
         search_time_ms=metrics.get("search_time_ms"),
         chunks_searched=metrics.get("chunks_searched"),
         sources_searched=metrics.get("sources_searched"),
     )
+    store.save_conversation_turn(conversation_id, response.model_dump(mode="json"))
+    return response
+
+
+@router.get("/conversations/{conversation_id}")
+async def conversation(conversation_id: str):
+    data = store.get_conversation(conversation_id)
+    if data is None:
+        raise HTTPException(404, "Conversation not found")
+    return data
 
 
 @router.post("/stream")

@@ -37,6 +37,7 @@ export function InlineCitation({ index, sourceTitle, sourceType, snippet, url }:
             </span>
             {url && (
               (() => {
+                if (url.startsWith("/source/")) return url;
                 if (url.startsWith("/")) {
                   return `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${url}`;
                 }
@@ -52,7 +53,7 @@ export function InlineCitation({ index, sourceTitle, sourceType, snippet, url }:
               })() && (
                 <a
                   href={
-                    url.startsWith("http")
+                    (url.startsWith("http") || url.startsWith("/source/"))
                       ? url
                       : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}${url}`
                   }

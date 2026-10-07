@@ -8,15 +8,16 @@ PostgreSQL in a later phase without changing the API layer.
 from __future__ import annotations
 
 import json
-import threading
 from pathlib import Path
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
+from app.core.tenant import cloud
 from app.models.schemas import RecentQuery, SourceItem
+from app.services import cloud_db
 
 logger = get_logger(__name__)
-_lock = threading.Lock()
+_lock = cloud_db.StoreLock()
 _MAX_RECENT = 20
 _CACHE: dict | None = None
 _CACHE_PATH: Path | None = None
@@ -30,6 +31,8 @@ def _path() -> Path:
 
 
 def _load() -> dict:
+    if cloud():
+        return cloud_db.load("store", {"sources": [], "searches": [], "questions": [], "notes": []})
     global _CACHE, _CACHE_PATH, _CACHE_VALID
     path = _path()
     
@@ -56,6 +59,9 @@ def _load() -> dict:
 
 
 def _save(data: dict) -> None:
+    if cloud():
+        cloud_db.save("store", data)
+        return
     global _CACHE, _CACHE_VALID
     path = _path()
     # Atomic write: a crash mid-write must never truncate store.json.
@@ -95,6 +101,11 @@ def _add_activity(key: str, text: str) -> None:
     with _lock:
         data = _load()
         entry = json.loads(RecentQuery(text=text).model_dump_json())
+        if cloud():
+            from app.core.tenant import scope
+            entry["job_id"] = scope().job_id
+            if any(row.get("job_id") == entry["job_id"] for row in data[key]):
+                return
         data[key].insert(0, entry)
         data[key] = data[key][:_MAX_RECENT]
         _save(data)
@@ -210,3 +221,30 @@ def delete_source(source_id: str) -> bool:
         data["sources"] = new_sources
         _save(data)
         return len(new_sources) != len(sources)
+
+
+def get_conversation(conversation_id: str) -> dict | None:
+    from app.core.tenant import scope
+    user = scope().user_id if cloud() else "local"
+    return next((c for c in _load().get("conversations", [])
+                 if c["id"] == conversation_id and c["user_id"] == user), None)
+
+
+def save_conversation_turn(conversation_id: str, response: dict) -> None:
+    from app.core.tenant import scope
+    from datetime import datetime, timezone
+    user = scope().user_id if cloud() else "local"
+    job_id = scope().job_id if cloud() else None
+    with _lock:
+        data = _load()
+        conversations = data.setdefault("conversations", [])
+        conversation = next((c for c in conversations if c["id"] == conversation_id and c["user_id"] == user), None)
+        if conversation is None:
+            conversation = {"id": conversation_id, "user_id": user, "turns": [], "title": response["question"][:80]}
+            conversations.append(conversation)
+        if job_id and any(t.get("job_id") == job_id for t in conversation["turns"]):
+            return
+        conversation["turns"].append({"job_id": job_id, "response": response})
+        conversation["turns"] = conversation["turns"][-50:]
+        conversation["updated_at"] = datetime.now(timezone.utc).isoformat()
+        _save(data)

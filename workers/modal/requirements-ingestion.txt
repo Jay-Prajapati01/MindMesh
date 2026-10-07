@@ -1,0 +1,8 @@
+yt-dlp>=2025.2.19
+youtube-transcript-api>=1.0,<2
+instaloader==4.14
+playwright>=1.40,<2
+crawl4ai>=0.9,<1
+pymupdf==1.25.1
+pytesseract==0.3.13
+Pillow==11.0.0

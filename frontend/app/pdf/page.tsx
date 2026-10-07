@@ -11,7 +11,7 @@ const PDF_STEPS = [
   { id: "validate", name: "1. Validating PDF", icon: "check", description: "Checking format, size, and encryption...", weight: 3 },
   { id: "detect", name: "2. Detecting Document Type", icon: "search", description: "Analyzing document structure and metadata...", weight: 2 },
   { id: "layout", name: "3. Parsing Layout", icon: "layout", description: "Extracting structure using Docling document intelligence...", weight: 12 },
-  { id: "ocr", name: "4. Running OCR", icon: "scan", description: "PaddleOCR processing scanned pages...", weight: 15 },
+  { id: "ocr", name: "4. Running OCR", icon: "scan", description: "Tesseract OCR processing scanned pages...", weight: 15 },
   { id: "tables", name: "5. Extracting Tables", icon: "table", description: "Detecting and extracting table structures...", weight: 5 },
   { id: "images", name: "6. Extracting Images", icon: "image", description: "Identifying images and figures...", weight: 3 },
   { id: "headings", name: "7. Detecting Headings", icon: "heading", description: "Building document hierarchy...", weight: 3 },
@@ -70,7 +70,7 @@ export default function PdfPage() {
           <div className="flex-1">
             <h1 className="text-[28px] font-bold text-foreground tracking-tight">PDF Intelligence</h1>
             <p className="mt-2 text-[15px] text-foreground-3 leading-relaxed max-w-2xl">
-              Transform books, papers, and notes into queryable knowledge. Docling document intelligence, PaddleOCR for scanned pages, table extraction, and semantic chunking.
+              Transform books, papers, and notes into queryable knowledge. Docling document intelligence, Tesseract OCR for scanned pages, table extraction, and semantic chunking.
             </p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1.5 text-[11px] font-medium text-brand">
@@ -81,7 +81,7 @@ export default function PdfPage() {
                 Docling
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[11px] font-medium text-muted">
-                PaddleOCR
+                Tesseract OCR
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[11px] font-medium text-muted">
                 Tables & Headings

@@ -5,8 +5,9 @@
  * Processes survive page navigation and can be reconnected on refresh.
  */
 
-import { API_URL } from "./api";
+import { API_URL, api } from "./api";
 import { useAppStore } from "./store";
+import { authHeaders, cloudMode } from "./auth";
 
 export interface ProcessState {
   id: string;
@@ -19,6 +20,7 @@ export interface ProcessState {
   fileName?: string;
   url?: string;
   title?: string;
+  jobId?: string;
 }
 
 type ProcessListener = (process: ProcessState) => void;
@@ -125,6 +127,8 @@ class ProcessManager {
       let res: Response;
       const apiKey = useAppStore.getState().settings.apiKey;
       const headers: Record<string, string> = apiKey ? { "X-API-Key": apiKey } : {};
+      Object.assign(headers, await authHeaders());
+      headers["Idempotency-Key"] = processId;
       if (file) {
         const formData = new FormData();
         formData.append("file", file);
@@ -148,6 +152,14 @@ class ProcessManager {
         throw new Error(errData.detail || `HTTP ${res.status}`);
       }
 
+      const cloudJob = res.headers.get("X-Job-ID");
+      if (cloudMode && cloudJob) {
+        const proc = this.processes.get(processId);
+        if (proc) proc.jobId = cloudJob;
+        await res.body?.cancel();
+        await this.pollJob(processId, cloudJob);
+        return;
+      }
       const reader = res.body?.getReader();
       if (!reader) throw new Error("No response body");
 
@@ -212,6 +224,7 @@ class ProcessManager {
     if (!proc) return;
 
     proc.events = [...proc.events, evt];
+    if (evt.event === "queued") proc.jobId = evt.data.job_id;
 
     if (evt.event === "complete") {
       proc.result = evt.data;
@@ -225,6 +238,31 @@ class ProcessManager {
     this.notify(processId);
   }
 
+  private polling = new Set<string>();
+  private async pollJob(processId: string, jobId: string) {
+    if (this.polling.has(processId)) return;
+    this.polling.add(processId);
+    try {
+      while (this.processes.get(processId)?.status === "running") {
+        const { data } = await api.get(`/jobs/${jobId}`);
+        if (data.status === "completed") {
+          this._addEvent(processId, { event: "complete", data: data.result }); return;
+        }
+        if (data.status === "failed" || data.status === "cancelled") {
+          this._addEvent(processId, { event: "error", data: { error: data.error?.message || "Job cancelled" } }); return;
+        }
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    } catch (err) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      const message =
+        status === 401
+          ? "Your session expired. Sign in again to keep tracking this job."
+          : "Unable to read cloud job status. Refresh to reconnect.";
+      this._addEvent(processId, { event: "error", data: { error: message } });
+    } finally { this.polling.delete(processId); }
+  }
+
   /** Cancel a running process */
   abortProcess(processId: string) {
     const abort = this.abortControllers.get(processId);
@@ -235,7 +273,12 @@ class ProcessManager {
   }
 
   /** Cancel and remove a process */
-  cancelProcess(processId: string) {
+  async cancelProcess(processId: string) {
+    const existing = this.processes.get(processId);
+    if (cloudMode && existing?.jobId) {
+      try { await api.delete(`/jobs/${existing.jobId}`); }
+      catch { existing.error = "This job is already processing and cannot be cancelled."; this.notify(processId); return; }
+    }
     this.abortProcess(processId);
     const proc = this.processes.get(processId);
     if (proc) {
@@ -261,8 +304,12 @@ class ProcessManager {
       this._persistTimer = null;
       try {
         const data = Array.from(this.processes.entries()).map(([id, state]) => [id, {
+          ...(cloudMode ? { id: state.id, type: state.type, status: state.status, startedAt: state.startedAt,
+             jobId: state.jobId, events: [], result: null, error: null } : {
+
           ...state,
           events: state.events.slice(-100),
+          }),
         }]);
         localStorage.setItem("mindmesh-processes", JSON.stringify(data));
       } catch {
@@ -284,6 +331,12 @@ class ProcessManager {
         if (this.processes.has(id)) continue; // already live in this session
         // The SSE stream cannot resume after a reload — surface that honestly
         // instead of showing a spinner that never moves.
+        if (cloudMode && state.jobId && (state.status === "running" || state.status === "failed")) {
+          state.status = "running";
+          this.processes.set(id, state);
+          void this.pollJob(id, state.jobId);
+          continue;
+        }
         if (state.status === "running") {
           state.status = "failed";
           state.error =

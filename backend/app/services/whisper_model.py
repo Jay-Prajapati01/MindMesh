@@ -20,6 +20,9 @@ MODEL_NAME = "base"
 
 def get_model():
     """Return the process-wide WhisperModel, loading it on first use."""
+    from app.core.tenant import cloud
+    if cloud():
+        return _RemoteWhisper()
     global _model
     if _model is None:
         with _lock:
@@ -29,3 +32,11 @@ def get_model():
                 logger.info("Loading faster-whisper model '%s'", MODEL_NAME)
                 _model = WhisperModel(MODEL_NAME, device="cpu", compute_type="int8")
     return _model
+
+
+class _RemoteWhisper:
+    def transcribe(self, path, **kwargs):
+        from types import SimpleNamespace
+        from app.services.modal_client import transcribe
+        segments = transcribe(str(path))
+        return (SimpleNamespace(**segment) for segment in segments), None

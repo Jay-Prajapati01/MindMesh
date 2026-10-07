@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+yt-dlp
+docling
+transformers
+accelerate
+torch
+torchvision
+torchaudio
+pydantic
+python-multipart
+requests

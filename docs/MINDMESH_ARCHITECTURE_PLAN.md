@@ -724,3 +724,11 @@ After implementation, the user should be able to:
 7. **Stored Sources page** → all uploaded files visible with thumbnails → download/open/ask AI about any of them
 
 This transforms MindMesh from "AI that summarizes" into "AI that remembers everything, including where it learned it."
+# Implementation status — 6 October 2026
+
+This historical feature plan predates the cloud worker implementation. The current
+architecture, manual deployment steps and limitations are documented in
+[MODAL_DEPLOYMENT.md](MODAL_DEPLOYMENT.md), with a complete
+[change report](MODAL_IMPLEMENTATION_REPORT.md). Production uses Supabase and Modal;
+the local filesystem/Ollama diagrams below remain historical/development context.
+

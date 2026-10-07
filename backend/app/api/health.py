@@ -1,4 +1,6 @@
 """Health check endpoint."""
+import asyncio
+
 import httpx
 from fastapi import APIRouter
 
@@ -24,12 +26,54 @@ async def health() -> HealthResponse:
 
 @router.get("/health/detailed")
 async def health_detailed():
-    """Detailed health check including service dependencies."""
+    """Readiness probe: reports dependency booleans only.
+
+    Public in every mode (no auth for orchestrators) and deliberately free of
+    URLs, credentials, hostnames or stack traces — only ok/error flags
+    (test API-001: liveness vs dependency health, no sensitive detail).
+    """
     settings = get_settings()
+    checks: dict[str, str] = {"app": "ok"}
+
+    if settings.mindmesh_execution_mode == "modal":
+        # Redis: job queue availability.
+        try:
+            from app.services.jobs import client as redis_client
+
+            await asyncio.to_thread(redis_client().ping)
+            checks["redis"] = "ok"
+        except Exception:  # noqa: BLE001
+            checks["redis"] = "error"
+        # Postgres: tenant/state store.
+        try:
+            from app.services.cloud_db import connect
+
+            def _ping() -> None:
+                with connect() as conn:
+                    conn.execute("SELECT 1")
+
+            await asyncio.to_thread(_ping)
+            checks["database"] = "ok"
+        except Exception:  # noqa: BLE001
+            checks["database"] = "error"
+        # Qdrant: vector search.
+        try:
+            from app.services.vectorstore import get_client
+
+            def _qping() -> None:
+                get_client().get_collections()
+
+            await asyncio.to_thread(_qping)
+            checks["qdrant"] = "ok"
+        except Exception:  # noqa: BLE001
+            checks["qdrant"] = "error"
+        overall = "ok" if all(v == "ok" for v in checks.values()) else "degraded"
+        return {"status": overall, "execution_mode": "modal", "checks": checks}
+
     # Exception text can include internal base URLs (qdrant/ollama) — only
     # surface those details outside production (I-2).
     show_details = settings.environment != "production"
-    checks = {"app": "ok", "ollama": "unknown", "qdrant": "unknown"}
+    checks.update({"ollama": "unknown", "qdrant": "unknown"})
 
     # Check Ollama
     try:
@@ -46,7 +90,7 @@ async def health_detailed():
     try:
         from app.services.vectorstore import get_client
         client = get_client()
-        collections = client.get_collections()
+        client.get_collections()  # side-effect probe: raises when unreachable
         checks["qdrant"] = "ok"
     except Exception as e:
         checks["qdrant"] = "error" if not show_details else f"error: {str(e)[:100]}"

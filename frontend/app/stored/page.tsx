@@ -139,7 +139,7 @@ export default function StoredPage() {
                     </a>
                   ) : canViewInline(s) ? (
                     <a
-                      href={`${API_URL}/api/sources/${encodeURIComponent(s.source_id)}/view`}
+                      href={`/source/${encodeURIComponent(s.source_id)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="hover:text-brand transition-colors"
@@ -174,7 +174,7 @@ export default function StoredPage() {
                 )}
                 {canViewInline(s) && (
                   <a
-                    href={`${API_URL}/api/sources/${encodeURIComponent(s.source_id)}/view`}
+                    href={`/source/${encodeURIComponent(s.source_id)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1 rounded-lg bg-info/10 px-3 py-1.5 text-xs text-info hover:bg-info/20 transition"

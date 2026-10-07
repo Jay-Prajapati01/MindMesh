@@ -8,15 +8,15 @@ the source it came from. `get_graph` returns nodes + edges for visualization.
 from __future__ import annotations
 
 import json
-import threading
 from pathlib import Path
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
-from app.services import llm
+from app.core.tenant import cloud
+from app.services import cloud_db, llm
 
 logger = get_logger(__name__)
-_lock = threading.Lock()
+_lock = cloud_db.StoreLock()
 
 _EXTRACT_SYS = (
     "You extract knowledge graph triples. Given text, return the most "
@@ -34,6 +34,8 @@ def _path() -> Path:
 
 
 def _load() -> dict:
+    if cloud():
+        return cloud_db.load("graph", {"nodes": {}, "edges": []})
     path = _path()
     if not path.exists():
         return {"nodes": {}, "edges": []}
@@ -44,6 +46,9 @@ def _load() -> dict:
 
 
 def _save(data: dict) -> None:
+    if cloud():
+        cloud_db.save("graph", data)
+        return
     path = _path()
     # Atomic write: a crash mid-write must never truncate graph.json.
     tmp = path.with_suffix(path.suffix + ".tmp")
@@ -151,3 +156,19 @@ def get_graph() -> dict:
         for key, node in data["nodes"].items()
     ]
     return {"nodes": nodes, "edges": data["edges"]}
+
+
+def replace_triples(triples, source_id, source_type, title=None):
+    """Atomically replace one source's edges and recompute node counts on retries."""
+    with _lock:
+        data = _load()
+        edges = [e for e in data["edges"] if e.get("source_id") != source_id]
+        unique = {(t["subject"].strip().lower(), t["object"].strip().lower(), t["relation"].strip()) for t in triples}
+        edges.extend({"source": a, "target": b, "label": relation, "source_id": source_id,
+                      "source_type": source_type, "title": title} for a, b, relation in sorted(unique))
+        nodes = {}
+        for edge in edges:
+            for key in (edge["source"], edge["target"]):
+                nodes.setdefault(key, {"label": key, "count": 0})["count"] += 1
+        _save(_prune_graph({"nodes": nodes, "edges": edges}))
+    return len(unique)

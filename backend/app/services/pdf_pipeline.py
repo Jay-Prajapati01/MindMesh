@@ -1,11 +1,10 @@
-"""PDF pipeline: Docling-based document intelligence with PaddleOCR.
+"""PDF pipeline: Docling-based document intelligence with Tesseract OCR.
 
 This is the core extraction engine that converts PDF bytes into structured
 documents with headings, tables, images, and markdown representation.
 """
 from __future__ import annotations
 
-import io
 import os
 import tempfile
 from dataclasses import dataclass, field
@@ -41,7 +40,7 @@ class PDFDocument:
 
 
 def _get_converter():
-    """Lazy-initialize the Docling converter with PaddleOCR backend."""
+    """Lazy-initialize the Docling converter with Tesseract OCR backend."""
     global _converter
     if _converter is not None:
         return _converter
@@ -52,28 +51,14 @@ def _get_converter():
         from docling.datamodel.base_models import InputFormat
 
         pipeline_options = PdfPipelineOptions()
+        if os.environ.get("DOCLING_ARTIFACTS_PATH"):
+            from pathlib import Path
+            pipeline_options.artifacts_path = Path(os.environ["DOCLING_ARTIFACTS_PATH"])
         pipeline_options.do_table_structure = True
         pipeline_options.do_ocr = True
 
-        # Pick the best OCR backend available in this Docling version.
-        # (PaddleOcrOptions existed in older Docling; newer versions ship
-        # RapidOcrOptions with bundled ONNX models.)
-        ocr_choice = None
-        for opt_name in ("PaddleOcrOptions", "RapidOcrOptions", "EasyOcrOptions"):
-            ocr_options_cls = getattr(
-                __import__("docling.datamodel.pipeline_options", fromlist=[opt_name]),
-                opt_name,
-                None,
-            )
-            if ocr_options_cls is None:
-                continue
-            try:
-                pipeline_options.ocr_options = ocr_options_cls()
-                ocr_choice = opt_name
-                break
-            except Exception as exc:  # backend deps missing/broken
-                logger.warning("%s unavailable: %s", opt_name, exc)
-        logger.info("Docling OCR backend: %s", ocr_choice or "docling default")
+        from docling.datamodel.pipeline_options import TesseractCliOcrOptions
+        pipeline_options.ocr_options = TesseractCliOcrOptions()
 
         _converter = DocumentConverter(
             format_options={
@@ -86,7 +71,7 @@ def _get_converter():
         raise ImportError(
             "Docling is required for PDF processing. "
             "Install with: pip install docling"
-            " (optional OCR backends: paddleocr paddlepaddle / rapidocr)"
+            " (requires the tesseract-ocr system package)"
         ) from exc
 
     return _converter

@@ -1,7 +1,6 @@
 """PDF validation: format, size, encryption, and OCR necessity detection."""
 from __future__ import annotations
 
-import io
 from dataclasses import dataclass, field
 
 from app.core.config import get_settings

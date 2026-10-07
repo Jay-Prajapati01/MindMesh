@@ -1,4 +1,4 @@
-"""PDF ingestion: Docling-based document intelligence with PaddleOCR.
+"""PDF ingestion: Docling-based document intelligence with Tesseract OCR.
 
 This module provides the public interface for PDF text extraction.
 It delegates to the pdf_pipeline for structured extraction and falls

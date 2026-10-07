@@ -130,6 +130,8 @@ export default function SettingsPage() {
           <h2 className="mb-3 text-sm font-bold text-foreground">Backend</h2>
           <Row label="API URL" value={API_URL} />
           <Row label="Vector store" value={data?.vector_store ?? "qdrant"} />
+          <Row label="Stored originals" value={data ? String(data.total_files_stored) : "—"} />
+          <Row label="Original storage" value={data ? `${(data.total_storage_bytes / 1024 / 1024).toFixed(1)} MB` : "—"} />
           <Row
             label="Indexed chunks"
             value={data ? String(data.indexed_chunks) : "—"}

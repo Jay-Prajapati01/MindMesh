@@ -7,7 +7,7 @@ Falls back to httpx when Crawl4AI returns insufficient content.
 from __future__ import annotations
 
 import re
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urlparse
 
 from app.core.config import get_settings
 from app.core.logging import get_logger, safe_log_str
@@ -126,9 +126,10 @@ async def fetch_article(url: str) -> dict:
     text = ""
     title = url
 
-    # Try httpx first (fast, no browser needed)
+    # Local mode keeps its fast static-page path; cloud uses the browser first.
     try:
-        text, title = await _fetch_with_httpx(url)
+        if settings.mindmesh_execution_mode != "modal":
+            text, title = await _fetch_with_httpx(url)
     except SSRFBlockedError:
         raise
     except Exception as exc:
@@ -154,6 +155,8 @@ async def fetch_article(url: str) -> dict:
             )
 
             async with AsyncWebCrawler(config=browser_config) as crawler:
+                from app.core.browser_guard import crawler_hook
+                crawler.crawler_strategy.set_hook("on_page_context_created", crawler_hook)
                 result = await crawler.arun(url, config=run_config)
 
             # Re-validate final URL if crawler followed redirects (DNS rebinding mitigation)
@@ -177,6 +180,8 @@ async def fetch_article(url: str) -> dict:
             logger.warning("Crawl4AI failed for %s: %s", url, exc)
 
     if not text.strip():
+        text, title = await _fetch_with_httpx(url)
+    if not text.strip():
         raise RuntimeError(f"Could not extract readable content from {url}")
 
     return {"url": url, "title": title, "text": text}
@@ -184,8 +189,8 @@ async def fetch_article(url: str) -> dict:
 
 async def _fetch_with_httpx(url: str) -> tuple[str, str]:
     """Fallback fetcher using httpx + basic HTML parsing (with SSRF revalidation)."""
-    import httpx
 
+    settings = get_settings()
     headers = {
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -256,9 +261,8 @@ async def _fetch_youtube_video(url: str) -> dict:
 async def _fetch_pdf_url(url: str) -> dict:
     """Download and extract text from a PDF URL (with SSRF revalidation)."""
     import tempfile
-    from pathlib import Path
 
-    import httpx
+    settings = get_settings()
 
     headers = {
         "User-Agent": (

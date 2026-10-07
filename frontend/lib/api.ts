@@ -1,8 +1,13 @@
 import axios from "axios";
 import { useAppStore } from "./store";
+import { authHeaders, cloudMode } from "./auth";
+import { getSupabase } from "./supabaseClient";
 
-export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+export const API_URL = (
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+  // Callers all append "/api" themselves; tolerate an env value that
+  // already includes the prefix instead of producing ".../api/api".
+).replace(/\/+api\/+$/, "").replace(/\/+api$/, "");
 
 export const api = axios.create({
   baseURL: `${API_URL}/api`,
@@ -10,13 +15,66 @@ export const api = axios.create({
 });
 
 // Attach X-API-Key from settings store on every mutating request
-api.interceptors.request.use((config) => {
+api.interceptors.request.use(async (config) => {
+  Object.assign(config.headers, await authHeaders());
   const state = useAppStore.getState();
   if (state.settings.apiKey) {
     config.headers = config.headers || {};
     config.headers["X-API-Key"] = state.settings.apiKey;
   }
   return config;
+});
+
+// Session expiry handling: on a 401, try exactly one silent refresh with
+// Supabase; if that fails, sign out so the auth gate takes over instead of
+// leaving the user with silent failures (audit: expired-session UX).
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const original = error.config;
+    if (
+      cloudMode &&
+      error.response?.status === 401 &&
+      original &&
+      !original._sessionRetried
+    ) {
+      original._sessionRetried = true;
+      try {
+        const { data } = await getSupabase().auth.refreshSession();
+        if (data.session) {
+          original.headers = {
+            ...original.headers,
+            Authorization: `Bearer ${data.session.access_token}`,
+          };
+          return api.request(original);
+        }
+      } catch {
+        // fall through to sign-out
+      }
+      try {
+        await getSupabase().auth.signOut();
+      } catch {
+        // ignore: the gate handles the signed-out state
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Queue acknowledgements are polled behind the existing typed API functions.
+api.interceptors.response.use(async (response) => {
+  if (response.status !== 202 || !response.data?.job_id) return response;
+  const jobId = response.data.job_id;
+  const deadline = Date.now() + 4 * 60 * 60 * 1000;
+  while (Date.now() < deadline) {
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    const { data } = await api.get(`/jobs/${jobId}`);
+    if (data.status === "completed") { response.data = data.result; return response; }
+    if (data.status === "failed" || data.status === "cancelled") {
+      throw new Error(data.error?.message || "Processing was cancelled.");
+    }
+  }
+  throw new Error(`Processing continues in the cloud. Job: ${jobId}`);
 });
 
 export interface VideoMetadata {
@@ -77,6 +135,7 @@ export interface ChatMessage {
 }
 
 export interface ChatResponse {
+  conversation_id?: string;
   question: string;
   answer: string;
   citations: Citation[];
@@ -109,6 +168,8 @@ export interface RecentQuery {
 }
 
 export interface Stats {
+  total_files_stored: number;
+  total_storage_bytes: number;
   indexed_chunks: number;
   total_sources: number;
   sources_by_type: Record<string, number>;
@@ -161,14 +222,16 @@ export const askChat = (
   sourceType?: string,
   sourceId?: string,
   history?: ChatMessage[],
-  topK?: number
+  topK?: number,
+  conversationId?: string
 ) =>
   api
     .post<ChatResponse>("/chat", {
       question,
       source_type: sourceType || undefined,
       source_id: sourceId || undefined,
-      history: history || [],
+      history: (history || []).slice(-40),
+      conversation_id: conversationId,
       top_k: topK ?? useAppStore.getState().settings.topK,
     })
     .then((r) => r.data);
@@ -292,7 +355,12 @@ export const deleteNote = (id: string) =>
 export const deleteSource = (sourceId: string) =>
   api.delete<{ deleted: string; message: string }>(`/sources/${sourceId}`).then((r) => r.data);
 
-export const downloadSource = (sourceId: string, fileName?: string) => {
+export const downloadSource = async (sourceId: string, fileName?: string) => {
+  if (cloudMode) {
+    const { data } = await api.get(`/sources/${encodeURIComponent(sourceId)}/link`);
+    window.open(data.url, "_blank", "noopener,noreferrer");
+    return;
+  }
   const url = `${API_URL}/api/sources/${sourceId}/download`;
   const link = document.createElement("a");
   link.href = url;

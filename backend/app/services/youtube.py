@@ -141,10 +141,7 @@ _WHISPER_PLAYER_CLIENTS = ("android", "ios", "mweb", "tv", "web_safari", None)
 
 def _whisper_transcribe(video_id: str) -> str:
     """Download audio with yt-dlp and transcribe with faster-whisper."""
-    import tempfile
-    from pathlib import Path
 
-    import yt_dlp
 
     from app.services.whisper_model import get_model
 

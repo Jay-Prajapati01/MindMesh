@@ -1,7 +1,6 @@
 """Tests for the PDF pipeline services."""
 from __future__ import annotations
 
-import pytest
 
 
 class TestPdfValidator:

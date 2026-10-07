@@ -10,6 +10,8 @@ desktop.ini
 .env
 .env.*
 !.env.example
+!*.env.example
+!deploy/.env.*.example
 
 # ---------- Python ----------
 __pycache__/
@@ -53,6 +55,19 @@ media/
 qdrant_storage/
 ollama_data/
 *.gguf
+.modal/
+.modal.toml
+.cache/
+model-cache/
+models/
+downloads/
+tmp/
+*.safetensors
+*.onnx
+credentials*.json
+*service-role*.json
+supabase/.temp/
+mindmesh-backup-*.tar.gz
 
 # ---------- AI tooling ----------
 .claude/

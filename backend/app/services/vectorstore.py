@@ -9,6 +9,7 @@ from qdrant_client import QdrantClient
 from qdrant_client.http import models as qmodels
 
 from app.core.config import get_settings
+from app.core.tenant import cloud, scope
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -26,7 +27,7 @@ def get_client() -> QdrantClient:
         last_error = None
         for attempt in range(_MAX_RETRIES):
             try:
-                _client = QdrantClient(url=settings.qdrant_url)
+                _client = QdrantClient(url=settings.qdrant_url, api_key=settings.qdrant_api_key or None)
                 # Verify connection
                 _client.get_collections()
                 logger.info("Connected to Qdrant at %s", settings.qdrant_url)
@@ -62,6 +63,17 @@ def ensure_collection() -> None:
             ),
         )
         logger.info("Created Qdrant collection %s with dim=%d", settings.qdrant_collection, settings.embedding_dim_for_model)
+    info = client.get_collection(settings.qdrant_collection)
+    if info.config.params.vectors.size != settings.embedding_dim_for_model:
+        raise ValueError("Embedding dimension mismatch; reindex into a new collection")
+    if cloud():
+        incompatible = client.count(collection_name=settings.qdrant_collection,
+            count_filter=qmodels.Filter(must_not=[qmodels.FieldCondition(
+                key="embedding_model", match=qmodels.MatchValue(value="BAAI/bge-m3"))]), exact=True).count
+        if incompatible:
+            raise ValueError("Collection contains another embedding model; select an empty BGE-M3 collection")
+        for field in ("tenant_id", "user_id", "source_id"):
+            client.create_payload_index(settings.qdrant_collection, field, qmodels.PayloadSchemaType.KEYWORD, wait=True)
     _ready = True
 
 
@@ -71,7 +83,7 @@ def _point_id(payload: dict[str, Any]) -> str:
     chunk_index = payload.get("chunk_index")
     if source_id is None or chunk_index is None:
         return str(uuid.uuid4())
-    return str(uuid.uuid5(uuid.NAMESPACE_URL, f"mindmesh:{source_id}:{chunk_index}"))
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, f"mindmesh:{payload.get('tenant_id', 'local')}:{source_id}:{chunk_index}"))
 
 
 def upsert_chunks(
@@ -81,6 +93,8 @@ def upsert_chunks(
     """Upsert chunk vectors with their payloads. Returns count upserted."""
     if not vectors:
         return 0
+    if cloud():
+        scope()
     settings = get_settings()
     client = get_client()
     try:
@@ -88,11 +102,18 @@ def upsert_chunks(
     except Exception as e:  # noqa: BLE001
         logger.warning("ensure_collection before upsert failed: %s", e)
         raise
+    if len(vectors) != len(payloads) or any(len(v) != settings.embedding_dim_for_model for v in vectors):
+        raise ValueError("Invalid embedding batch shape")
+    if cloud():
+        owner = scope()
+        payloads = [{**p, "tenant_id": owner.tenant_id, "user_id": owner.user_id,
+                     "document_id": p.get("source_id"), "chunk_id": str(p.get("chunk_index")),
+                     "embedding_model": "BAAI/bge-m3"} for p in payloads]
     points = [
         qmodels.PointStruct(id=_point_id(payload), vector=vec, payload=payload)
         for vec, payload in zip(vectors, payloads)
     ]
-    client.upsert(collection_name=settings.qdrant_collection, points=points)
+    client.upsert(collection_name=settings.qdrant_collection, points=points, wait=True)
     return len(points)
 
 
@@ -105,7 +126,7 @@ def search(
     """Return the top_k nearest payloads with scores, optionally filtered."""
     settings = get_settings()
     client = get_client()
-    must_conditions = []
+    must_conditions = _ownership()
     if source_type:
         must_conditions.append(
             qmodels.FieldCondition(
@@ -146,8 +167,9 @@ def search(
 def count() -> int:
     settings = get_settings()
     client = get_client()
+    ownership = _ownership()
     try:
-        return client.count(collection_name=settings.qdrant_collection).count
+        return client.count(collection_name=settings.qdrant_collection, count_filter=qmodels.Filter(must=ownership), exact=True).count
     except Exception:  # noqa: BLE001
         return 0
 
@@ -157,7 +179,7 @@ def get_chunks_by_source(source_id: str, limit: int = 30) -> list[dict[str, Any]
     settings = get_settings()
     client = get_client()
     flt = qmodels.Filter(
-        must=[
+        must=_ownership() + [
             qmodels.FieldCondition(
                 key="source_id",
                 match=qmodels.MatchValue(value=source_id),
@@ -181,28 +203,20 @@ def delete_by_source_id(source_id: str) -> int:
     settings = get_settings()
     client = get_client()
     flt = qmodels.Filter(
-        must=[
+        must=_ownership() + [
             qmodels.FieldCondition(
                 key="source_id",
                 match=qmodels.MatchValue(value=source_id),
             )
         ]
     )
-    try:
-        # Scroll to find point IDs matching the filter
-        points, _ = client.scroll(
-            collection_name=settings.qdrant_collection,
-            scroll_filter=flt,
-            limit=10000,
-            with_payload=False,
-        )
-        if points:
-            point_ids = [p.id for p in points]
-            client.delete(
-                collection_name=settings.qdrant_collection,
-                points_selector=qmodels.PointIdsList(points=point_ids),
-            )
-            return len(point_ids)
-    except Exception as e:
-        logger.warning("Failed to delete chunks for source_id %s: %s", source_id, e)
-    return 0
+    total = client.count(collection_name=settings.qdrant_collection, count_filter=flt, exact=True).count
+    client.delete(collection_name=settings.qdrant_collection,
+                  points_selector=qmodels.FilterSelector(filter=flt), wait=True)
+    return total
+
+
+def _ownership() -> list:
+    if not cloud():
+        return []
+    return [qmodels.FieldCondition(key="tenant_id", match=qmodels.MatchValue(value=scope().tenant_id))]

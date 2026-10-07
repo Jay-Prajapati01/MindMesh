@@ -89,6 +89,7 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     question: str
+    conversation_id: str | None = Field(default=None, max_length=128)
     top_k: int | None = Field(default=None, ge=1, le=50)
     source_type: str | None = Field(default=None, max_length=32)
     source_id: str | None = Field(default=None, max_length=128)
@@ -111,6 +112,7 @@ class Citation(BaseModel):
 
 class ChatResponse(BaseModel):
     question: str
+    conversation_id: str | None = None
     answer: str
     citations: list[Citation]
     search_time_ms: int | None = None

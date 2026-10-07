@@ -10,7 +10,7 @@ from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.core.uploads import read_upload
 from app.models.schemas import SourceItem
-from app.services import chunking, embeddings, graph, rag, store, vectorstore
+from app.services import embeddings, graph, rag, store, vectorstore
 from app.services.pdf_validator import validate as validate_pdf
 from app.services.pdf_chunker import chunk_document
 from app.services.sse import public_error, sse
@@ -77,7 +77,7 @@ async def process_pdf(file: UploadFile = File(...)) -> SourceItem:
     source_id = hashlib.sha1(data).hexdigest()[:16]
     from app.services import file_storage, ingest
     file_path = file_storage.save_file(source_id, data, "pdf", file.filename)
-    return await ingest.ingest_text(text=doc.markdown, source_id=source_id, source_type="pdf", title=doc.title, file_path=file_path, file_name=file.filename, file_size=len(data), mime_type="application/pdf")
+    return await ingest.ingest_text(text=doc.markdown, source_id=source_id, source_type="pdf", title=doc.title, file_path=file_path, file_name=file.filename, file_size=len(data), mime_type="application/pdf", structured_chunks=chunk_document(doc.markdown, doc.sections), page_count=doc.page_count)
 
 
 @router.post("/process/stream")
@@ -132,7 +132,7 @@ async def process_pdf_stream(file: UploadFile = File(...)):
             yield sse("step_complete", {"step": 3, "duration_ms": ms(), "title": doc.title, "chars": len(doc.markdown), "headings_count": len(doc.headings), "sections_count": len(doc.sections)})
 
             # Step 4: Running OCR (conditional)
-            yield sse("step_start", {"step": 4, "total_steps": TOTAL_STEPS, "name": "Running OCR", "description": "PaddleOCR processing scanned pages..."})
+            yield sse("step_start", {"step": 4, "total_steps": TOTAL_STEPS, "name": "Running OCR", "description": "Tesseract OCR processing scanned pages..."})
             if validation.needs_ocr:
                 yield sse("step_progress", {"step": 4, "progress": 50, "sub_text": f"OCR applied to {validation.scanned_page_count} pages"})
                 yield sse("step_complete", {"step": 4, "duration_ms": ms(), "ocr_pages": validation.scanned_page_count})

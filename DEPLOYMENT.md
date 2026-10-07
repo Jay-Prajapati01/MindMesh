@@ -425,3 +425,9 @@ docker compose -f deploy/docker-compose.prod.yml logs caddy
 - Caddy admin: `curl localhost:2019/metrics`
 
 For issues, check the GitHub repository issues page.
+# Current cloud production path
+
+Use [docs/MODAL_DEPLOYMENT.md](docs/MODAL_DEPLOYMENT.md) for the Modal AI workers,
+Supabase membership/storage setup and standalone cloud Docker configuration.
+The older deployment instructions below describe the local-model architecture.
+
