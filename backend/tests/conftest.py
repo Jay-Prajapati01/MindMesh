@@ -146,14 +146,14 @@ def auth_state() -> _AuthState:
     return _AuthState()
 
 
-@pytest.fixture
-def modal_app(auth_state: _AuthState):
+@pytest.fixture(params=["modal", "cloud"])
+def modal_app(auth_state: _AuthState, request):
     """App instance built in modal mode with all auth backends mocked."""
     from app.core.config import get_settings
 
     settings = get_settings()
     previous_mode = settings.mindmesh_execution_mode
-    settings.mindmesh_execution_mode = "modal"
+    settings.mindmesh_execution_mode = request.param
     with (
         patch("httpx.AsyncClient.get", new=auth_state.httpx_get()),
         patch("app.core.cloud_auth.resolve_user", new=auth_state.resolver()),

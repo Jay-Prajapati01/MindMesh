@@ -35,7 +35,7 @@ async def health_detailed():
     settings = get_settings()
     checks: dict[str, str] = {"app": "ok"}
 
-    if settings.mindmesh_execution_mode == "modal":
+    if settings.mindmesh_execution_mode in {"modal", "cloud"}:
         # Redis: job queue availability.
         try:
             from app.services.jobs import client as redis_client
@@ -68,7 +68,7 @@ async def health_detailed():
         except Exception:  # noqa: BLE001
             checks["qdrant"] = "error"
         overall = "ok" if all(v == "ok" for v in checks.values()) else "degraded"
-        return {"status": overall, "execution_mode": "modal", "checks": checks}
+        return {"status": overall, "execution_mode": settings.mindmesh_execution_mode, "checks": checks}
 
     # Exception text can include internal base URLs (qdrant/ollama) — only
     # surface those details outside production (I-2).

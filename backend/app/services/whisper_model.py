@@ -21,6 +21,10 @@ MODEL_NAME = "base"
 def get_model():
     """Return the process-wide WhisperModel, loading it on first use."""
     from app.core.tenant import cloud
+    from app.core.config import get_settings
+    if get_settings().mindmesh_execution_mode == "cloud":
+        from app.services.cpu_inference import whisper
+        return whisper()
     if cloud():
         return _RemoteWhisper()
     global _model

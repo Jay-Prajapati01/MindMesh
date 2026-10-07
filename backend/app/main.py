@@ -125,7 +125,7 @@ class HeavyTaskMiddleware:
             return await self.app(scope, receive, send)
 
         path = scope.get("path", "")
-        if get_settings().mindmesh_execution_mode == "modal" or not path.startswith(self.HEAVY_PREFIXES):
+        if get_settings().mindmesh_execution_mode in {"modal", "cloud"} or not path.startswith(self.HEAVY_PREFIXES):
             return await self.app(scope, receive, send)
 
         async with _heavy_semaphore:
@@ -263,7 +263,7 @@ def create_app() -> FastAPI:
         app.add_middleware(IdentityRateLimitMiddleware)
 
     # 3 — bearer validation + server-side membership resolution (modal only).
-    if settings.mindmesh_execution_mode == "modal":
+    if settings.mindmesh_execution_mode in {"modal", "cloud"}:
         from app.core.cloud_auth import CloudAuthMiddleware
 
         app.add_middleware(CloudAuthMiddleware)
@@ -330,7 +330,7 @@ def create_app() -> FastAPI:
     # --- Routes ------------------------------------------------------------
     mutating = [Depends(require_key)]
 
-    if settings.mindmesh_execution_mode == "modal":
+    if settings.mindmesh_execution_mode in {"modal", "cloud"}:
         from app.api.cloud_jobs import router as jobs_router
 
         # Facade routes carry require_key (scope()) as defense-in-depth behind

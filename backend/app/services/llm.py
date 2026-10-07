@@ -39,6 +39,9 @@ def _chat_messages(prompt: str, system: str | None) -> list[dict]:
 async def generate(prompt: str, system: str | None = None) -> str:
     """Generate a completion from the active AI backend."""
     settings = get_settings()
+    if settings.mindmesh_execution_mode == "cloud":
+        from app.services.cloud_llm import generate as cloud_generate
+        return await cloud_generate(prompt, system)
     if settings.mindmesh_execution_mode == "modal":
         from app.services.modal_client import generate as remote_generate
         return await remote_generate(prompt, system)
@@ -86,7 +89,7 @@ async def generate_stream(
     prompt: str, system: str | None = None
 ) -> AsyncIterator[str]:
     """Stream tokens from the active AI backend."""
-    if get_settings().mindmesh_execution_mode == "modal":
+    if get_settings().mindmesh_execution_mode in {"modal", "cloud"}:
         yield await generate(prompt, system)
         return
 

@@ -1,6 +1,6 @@
 import { getSupabase } from "./supabaseClient";
 
-export const cloudMode = process.env.NEXT_PUBLIC_EXECUTION_MODE === "modal";
+export const cloudMode = ["modal", "cloud"].includes(process.env.NEXT_PUBLIC_EXECUTION_MODE || "");
 
 export async function authHeaders(): Promise<Record<string, string>> {
   if (!cloudMode) return {};

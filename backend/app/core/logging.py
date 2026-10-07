@@ -17,7 +17,7 @@ def configure_logging() -> None:
             datefmt="%Y-%m-%d %H:%M:%S",
         )
     )
-    if settings.mindmesh_execution_mode == "modal":
+    if settings.mindmesh_execution_mode in {"modal", "cloud"}:
         handler.setFormatter(CloudFormatter())
 
     root = logging.getLogger()

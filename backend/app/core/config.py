@@ -26,6 +26,12 @@ class Settings(BaseSettings):
     redis_url: str = ""
     qdrant_api_key: str = ""
     job_ttl_seconds: int = 604800
+    worker_process: bool = False
+    llm_provider: str = ""
+    xai_api_key: str = ""
+    xai_model: str = ""
+    groq_api_key: str = ""
+    groq_model: str = "llama-3.1-8b-instant"
 
     # Security — when set (any environment), mutating endpoints require a
     # matching X-API-Key header. Empty keeps local development open.
@@ -140,15 +146,15 @@ class Settings(BaseSettings):
         # API-key guard or the rate limiter (exact-case comparisons before).
         self.environment = self.environment.strip().lower()
         self.mindmesh_execution_mode = self.mindmesh_execution_mode.strip().lower()
-        if self.mindmesh_execution_mode not in {"local", "modal"}:
-            raise ValueError("MINDMESH_EXECUTION_MODE must be local or modal")
-        if self.environment == "production" and self.mindmesh_execution_mode != "modal":
-            raise ValueError("Production requires MINDMESH_EXECUTION_MODE=modal")
-        if self.mindmesh_execution_mode == "modal":
+        if self.mindmesh_execution_mode not in {"local", "modal", "cloud"}:
+            raise ValueError("MINDMESH_EXECUTION_MODE must be local, modal or cloud")
+        if self.environment == "production" and self.mindmesh_execution_mode == "local":
+            raise ValueError("Production requires a cloud execution mode")
+        if self.mindmesh_execution_mode in {"modal", "cloud"}:
             from urllib.parse import urlparse
             if not all((self.supabase_url, self.supabase_anon_key, self.supabase_service_role_key,
                         self.supabase_db_url, self.redis_url, self.qdrant_api_key)):
-                raise ValueError("Modal mode requires Supabase, database, Redis and Qdrant credentials")
+                raise ValueError("Cloud mode requires Supabase, database, Redis and Qdrant credentials")
             if not self.redis_url.startswith("rediss://"):
                 raise ValueError("Cloud Redis must use TLS (rediss://)")
             for endpoint in (self.supabase_url, self.qdrant_url):
@@ -163,6 +169,17 @@ class Settings(BaseSettings):
                 raise ValueError("Use a new collection for BGE-M3, e.g. mindmesh_bge_m3_v1")
             if not self.ssrf_block_private or not self.crawl4ai_headless or self.crawl4ai_cache_mode != "bypass":
                 raise ValueError("Cloud browsers require SSRF protection, headless mode and disabled page caching")
+        if self.mindmesh_execution_mode == "cloud":
+            if self.llm_provider not in {"xai", "groq"}:
+                raise ValueError("Cloud mode requires an explicit LLM_PROVIDER: xai or groq")
+            if self.llm_provider == "xai" and not (self.xai_api_key and self.xai_model):
+                raise ValueError("xAI requires XAI_API_KEY and XAI_MODEL")
+            if self.llm_provider == "groq" and not self.groq_api_key:
+                raise ValueError("Groq requires GROQ_API_KEY")
+            from urllib.parse import urlparse
+            if any(urlparse(o).scheme != "https" or urlparse(o).hostname in {"localhost", "127.0.0.1"}
+                   for o in self.cors_origin_list):
+                raise ValueError("Cloud CORS origins must use public HTTPS")
 
         # allow_credentials=True is hardcoded in main.py; Starlette would
         # reflect any request Origin if "*" were allowed — reject it outright.

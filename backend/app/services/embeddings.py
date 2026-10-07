@@ -87,6 +87,11 @@ async def embed_texts(texts: list[str]) -> list[list[float]]:
     if not texts:
         return []
 
+    if get_settings().mindmesh_execution_mode == "cloud":
+        import asyncio
+        from app.services.cpu_inference import embed
+        return await asyncio.to_thread(embed, texts)
+
     if get_settings().mindmesh_execution_mode == "modal":
         from app.services.modal_client import embed
         return await embed(texts)

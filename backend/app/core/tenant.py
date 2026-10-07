@@ -28,4 +28,4 @@ def scope() -> Scope:
 
 
 def cloud() -> bool:
-    return get_settings().mindmesh_execution_mode == "modal"
+    return get_settings().mindmesh_execution_mode in {"modal", "cloud"}

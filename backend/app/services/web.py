@@ -128,7 +128,7 @@ async def fetch_article(url: str) -> dict:
 
     # Local mode keeps its fast static-page path; cloud uses the browser first.
     try:
-        if settings.mindmesh_execution_mode != "modal":
+        if settings.mindmesh_execution_mode == "local":
             text, title = await _fetch_with_httpx(url)
     except SSRFBlockedError:
         raise
