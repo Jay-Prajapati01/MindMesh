@@ -7,7 +7,6 @@ import { ArrowLeft, Check, Send } from "lucide-react";
 import { motion } from "motion/react";
 import { api } from "@/lib/api";
 import { Navbar, Footer } from "./Sections";
-import { markIntroSeen } from "@/lib/intro";
 import { Label, EASE } from "./ui";
 
 const TOPICS = ["General", "Account support", "Partnership", "Bug / feedback"] as const;
@@ -60,7 +59,7 @@ export function ContactPage() {
       <Navbar />
       <main className="mx-auto grid w-full max-w-6xl flex-1 gap-10 px-6 py-10 md:grid-cols-[1fr_1.15fr] md:py-14">
         <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE }}>
-          <Link href="/" onClick={markIntroSeen} className="mb-8 flex w-fit items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest"><ArrowLeft className="h-4 w-4" />Back home</Link>
+          <Link href="/" className="mb-8 flex w-fit items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest"><ArrowLeft className="h-4 w-4" />Back home</Link>
           <Label>Contact</Label>
           <h1 className="mt-5 font-display text-[clamp(3rem,8vw,6.5rem)] uppercase leading-[0.9] tracking-[-0.04em]">
             Let&apos;s talk <span className="text-orange">brains.</span>
@@ -79,7 +78,7 @@ export function ContactPage() {
               <span className="brut grid h-16 w-16 place-items-center rounded-2xl bg-orange"><Check className="h-8 w-8" /></span>
               <h2 className="font-display text-4xl uppercase">Message received.</h2>
               <p className="text-ink-muted">Thanks for reaching out — we&apos;ll get back to you soon.</p>
-              <Link href="/" onClick={markIntroSeen} className="brut-btn rounded-2xl bg-paper px-5 py-3 font-bold">Back to MindMesh</Link>
+              <Link href="/" className="brut-btn rounded-2xl bg-paper px-5 py-3 font-bold">Back to MindMesh</Link>
             </div>
           ) : (
             <form onSubmit={submit} noValidate className="grid gap-5">

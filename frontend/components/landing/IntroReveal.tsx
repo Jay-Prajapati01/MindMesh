@@ -1,6 +1,5 @@
 import { motion, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
-import { introSeen, markIntroSeen } from "@/lib/intro";
 
 const subscribeNoop = () => () => {};
 
@@ -37,11 +36,11 @@ export function IntroReveal({ children }: { children: ReactNode }) {
   const reduce = useReducedMotion();
   const [size, setSize] = useState({ w: 1280, h: 800 });
   const held = useRef(false);
-  // Skip the cover when the visitor already saw it this session, when they
-  // arrive with a deep link (/#features), or when reduced motion is on.
-  const seen = useSyncExternalStore(
+  // The intro plays on every visit to the landing page. The only skip is a
+  // deep link (/#features) — that must land on its section, not the cover.
+  const deepLink = useSyncExternalStore(
     subscribeNoop,
-    () => introSeen() || window.location.hash !== "",
+    () => window.location.hash !== "",
     () => false,
   );
 
@@ -82,13 +81,12 @@ export function IntroReveal({ children }: { children: ReactNode }) {
   useMotionValueEvent(raw, "change", (v) => {
     if (v >= 0.999 && !held.current) {
       held.current = true;
-      markIntroSeen();
       window.dispatchEvent(new CustomEvent("mindmesh:intro-hold", { detail: 2000 }));
     }
     if (v < 0.5) held.current = false;
   });
 
-  if (reduce || seen) return <div className="bg-paper">{children}</div>;
+  if (reduce || deepLink) return <div className="bg-paper">{children}</div>;
 
   return (
     <>

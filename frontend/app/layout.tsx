@@ -6,7 +6,7 @@ import { ThemeEffect } from "@/components/ThemeEffect";
 import { CloudAuthGate } from "@/components/CloudAuthGate";
 
 export const metadata: Metadata = {
-  title: "MindMesh -> Your buddy who remembers everything you save",
+  title: "MindMesh | Your buddy who remembers everything you save",
   description:
     "Your buddy that remembers everything you save — videos, PDFs, notes, links and more, all in one place you can talk to.",
 };

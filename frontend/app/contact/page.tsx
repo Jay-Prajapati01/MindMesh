@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ContactPage } from "@/components/landing/ContactPage";
 
-const TITLE = "Contact MindMesh — Talk to the team";
+const TITLE = "Contact MindMesh | Talk to the team";
 const DESC =
   "Questions, partnerships or account support? Send the MindMesh team a message and we'll get back to you.";
 

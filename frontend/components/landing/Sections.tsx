@@ -8,7 +8,6 @@ import { Btn, FadeUp, Label } from "./ui";
 import { MiniGraph } from "./Hero";
 import { ThemeToggle } from "./ThemeToggle";
 import { useAuth } from "../CloudAuthGate";
-import { markIntroSeen } from "@/lib/intro";
 
 function useIdentity() {
   const { session } = useAuth();
@@ -260,7 +259,7 @@ export function Footer() {
 
 export function Logo() {
   return (
-    <Link href="/" onClick={markIntroSeen} className="flex items-center gap-2">
+    <Link href="/" className="flex items-center gap-2">
       <span className="grid h-9 w-9 place-items-center overflow-hidden rounded-lg bg-[#111]">
         <Image src="/logo.png" alt="" width={36} height={36} className="h-full w-full object-contain p-1" />
       </span>

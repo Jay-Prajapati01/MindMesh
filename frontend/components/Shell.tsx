@@ -10,14 +10,43 @@ import { ThemeToggle } from "./ThemeToggle";
 import { CommandPalette } from "./dashboard/CommandPalette";
 import { useAppStore } from "@/lib/store";
 import { applyThemeToDOM, applyAccentToDOM, applyDensityToDOM } from "./ThemeEffect";
-import { markIntroSeen } from "@/lib/intro";
 
 const CHROMELESS_ROUTES = ["/", "/contact", "/login", "/signup", "/forgot-password", "/reset-password"];
+const NAV_COLLAPSED_KEY = "mindmesh-nav-collapsed";
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const settings = useAppStore((s) => s.settings);
   const pathname = usePathname();
+
+  // Apply theme on mount (fixes hydration mismatch issue)
+  useEffect(() => {
+    applyThemeToDOM(settings.theme);
+    applyAccentToDOM(settings.accentColor);
+    applyDensityToDOM(settings.density);
+  }, [settings.theme, settings.accentColor, settings.density]);
+
+  // Restore the persisted sidebar state after mount (localStorage is
+  // unavailable during SSR, so the first paint is always expanded).
+  useEffect(() => {
+    try {
+      setCollapsed(localStorage.getItem(NAV_COLLAPSED_KEY) === "1");
+    } catch {
+      // storage unavailable — sidebar just starts expanded
+    }
+  }, []);
+
+  const toggleCollapsed = () =>
+    setCollapsed((v) => {
+      const next = !v;
+      try {
+        localStorage.setItem(NAV_COLLAPSED_KEY, next ? "1" : "0");
+      } catch {
+        // storage unavailable — state still toggles for this visit
+      }
+      return next;
+    });
 
   // Apply theme on mount (fixes hydration mismatch issue)
   useEffect(() => {
@@ -33,9 +62,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="paper-grain flex min-h-screen bg-background text-foreground transition-colors duration-200">
-      {/* Desktop sidebar */}
+      {/* Desktop sidebar (collapsible, preference persisted) */}
       <div className="hidden md:block">
-        <Nav />
+        <Nav collapsed={collapsed} onToggleCollapse={toggleCollapsed} />
       </div>
 
       {/* Mobile drawer */}
@@ -59,7 +88,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </button>
           <Link
             href="/"
-            onClick={markIntroSeen}
             className="text-lg font-extrabold tracking-tight text-foreground"
           >
             MindMesh
