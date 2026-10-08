@@ -9,7 +9,7 @@ from qdrant_client import QdrantClient
 from qdrant_client.http import models as qmodels
 
 from app.core.config import get_settings
-from app.core.tenant import cloud, scope
+from app.core.tenant import cloud, scope, authenticated
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -72,6 +72,7 @@ def ensure_collection() -> None:
                 key="embedding_model", match=qmodels.MatchValue(value="BAAI/bge-m3"))]), exact=True).count
         if incompatible:
             raise ValueError("Collection contains another embedding model; select an empty BGE-M3 collection")
+    if authenticated():
         for field in ("tenant_id", "user_id", "source_id"):
             client.create_payload_index(settings.qdrant_collection, field, qmodels.PayloadSchemaType.KEYWORD, wait=True)
     _ready = True
@@ -93,7 +94,7 @@ def upsert_chunks(
     """Upsert chunk vectors with their payloads. Returns count upserted."""
     if not vectors:
         return 0
-    if cloud():
+    if authenticated():
         scope()
     settings = get_settings()
     client = get_client()
@@ -104,11 +105,11 @@ def upsert_chunks(
         raise
     if len(vectors) != len(payloads) or any(len(v) != settings.embedding_dim_for_model for v in vectors):
         raise ValueError("Invalid embedding batch shape")
-    if cloud():
+    if authenticated():
         owner = scope()
         payloads = [{**p, "tenant_id": owner.tenant_id, "user_id": owner.user_id,
                      "document_id": p.get("source_id"), "chunk_id": str(p.get("chunk_index")),
-                     "embedding_model": "BAAI/bge-m3"} for p in payloads]
+                     "embedding_model": "BAAI/bge-m3" if cloud() else settings.embedding_model} for p in payloads]
     points = [
         qmodels.PointStruct(id=_point_id(payload), vector=vec, payload=payload)
         for vec, payload in zip(vectors, payloads)
@@ -217,6 +218,6 @@ def delete_by_source_id(source_id: str) -> int:
 
 
 def _ownership() -> list:
-    if not cloud():
+    if not authenticated():
         return []
     return [qmodels.FieldCondition(key="tenant_id", match=qmodels.MatchValue(value=scope().tenant_id))]

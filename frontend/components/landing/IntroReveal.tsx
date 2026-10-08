@@ -1,5 +1,8 @@
 import { motion, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { introSeen, markIntroSeen } from "@/lib/intro";
+
+const subscribeNoop = () => () => {};
 
 /**
  * Cinematic opening: a clean editorial cover (© 2026 · orange mesh pill · MindMesh).
@@ -34,6 +37,13 @@ export function IntroReveal({ children }: { children: ReactNode }) {
   const reduce = useReducedMotion();
   const [size, setSize] = useState({ w: 1280, h: 800 });
   const held = useRef(false);
+  // Skip the cover when the visitor already saw it this session, when they
+  // arrive with a deep link (/#features), or when reduced motion is on.
+  const seen = useSyncExternalStore(
+    subscribeNoop,
+    () => introSeen() || window.location.hash !== "",
+    () => false,
+  );
 
   useEffect(() => {
     const update = () => setSize({ w: window.innerWidth, h: window.innerHeight });
@@ -72,12 +82,13 @@ export function IntroReveal({ children }: { children: ReactNode }) {
   useMotionValueEvent(raw, "change", (v) => {
     if (v >= 0.999 && !held.current) {
       held.current = true;
+      markIntroSeen();
       window.dispatchEvent(new CustomEvent("mindmesh:intro-hold", { detail: 2000 }));
     }
     if (v < 0.5) held.current = false;
   });
 
-  if (reduce) return <div className="bg-paper">{children}</div>;
+  if (reduce || seen) return <div className="bg-paper">{children}</div>;
 
   return (
     <>

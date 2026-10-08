@@ -10,9 +10,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from app.core.config import get_settings
 from app.core.logging import get_logger
-from app.core.tenant import cloud
+from app.core.tenant import cloud, authenticated, data_directory
 from app.models.schemas import RecentQuery, SourceItem
 from app.services import cloud_db
 
@@ -25,7 +24,7 @@ _CACHE_VALID = False
 
 
 def _path() -> Path:
-    data_dir = Path(get_settings().data_dir)
+    data_dir = data_directory()
     data_dir.mkdir(parents=True, exist_ok=True)
     return data_dir / "store.json"
 
@@ -33,6 +32,12 @@ def _path() -> Path:
 def _load() -> dict:
     if cloud():
         return cloud_db.load("store", {"sources": [], "searches": [], "questions": [], "notes": []})
+    if authenticated():
+        path = _path()
+        if not path.exists():
+            return {"sources": [], "searches": [], "questions": [], "notes": []}
+        # Do not share mutable process-global caches across account requests.
+        return json.loads(path.read_text())
     global _CACHE, _CACHE_PATH, _CACHE_VALID
     path = _path()
     
@@ -68,8 +73,9 @@ def _save(data: dict) -> None:
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text(json.dumps(data, default=str, indent=2))
     tmp.replace(path)
-    _CACHE = data
-    _CACHE_VALID = True
+    if not authenticated():
+        _CACHE = data
+        _CACHE_VALID = True
 
 
 def invalidate_cache() -> None:
@@ -225,7 +231,7 @@ def delete_source(source_id: str) -> bool:
 
 def get_conversation(conversation_id: str) -> dict | None:
     from app.core.tenant import scope
-    user = scope().user_id if cloud() else "local"
+    user = scope().user_id if authenticated() else "local"
     return next((c for c in _load().get("conversations", [])
                  if c["id"] == conversation_id and c["user_id"] == user), None)
 
@@ -233,7 +239,7 @@ def get_conversation(conversation_id: str) -> dict | None:
 def save_conversation_turn(conversation_id: str, response: dict) -> None:
     from app.core.tenant import scope
     from datetime import datetime, timezone
-    user = scope().user_id if cloud() else "local"
+    user = scope().user_id if authenticated() else "local"
     job_id = scope().job_id if cloud() else None
     with _lock:
         data = _load()

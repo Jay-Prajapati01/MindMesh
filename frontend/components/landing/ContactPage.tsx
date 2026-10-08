@@ -5,11 +5,12 @@ import Link from "next/link";
 import { z } from "zod";
 import { ArrowLeft, Check, Send } from "lucide-react";
 import { motion } from "motion/react";
-import { getSupabase } from "@/lib/supabaseClient";
+import { api } from "@/lib/api";
 import { Navbar, Footer } from "./Sections";
+import { markIntroSeen } from "@/lib/intro";
 import { Label, EASE } from "./ui";
 
-const TOPICS = ["General", "Self-hosting", "Partnership", "Bug / feedback"] as const;
+const TOPICS = ["General", "Account support", "Partnership", "Bug / feedback"] as const;
 
 const schema = z.object({
   name: z.string().trim().min(1, "Tell us your name").max(100),
@@ -40,11 +41,15 @@ export function ContactPage() {
     }
     setErrors({}); setState("sending");
     try {
-      const { error } = await getSupabase().from("contact_submissions").insert({
-        name: parsed.data.name, email: parsed.data.email, company: parsed.data.company ?? null,
-        topic: parsed.data.topic, message: parsed.data.message,
+      // Delivered to the MindMesh API (public endpoint — no account needed).
+      await api.post("/contact", {
+        name: parsed.data.name,
+        email: parsed.data.email,
+        company: parsed.data.company ?? null,
+        topic: parsed.data.topic,
+        message: parsed.data.message,
       });
-      setState(error ? "error" : "done");
+      setState("done");
     } catch {
       setState("error");
     }
@@ -55,15 +60,15 @@ export function ContactPage() {
       <Navbar />
       <main className="mx-auto grid w-full max-w-6xl flex-1 gap-10 px-6 py-10 md:grid-cols-[1fr_1.15fr] md:py-14">
         <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE }}>
-          <Link href="/" className="mb-8 flex w-fit items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest"><ArrowLeft className="h-4 w-4" />Back home</Link>
+          <Link href="/" onClick={markIntroSeen} className="mb-8 flex w-fit items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest"><ArrowLeft className="h-4 w-4" />Back home</Link>
           <Label>Contact</Label>
           <h1 className="mt-5 font-display text-[clamp(3rem,8vw,6.5rem)] uppercase leading-[0.9] tracking-[-0.04em]">
             Let&apos;s talk <span className="text-orange">brains.</span>
           </h1>
-          <p className="mt-6 max-w-md text-lg text-ink-muted">Questions about MindMesh, self-hosting help, or a partnership idea — drop us a line and the team will reply.</p>
+          <p className="mt-6 max-w-md text-lg text-ink-muted">Questions about your account, help with MindMesh, or a partnership idea — drop us a line and the team will reply.</p>
           <div className="brut mt-8 rounded-3xl bg-paper-card p-6">
-            <p className="font-mono text-xs font-bold uppercase tracking-widest text-ink-muted">[ Open source ]</p>
-            <p className="mt-2 font-display text-2xl uppercase">MIT licensed · Self-hosted</p>
+            <p className="font-mono text-xs font-bold uppercase tracking-widest text-ink-muted">[ Here to help ]</p>
+            <p className="mt-2 font-display text-2xl uppercase">Your knowledge, connected</p>
           </div>
         </motion.div>
 
@@ -74,7 +79,7 @@ export function ContactPage() {
               <span className="brut grid h-16 w-16 place-items-center rounded-2xl bg-orange"><Check className="h-8 w-8" /></span>
               <h2 className="font-display text-4xl uppercase">Message received.</h2>
               <p className="text-ink-muted">Thanks for reaching out — we&apos;ll get back to you soon.</p>
-              <Link href="/" className="brut-btn rounded-2xl bg-paper px-5 py-3 font-bold">Back to MindMesh</Link>
+              <Link href="/" onClick={markIntroSeen} className="brut-btn rounded-2xl bg-paper px-5 py-3 font-bold">Back to MindMesh</Link>
             </div>
           ) : (
             <form onSubmit={submit} noValidate className="grid gap-5">

@@ -10,9 +10,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from app.core.config import get_settings
 from app.core.logging import get_logger
-from app.core.tenant import cloud
+from app.core.tenant import cloud, data_directory
 from app.services import cloud_db, llm
 
 logger = get_logger(__name__)
@@ -28,7 +27,7 @@ _MAX_EDGES = 1000
 
 
 def _path() -> Path:
-    data_dir = Path(get_settings().data_dir)
+    data_dir = data_directory()
     data_dir.mkdir(parents=True, exist_ok=True)
     return data_dir / "graph.json"
 

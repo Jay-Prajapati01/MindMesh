@@ -19,8 +19,11 @@ import {
   LayoutGrid,
   Library,
   Settings,
+  UserRound,
 } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
+import { useAuth } from "./CloudAuthGate";
+import { markIntroSeen } from "@/lib/intro";
 
 const links = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
@@ -37,17 +40,25 @@ const links = [
   { href: "/search", label: "Search", icon: Search },
   { href: "/chat", label: "Ask AI", icon: MessageSquare },
   { href: "/stored", label: "Stored", icon: Library },
+  { href: "/profile", label: "Profile", icon: UserRound },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function Nav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const { session } = useAuth();
+  const name = typeof session?.user.user_metadata?.preferred_name === "string" ? session.user.user_metadata.preferred_name : typeof session?.user.user_metadata?.full_name === "string" ? session.user.user_metadata.full_name : session?.user.email?.split("@")[0];
   return (
     <aside className="flex h-full w-56 shrink-0 flex-col overflow-y-auto border-r-2 border-ink bg-card text-foreground p-4">
       <div className="mb-8 flex items-center gap-2 px-2">
         <Link
           href="/"
-          onClick={onNavigate}
+          onClick={() => {
+            // Landing home from inside the app shows the real site immediately —
+            // no scroll-gated intro cover for signed-in round trips.
+            markIntroSeen();
+            onNavigate?.();
+          }}
           title="Back to landing page"
           className="flex items-center gap-2 rounded-lg"
         >
@@ -80,6 +91,10 @@ export function Nav({ onNavigate }: { onNavigate?: () => void }) {
           );
         })}
       </nav>
+      <Link href="/profile" onClick={onNavigate} className="mt-auto flex items-center gap-3 rounded-xl border-2 border-ink bg-surface p-3 hover:bg-paper-card">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-orange font-bold">{name?.slice(0, 1).toUpperCase() || <UserRound className="h-4 w-4" />}</span>
+        <span className="min-w-0"><span className="block truncate text-sm font-bold">{name || "Your profile"}</span><span className="block text-xs text-muted">Account settings</span></span>
+      </Link>
     </aside>
   );
 }

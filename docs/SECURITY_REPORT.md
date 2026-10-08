@@ -4,7 +4,7 @@
 |---|---|
 | **Date** | 2026-10-03 |
 | **Target** | MindMesh monorepo @ `f771ada` (master, local Docker stack) |
-| **Scope** | `backend/` (FastAPI), `frontend/` (Next.js 15), `extension/` (MV3), `docker-compose.yml`, dependency manifests |
+| **Scope** | Historical audit of `backend/` (FastAPI), `frontend/` (Next.js 15), Docker configuration, and dependencies. The former browser extension has since been removed. |
 | **Method** | 3 passes: (1) static code review, (2) dependency CVE audit, (3) active probing against the locally running stack |
 | **Out of scope** | Fuzzing/memory-safety, external-network perspective, production Supabase project (not accessible from this account), zero-day research |
 | **Overall risk** | **HIGH** — combination of H-1 + H-2 + H-3 means a LAN attacker can read, alter and destroy the entire knowledge base with no credentials |
@@ -27,7 +27,7 @@ The three issues that matter, all **confirmed by active testing**:
 
 Dependency audit found **66 Python advisory instances (6 packages)** and **12 npm vulnerabilities (9 high)** including direct runtime dep `axios@1.7.9`.
 
-Everything else checked out well: **no command injection, no path traversal, no XSS sinks, no SQL/NoSQL injection, no insecure deserialization, no open redirects, no secrets in the repo, CORS does not reflect hostile origins, and the browser extension permissions are minimal** (see §6).
+Everything else checked out well at audit time: **no command injection, no path traversal, no XSS sinks, no SQL/NoSQL injection, no insecure deserialization, no open redirects, no secrets in the repo, and CORS does not reflect hostile origins** (see §6).
 
 ---
 
@@ -121,9 +121,8 @@ Only local `/logo.png` is ever used with `<Image>`, so the wildcard is pure atta
 **Fix:** `remotePatterns: []` (or enumerate exact hosts).
 
 #### M-7 — Supabase contact form: anonymous insert, no rate limit, RLS policy not in repo (unverifiable)
-**Location:** `frontend/components/landing/ContactPage.tsx:43-46` (client-side zod only) · `docker-compose.yml:25-26` (publishable key) — **no `.sql`/policy file exists in the repo** (grep-verified); the linked project (`anknukysxndknocioxnq`) is not accessible from this account to verify live.
-The publishable key itself is public **by design** (not a leak) — but with no insert-only policy verifiable and no rate limit, anyone can flood `contact_submissions`, and if RLS is off the same key can `select`/`delete` every visitor's message.
-**Fix:** commit the DLS as code: `alter table contact_submissions enable row level security;` + `anon` policy with `with check (true)` only (insert), **no** select/delete; DB `CHECK` constraints on lengths/email; abuse control (Turnstile or an Edge Function proxy with rate limiting).
+**Status: fixed in code.** The browser no longer talks to Supabase directly — `ContactPage.tsx` posts to `POST /api/contact`, and `backend/app/api/contact.py` inserts server-side over HTTPS REST with the service-role key (gitignored `backend/.env`), falling back to the local JSONL store. DDL is committed as code (`supabase/contact_submissions.sql`): RLS enabled, **no** `anon`/`authenticated` policies, `service_role`-only grants, and length/email CHECK constraints. The global per-IP limiter and body-size guard apply to `/api/contact` like every other route.
+**Residual:** the migration is not yet applied to the live project (the direct Postgres endpoint is IPv6-only, so DDL must run from the host and needs the DB password).
 
 #### M-8 — Stored (indirect) prompt injection into summaries, graph and chat answers
 **Location:** `services/rag.py:13-32, 124-131, 244` · `services/compare.py:30-35` · `services/graph.py:66-72`
@@ -187,11 +186,6 @@ URLs (`WebRequest.url`, up to 2048 chars incl. `\n`) and filenames are logged ra
 Backend-supplied `thumbnail` (arbitrary https URL from ingested content) rendered without `referrerPolicy` → tracking-pixel/origin-leak vector.
 **Fix:** `referrerPolicy="no-referrer"`, require `https:` (+ ideally host allowlist).
 
-#### L-9 — Extension sends active-tab URL to unvalidated configurable endpoint
-**Location:** `extension/popup.js:14-20, 31-35`
-`apiUrl` is free text (any scheme/host) in `chrome.storage.sync`; default `http://localhost:8000`. A tampered/suggested endpoint could receive the current tab's URL.
-**Fix:** allow only `https:` or `http://localhost:8000`; visually warn on non-default endpoints; confirm before sending.
-
 #### L-10 — `source_id` interpolated into URLs unencoded
 **Location:** `frontend/app/stored/page.tsx:142, 177`
 Currently safe (ids are `sha1[:16]` hex — verified), but path-escaping if id generation ever changes.
@@ -215,7 +209,7 @@ Only `WebRequest.url`, `question` and `query` have `max_length`. Others accept m
 | I-5 | Frontend image build non-reproducible (`package-lock.json` not copied; `npm install`) | `frontend/Dockerfile:5-6` | `COPY package.json package-lock.json` + `npm ci` |
 | I-6 | Dev posture: `uvicorn --reload`, bind mounts, polling watchers, no `restart`/`healthcheck`/resource limits | `docker-compose.yml:11-38` | Ship a `docker-compose.prod.yml` with healthchecks, `restart: unless-stopped`, `deploy.resources.limits` |
 | I-7 | `reactStrictMode: false` | `frontend/next.config.mjs:3` | Enables `true` |
-| I-8 | Supabase URL + publishable key committed in compose | `docker-compose.yml:25-26` | **Not a secret leak** — publishable keys are public by design; only relevant to M-7's policy gap |
+| I-8 | Supabase URL + anon (JWT) key committed in compose/examples | `docker-compose.prod.yml:45-46` · `deploy/*.example` | **Not a secret leak** — anon keys are public by design; the service-role key lives only in gitignored `backend/.env` |
 
 ---
 
@@ -266,12 +260,11 @@ Only `WebRequest.url`, `question` and `query` have `max_length`. Others accept m
 - **Regex robustness — no obvious ReDoS** in sentence/heading/OCR-fix patterns or URL matchers.
 - **Secrets — clean.** `.env` never tracked (`git log --all` empty); no hardcoded keys; only placeholders in `.env.example`/docs/CI.
 
-**Frontend/extension/infra (static):**
+**Frontend/infra (static):**
 - **XSS — zero sinks.** Repo-wide grep (excl. node_modules): no `dangerouslySetInnerHTML`, `innerHTML`, `rehype-*`, `react-markdown`, `marked`, `katex`, `eval`, `new Function`, `document.write`, `srcdoc`, `iframe`. LLM answers and citations render as escaped React text nodes (`AnswerCard.tsx:100-130` etc.). No dynamic `style` from user strings.
 - **URLs/redirects — safe.** `javascript:` cannot reach `href` (four link builders gate on http/`/` regexes); every `target="_blank"` has `rel="noopener noreferrer"`; **no open redirects** (no `redirect()`, no `next`/`returnUrl` params).
 - **Cookies/credentials — none.** No `document.cookie`, `withCredentials`, or `credentials:"include"` anywhere; axios instance is credential-free (A11 confirms CORS behavior).
 - **Supabase key — expected public** (publishable key; I-8/M-7).
-- **Extension — minimal permissions.** `activeTab` + `storage` + `host_permissions: ["http://localhost:8000/*"]` — not `<all_urls>`; no content scripts, no `web_accessible_resources`, no remote code; popup DOM writes use `textContent`.
 - **Storage — clean.** localStorage holds only theme/UI settings/process state — no tokens/credentials.
 - **Egress — clean.** All frontend outbound URLs are localhost/Supabase; no telemetry/analytics/CDN scripts; stream endpoints are hardcoded constants.
 - **Build scripts — clean.** No `eval`/`curl|sh` in package scripts, Dockerfiles or QA tooling; QA scripts contain no credentials.

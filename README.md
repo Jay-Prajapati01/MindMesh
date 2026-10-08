@@ -9,18 +9,12 @@
 **Capture → Understand → Connect → Ask.**  
 Stop remembering *where* you saw something — just ask MindMesh naturally.
 
-![License](https://img.shields.io/badge/License-MIT-8A2BE2?style=flat-square&logo=opensourceinitiative&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-15-000000?style=flat-square&logo=nextdotjs&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-3.4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
 ![Qdrant](https://img.shields.io/badge/Qdrant-Vector%20DB-DC2626?style=flat-square&logo=qdrant&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)
-
-![GitHub issues](https://img.shields.io/github/issues/Jay-Prajapati01/MindMesh?style=flat-square&color=E1306C)
-![GitHub stars](https://img.shields.io/github/stars/Jay-Prajapati01/MindMesh?style=flat-square&color=F59E0B)
-![Last commit](https://img.shields.io/github/last-commit/Jay-Prajapati01/MindMesh?style=flat-square&color=22C55E)
 
 <br/>
 
@@ -60,8 +54,6 @@ Stop remembering *where* you saw something — just ask MindMesh naturally.
 11. [🗂 Repository Structure](#-repository-structure)
 12. [⚙️ Configuration](#-configuration)
 13. [📚 Documentation](#-documentation)
-14. [🤝 Contributing](#-contributing)
-15. [📄 License & Author](#-license--author)
 
 </details>
 
@@ -86,7 +78,7 @@ Ingest anything — **video, audio, PDF, doc, web, social** — and ask question
 <td align="center" width="33%">
 
 ### 🚀 The Result
-A **private, self-hosted second brain**: semantic search, knowledge graphs, timelines, and cross-source comparisons — all running locally with **your** data.
+A **personal knowledge workspace**: semantic search, knowledge graphs, timelines, and cross-source comparisons built around each account's data.
 
 </td>
 </tr>
@@ -132,7 +124,6 @@ A **private, self-hosted second brain**: semantic search, knowledge graphs, time
 | ⏰ | **Memory Timeline** | Chronological view of everything you've ingested |
 | 🔀 | **Cross-Source Intel** | Compare, contrast & synthesize across multiple sources |
 | 🤖 | **AI Workspace** | Persistent threads, follow-ups, source filters |
-| 🧩 | **Browser Extension** | MV3 one-click clipper for instant capture |
 | 🔔 | **Real-time Processing** | SSE live pipeline updates with progress tracking |
 | 🌓 | **Light & Dark** | One-click theme toggle across the whole app |
 
@@ -190,7 +181,6 @@ selected via `MINDMESH_EXECUTION_MODE=local|modal`.
 | **Cache / Queue** | Redis (BullMQ-style) |
 | **Cloud services** | Supabase (contact form, cloud auth, storage, SQL migrations), Modal (serverless AI workers) |
 | **Infra** | Docker, Docker Compose, Caddy/Nginx, GitLab CI/CD, Hugging Face Spaces |
-| **Extension** | Manifest V3, TypeScript, Webpack |
 
 ---
 
@@ -226,27 +216,14 @@ export HF_SPACE_URL="https://your-space.hf.space"
 
 ## 🚀 Quick Start
 
-### ✅ Prerequisites
-- 🐳 **Docker Desktop** (≥ 8 GB RAM allocated)
-- 📦 **Git**
+The Docker quick start runs in single-user local mode. For a public multi-user
+deployment, use cloud mode with Supabase Auth and apply all SQL migrations,
+including `202610080001_personal_workspaces.sql`. Each signup then receives its
+own private workspace. See [cloud deployment](docs/MODAL_DEPLOYMENT.md).
 
-### 🪟 Windows (PowerShell)
-
-```powershell
-git clone https://github.com/Jay-Prajapati01/MindMesh.git
-cd MindMesh
-copy backend\.env.example backend\.env
-docker compose up --build
-```
-
-### 🍎 macOS / 🐧 Linux
-
-```bash
-git clone https://github.com/Jay-Prajapati01/MindMesh.git
-cd MindMesh
-cp backend/.env.example backend/.env
-docker compose up --build
-```
+Create an account at the MindMesh website, confirm your email, and sign in to
+your personal workspace. Your saved sources, notes, chats, and profile stay
+separate from every other account.
 
 ### 🤖 First Run — Pull AI Models
 
@@ -280,10 +257,8 @@ Four supported deployment targets — pick what fits:
 
 | Target | Command / Guide | Use for |
 |--------|-----------------|---------|
-| 🐳 **Local dev** | `docker compose up --build` (root) or `docker compose -f deploy/docker-compose.dev.yml up` | Daily development |
-| ☁️ **Cloud production** | [`DEPLOYMENT.md`](DEPLOYMENT.md) — Caddy + TLS on a VM | Public self-hosted instance |
-| 🧠 **Serverless AI workers** | [`docs/MODAL_DEPLOYMENT.md`](docs/MODAL_DEPLOYMENT.md) + [`deploy/docker-compose.cloud.yml`](deploy/docker-compose.cloud.yml) | YouTube/PDF/audio jobs on Modal + Supabase |
-| 🤗 **HF Space worker** | [`deploy/hf-spaces/`](deploy/hf-spaces/) — `python deploy/hf-spaces/deploy_hf.py` | Free CPU AI worker (summarization) |
+| ☁️ **Live product** | [`DEPLOYMENT.md`](DEPLOYMENT.md) | Public MindMesh service |
+| 🧠 **AI workers** | [`docs/MODAL_DEPLOYMENT.md`](docs/MODAL_DEPLOYMENT.md) | YouTube, PDF, and audio processing |
 
 > Production configs live in [`deploy/`](deploy/) (`docker-compose.prod.yml`,
 > `Caddyfile`, `.env.production.example`). Production mode requires
@@ -328,9 +303,9 @@ powershell -File scripts\qa\run_all.ps1
 
 </details>
 
-The GitHub Actions workflow runs backend tests and lint checks, plus frontend
-type-checking, linting, and a production build for pushes and pull requests.
-See [docs/QA_REPORT.md](docs/QA_REPORT.md) for the maintained QA overview.
+The automated quality checks run backend tests and lint checks, plus frontend
+type-checking, linting, and a production build. See
+[docs/QA_REPORT.md](docs/QA_REPORT.md) for the maintained QA overview.
 
 ---
 
@@ -371,7 +346,6 @@ MindMesh/
 │   ├── components/       60+ reusable components
 │   ├── hooks/            Custom React hooks
 │   └── lib/              API client, auth, utilities
-├── extension/            🧩 MV3 Browser Extension
 ├── workers/              🧠 Modal serverless AI workers
 ├── supabase/migrations/  🗄️  SQL migrations (cloud workers, normalized state)
 ├── deploy/               🚀 Deployment configs (dev/prod/cloud + hf-spaces/)
@@ -379,11 +353,8 @@ MindMesh/
 ├── scripts/              🛠️  ops scripts (purge_tenant.py, migrate_cloud.py, qa/)
 ├── docs/                 📚 Architecture, security, runbooks, QA, screenshots
 ├── docker-compose.yml    🐳 Full stack orchestration
-├── .github/workflows/    GitHub Actions checks
 └── .gitlab-ci.yml        GitLab CI pipeline
 ```
-
----
 
 ## ⚙️ Configuration
 
@@ -424,31 +395,3 @@ Edit **`backend/.env`**:
 | [scripts/qa/](scripts/qa/) | Runnable regression checks |
 
 ---
-
-## 🤝 Contributing
-
-Contributions are welcome. Read the [contribution guide](CONTRIBUTING.md) before
-opening a pull request, and follow the [Code of Conduct](CODE_OF_CONDUCT.md).
-Report security issues privately using the process in [SECURITY.md](SECURITY.md).
-
-For bugs and feature requests, use the project's
-[GitHub Issues](https://github.com/Jay-Prajapati01/MindMesh/issues).
-
----
-
-## 📄 License & Author
-
-Released under the [MIT License](LICENSE). ✅
-
-<br>
-
-<div align="center">
-
-**👨‍💻 Jay Prajapati**
-[@Jay-Prajapati01](https://github.com/Jay-Prajapati01)
-
-<br/>
-
-⭐ **If MindMesh helps you, consider giving it a star!** ⭐
-
-</div>

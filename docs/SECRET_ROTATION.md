@@ -3,13 +3,14 @@
 **Status: ACTION REQUIRED BY THE USER — an assistant cannot rotate external
 credentials.** The git-history scan performed on 7 October 2026 found no
 service-role keys, JWTs, private keys or AWS keys in the repository history;
-the only credential-shaped values present are `sb_publishable_…` keys, which
-are public by design (same class as a Supabase anon key).
+the only credential-shaped values present are Supabase **anon keys** (legacy
+JWT form, formerly `sb_publishable_…`), which are public by design.
 
-However, credentials were **pasted into chat during earlier sessions**. Chat
-paste is outside the repository and cannot be scanned or rotated from here.
-Treat every credential that ever appeared in chat, a shell history, a CI log
-or an `.env` file as compromised until rotated.
+However, credentials were **pasted into chat during earlier sessions** —
+including this project's service-role key and anon key on 8 October 2026.
+Chat paste is outside the repository and cannot be scanned or rotated from
+here. Treat every credential that ever appeared in chat, a shell history, a
+CI log or an `.env` file as compromised until rotated.
 
 ## Rotate in this order
 

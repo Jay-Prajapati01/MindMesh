@@ -4,6 +4,9 @@ services:
     container_name: mindmesh-backend
     env_file:
       - ./backend/.env
+    environment:
+      AUTH_ENABLED: "true"
+      # Supabase credentials come from backend/.env (single source of truth).
     ports:
       # Loopback-only: never expose the (unauthenticated in dev) API to the LAN.
       - "127.0.0.1:8000:8000"
@@ -22,9 +25,9 @@ services:
     container_name: mindmesh-frontend
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
-      # Public contact form (Supabase). Publishable key is public by design.
-      - NEXT_PUBLIC_SUPABASE_URL=https://anknukysxndknocioxnq.supabase.co
-      - NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_BYSG1jw7l_amJ9CL9Et_SQ__Ws2kISa
+      # NEXT_PUBLIC_SUPABASE_* come from frontend/.env.local and
+      # frontend/.env.development so the browser and the backend always share
+      # the same Supabase project and anon key.
       # Next's file watcher misses change events on the Docker Desktop bind
       # mount; poll instead so edits are recompiled during development.
       - WATCHPACK_POLLING=true

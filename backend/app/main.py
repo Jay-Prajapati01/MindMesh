@@ -19,6 +19,7 @@ from app.api import (
     audio,
     chat,
     compare,
+    contact,
     documents,
     graph,
     health,
@@ -262,11 +263,11 @@ def create_app() -> FastAPI:
     if settings.rate_limit_enabled:
         app.add_middleware(IdentityRateLimitMiddleware)
 
-    # 3 — bearer validation + server-side membership resolution (modal only).
-    if settings.mindmesh_execution_mode in {"modal", "cloud"}:
+    # Identity is independent of where ingestion runs.
+    if settings.auth_enabled or settings.mindmesh_execution_mode in {"modal", "cloud"}:
         from app.core.cloud_auth import CloudAuthMiddleware
 
-        app.add_middleware(CloudAuthMiddleware)
+        app.add_middleware(CloudAuthMiddleware, local_identity=settings.mindmesh_execution_mode == "local")
 
     # 4 — oversized-body rejection before routing/parsing.
     app.add_middleware(
@@ -349,11 +350,14 @@ def create_app() -> FastAPI:
         read_deps = mutating
     else:
         post_only = [videos, instagram, pdf, documents, audio, web, search, compare, chat]
-        read_deps = []
+        read_deps = mutating if settings.auth_enabled else []
 
     read_routers = [graph, timeline, notes, stats, sources]
 
     app.include_router(health.router, prefix=settings.api_prefix)
+    # Public contact intake: intentionally outside `mutating`/`read_deps` so
+    # anonymous visitors can reach it (CloudAuthMiddleware exempts the path).
+    app.include_router(contact.router, prefix=settings.api_prefix)
     for router in post_only:
         app.include_router(router.router, prefix=settings.api_prefix, dependencies=mutating)
     for router in read_routers:

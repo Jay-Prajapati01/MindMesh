@@ -20,7 +20,7 @@ export function Hero() {
       <div className="hero-stage sticky top-16 flex h-[calc(100dvh-4rem)] flex-col items-center overflow-hidden px-4 pb-5 pt-6 sm:pt-8">
         <motion.div style={{ opacity: copyOpacity, scale: copyScale }} className="hero-copy flex w-full origin-top flex-col items-center text-center">
           <span className="brut-btn mb-4 rounded-full bg-sheet px-4 py-1.5 font-mono text-[11px] font-bold tracking-widest sm:mb-5">
-            <span className="text-orange">●</span> AI SECOND BRAIN — PRIVATE & SELF-HOSTED
+            <span className="text-orange">●</span> YOUR PERSONAL AI KNOWLEDGE WORKSPACE
           </span>
           <ParticleHeading />
           <motion.p
@@ -37,7 +37,7 @@ export function Hero() {
             transition={{ duration: 0.8, ease: EASE, delay: 0.65 }}
             className="hero-actions mt-4 flex flex-wrap justify-center gap-3 sm:mt-5 sm:gap-4"
           >
-            <Btn href="/dashboard">Start Building Free <ArrowRight className="h-4 w-4" /></Btn>
+            <Btn href="/signup">Create Your Account <ArrowRight className="h-4 w-4" /></Btn>
             <Btn variant="paper" href="#how">See How it Works</Btn>
           </motion.div>
         </motion.div>
@@ -75,7 +75,7 @@ function Dashboard({ reducedMotion }: { reducedMotion: boolean }) {
         <span className="h-3 w-3 rounded-full border-2 border-ink bg-paper-card" />
         <span className="h-3 w-3 rounded-full border-2 border-ink bg-sheet" />
         </div>
-        <span className="truncate font-mono text-[10px] text-ink-muted sm:text-xs">mindmesh.local / chat / thread-42</span>
+        <span className="truncate font-mono text-[10px] text-ink-muted sm:text-xs">Your workspace / Ask AI</span>
       </div>
       <aside className="hidden border-r-2 border-ink bg-paper p-2.5 md:block xl:p-3">
         <p className="mb-2 font-mono text-[10px] font-bold tracking-widest text-ink-muted">SOURCES · 1,284</p>

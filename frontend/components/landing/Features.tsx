@@ -17,7 +17,7 @@ export function Features() {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
   return (
-    <section id="features" className="px-4 py-28">
+    <section id="features" className="scroll-mt-24 px-4 py-28">
       <div className="mx-auto max-w-6xl">
         <div className="mb-16 flex flex-col items-start gap-4">
           <Label>Features</Label>

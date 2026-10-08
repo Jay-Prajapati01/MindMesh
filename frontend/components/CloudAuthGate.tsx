@@ -1,75 +1,100 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { createContext, useContext, useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
-import { cloudMode } from "@/lib/auth";
+import type { Session } from "@supabase/supabase-js";
 import { getSupabase } from "@/lib/supabaseClient";
+import { useAppStore } from "@/lib/store";
+import { processManager } from "@/lib/processManager";
+import { NotificationBridge } from "./NotificationBridge";
+
+const PUBLIC_ROUTES = ["/", "/contact", "/login", "/signup", "/forgot-password", "/reset-password"];
+const AuthContext = createContext<{ session: Session | null; ready: boolean; error: string }>({ session: null, ready: false, error: "" });
+export const useAuth = () => useContext(AuthContext);
 
 export function CloudAuthGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const cache = useQueryClient();
-  const [ready, setReady] = useState(!cloudMode);
-  const [signedIn, setSignedIn] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+  const [ready, setReady] = useState(false);
+  const [error, setError] = useState("");
+  const isPublic = PUBLIC_ROUTES.includes(pathname);
+
+  const meta = (session?.user.user_metadata ?? {}) as Record<string, unknown>;
+  const rawName =
+    (typeof meta.preferred_name === "string" && meta.preferred_name.trim()) ||
+    (typeof meta.full_name === "string" && meta.full_name.trim()) ||
+    session?.user.email?.split("@")[0] ||
+    "Your profile";
+  const displayName = rawName.trim();
+  const initials =
+    displayName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "M";
 
   useEffect(() => {
-    if (!cloudMode) return;
     try {
-      const auth = getSupabase().auth;
-      auth.getSession().then(({ data }) => { setSignedIn(!!data.session); setReady(true); });
-      const { data } = auth.onAuthStateChange((event, session) => {
-        const previousUser = localStorage.getItem("mindmesh-session-owner");
-        if (session && previousUser !== session.user.id) {
+      const { data } = getSupabase().auth.onAuthStateChange((_event, nextSession) => {
+        const owner = nextSession?.user.id || "";
+        const previous = localStorage.getItem("mindmesh-session-owner") || "";
+        if (!owner || previous !== owner) {
+          void cache.cancelQueries();
           cache.clear();
-          for (const key of Object.keys(localStorage)) {
-            if (key.startsWith("mindmesh")) localStorage.removeItem(key);
+          processManager.resetForAccountChange();
+          useAppStore.setState(useAppStore.getInitialState(), true);
+          for (const storage of [localStorage, sessionStorage]) {
+            for (const key of Object.keys(storage)) {
+              if (key.startsWith("mindmesh")) storage.removeItem(key);
+            }
           }
-          sessionStorage.removeItem("mindmesh-chat-id");
-          localStorage.setItem("mindmesh-session-owner", session.user.id);
-          window.location.reload(); return;
         }
-        setSignedIn(!!session);
+        if (owner) localStorage.setItem("mindmesh-session-owner", owner);
+        setSession(nextSession);
         setReady(true);
-        if (event === "SIGNED_OUT") {
-          cache.clear();
-          sessionStorage.removeItem("mindmesh-chat-id");
-          for (const key of Object.keys(localStorage)) {
-            if (key.startsWith("mindmesh")) localStorage.removeItem(key);
-          }
-          // Clear in-memory process/chat state as well as cached query results.
-          window.location.assign("/");
-        }
       });
       return () => data.subscription.unsubscribe();
     } catch {
-      setMessage("Sign-in configuration is missing. Contact the workspace administrator.");
+      setError("Sign-in is currently unavailable. Please try again later.");
       setReady(true);
     }
   }, [cache]);
 
-  async function signIn(event: FormEvent) {
-    event.preventDefault(); setBusy(true); setMessage("");
-    try {
-      const { error } = await getSupabase().auth.signInWithPassword({ email, password });
-      if (error) setMessage("Unable to sign in. Check your email and password.");
-    } catch { setMessage("Sign-in is temporarily unavailable."); }
-    finally { setBusy(false); }
-  }
+  useEffect(() => {
+    if (ready && !session && !isPublic && !error) {
+      router.replace(`/login?next=${encodeURIComponent(pathname + window.location.search)}`);
+    }
+  }, [ready, session, isPublic, pathname, router, error]);
 
-  if (!cloudMode || pathname === "/" || pathname === "/contact") return <>{children}</>;
-  if (!ready) return <p className="p-8">Loading your session…</p>;
-  if (signedIn) return <><div className="flex justify-end px-6 py-2"><button onClick={() => getSupabase().auth.signOut()}>Sign out</button></div>{children}</>;
-  return <main className="mx-auto max-w-md p-8">
-    <h1 className="mb-6 text-2xl font-semibold">Sign in to MindMesh</h1>
-    <form onSubmit={signIn} className="space-y-4">
-      <label className="block">Email<input required type="email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} className="block w-full rounded border p-2 text-black" /></label>
-      <label className="block">Password<input required type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} className="block w-full rounded border p-2 text-black" /></label>
-      <button disabled={busy} className="rounded bg-orange-600 px-4 py-2 text-white">{busy ? "Signing in…" : "Sign in"}</button>
-      {message && <p role="alert">{message}</p>}
-    </form>
-  </main>;
+  return <AuthContext.Provider value={{ session, ready, error }}>
+    {isPublic ? children : !ready || !session ? (
+      <main className="grid min-h-screen place-items-center p-8" role="status">{error || "Opening your workspace…"}</main>
+    ) : (
+      <div key={session.user.id}>
+        <NotificationBridge />
+        <div className="flex items-center justify-end gap-3 border-b border-ink/10 bg-card px-4 py-2 text-sm">
+          <Link
+            href="/profile"
+            title="Open your profile"
+            className="flex max-w-[min(100%,22rem)] items-center gap-3 rounded-2xl border-2 border-ink bg-surface px-2.5 py-1.5 transition-colors hover:bg-paper-card"
+          >
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border-2 border-ink bg-orange text-[11px] font-extrabold text-ink">
+              {initials}
+            </span>
+            <span className="min-w-0 text-left leading-tight">
+              <span className="block truncate text-sm font-extrabold text-foreground">{displayName}</span>
+              <span className="block truncate text-xs text-muted">{session.user.email}</span>
+            </span>
+          </Link>
+          <button className="font-bold underline" onClick={async () => {
+            const { error: signOutError } = await getSupabase().auth.signOut();
+            if (signOutError) setError("Unable to sign out. Please try again.");
+            else router.replace("/login");
+          }}>Sign out</button>
+          {error && <span role="alert">{error}</span>}
+        </div>
+        {children}
+      </div>
+    )}
+  </AuthContext.Provider>;
 }

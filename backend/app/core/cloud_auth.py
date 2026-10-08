@@ -26,14 +26,21 @@ def resolve_user(user_id: str) -> Scope:
     with connect() as conn:
         rows = conn.execute("SELECT tenant_id FROM public.mm_memberships WHERE user_id=%s AND active",
                             (user_id,)).fetchall()
-    if len(rows) != 1:
-        raise PermissionError("Exactly one active beta membership is required")
+        if len(rows) != 1:
+            raise PermissionError("Exactly one active personal workspace is required")
+        members = conn.execute(
+            "SELECT count(*) FROM public.mm_memberships WHERE tenant_id=%s AND active",
+            (rows[0][0],),
+        ).fetchone()[0]
+    if members != 1:
+        raise PermissionError("A personal workspace must have exactly one active member")
     return Scope(str(rows[0][0]), user_id)
 
 
 class CloudAuthMiddleware:
-    def __init__(self, app):
+    def __init__(self, app, local_identity: bool = False):
         self.app = app
+        self.local_identity = local_identity
 
     async def __call__(self, scope, receive, send):
         cfg = get_settings()
@@ -41,7 +48,13 @@ class CloudAuthMiddleware:
             return await self.app(scope, receive, send)
         # Liveness/readiness probes stay unauthenticated but must not leak
         # dependency detail: health handlers are sanitized separately.
-        if scope.get("path") in {"/health", cfg.api_prefix + "/health", cfg.api_prefix + "/health/detailed"}:
+        # The contact form is intentionally public (anonymous visitors only).
+        if scope.get("path") in {
+            "/health",
+            cfg.api_prefix + "/health",
+            cfg.api_prefix + "/health/detailed",
+            cfg.api_prefix + "/contact",
+        }:
             return await self.app(scope, receive, send)
         request = Request(scope, receive)
         auth = request.headers.get("authorization", "")
@@ -57,7 +70,10 @@ class CloudAuthMiddleware:
                 metrics.inc("auth_failures_total", reason="invalid_token")
                 return await JSONResponse({"detail": "Invalid session", "error_code": "AUTH_INVALID"},
                                           status_code=401)(scope, receive, send)
-            owner = await asyncio.to_thread(resolve_user, str(UUID(response.json()["id"])))
+            user_id = str(UUID(response.json()["id"]))
+            # Local compute uses the verified Auth UUID as its personal namespace.
+            # Cloud workers resolve durable membership in Postgres instead.
+            owner = Scope(user_id, user_id) if self.local_identity else await asyncio.to_thread(resolve_user, user_id)
         except PermissionError:
             metrics.inc("auth_failures_total", reason="no_membership")
             return await JSONResponse({"detail": "No active workspace membership", "error_code": "NO_MEMBERSHIP"},

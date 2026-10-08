@@ -3,7 +3,6 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { Shell } from "@/components/Shell";
 import { ThemeEffect } from "@/components/ThemeEffect";
-import { NotificationBridge } from "@/components/NotificationBridge";
 import { CloudAuthGate } from "@/components/CloudAuthGate";
 
 export const metadata: Metadata = {
@@ -21,7 +20,6 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body>
         <ThemeEffect />
-        <NotificationBridge />
         <Providers>
           <CloudAuthGate><Shell>{children}</Shell></CloudAuthGate>
         </Providers>

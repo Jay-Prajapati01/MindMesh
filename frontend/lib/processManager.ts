@@ -39,6 +39,17 @@ class ProcessManager {
     return ProcessManager.instance;
   }
 
+  resetForAccountChange(): void {
+    if (this._persistTimer) clearTimeout(this._persistTimer);
+    this._persistTimer = null;
+    this.restored = false;
+    this.abortControllers.forEach(controller => controller.abort());
+    this.abortControllers.clear();
+    this.processes.clear();
+    this.listeners.clear();
+    this.globalListeners.clear();
+  }
+
   /** Subscribe to a specific process */
   subscribe(processId: string, listener: ProcessListener): () => void {
     if (!this.listeners.has(processId)) {

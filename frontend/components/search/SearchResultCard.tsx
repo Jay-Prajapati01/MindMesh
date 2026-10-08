@@ -259,7 +259,7 @@ export function SearchResultCard({ hit, index }: Props) {
               className="flex items-center gap-1.5 rounded-lg bg-surface px-3 py-1.5 text-[11px] text-foreground-3 transition-all hover:bg-surface hover:text-foreground"
             >
               <ExternalLink className="h-3 w-3" />
-              Open source
+              Open link
             </a>
           ) : (
             <button className="flex items-center gap-1.5 rounded-lg bg-surface px-3 py-1.5 text-[11px] text-muted cursor-not-allowed">

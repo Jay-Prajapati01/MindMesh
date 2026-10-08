@@ -96,10 +96,9 @@ Modal interfaces follow its [lifecycle documentation](https://modal.com/docs/gui
 
 Every stored job includes `job_id`, `tenant_id`, `user_id`, `resource_id`,
 `job_type`, `payload`, status and attempt count. The API ignores ownership fields
-from JSON and creates the envelope from authenticated membership. Beta supports
-one active workspace per user; all active members can access that tenant's shared
-sources, notes and graph. Conversation histories and job results are also filtered
-by user. There is no tenant-switch header or arbitrary worker invocation endpoint.
+from JSON and creates the envelope from authenticated membership. Each user has
+one personal workspace, and a workspace with multiple active members is denied.
+There is no tenant-switch header or arbitrary worker invocation endpoint.
 
 Workers load the authoritative job from Redis, require complete ownership, compare
 the envelope, and recheck active database membership. Model workers repeat this
@@ -145,9 +144,14 @@ ingestion job for it is active. Keep Redis persistence enabled and use `noevicti
    SQL editor. It creates tenants, memberships, tenant state, durable job results,
    and the private `mindmesh-private` bucket. No existing production schema was
    inspected or altered during this task.
-3. Create/invite beta users with Supabase Auth. Create rows in `mm_tenants`, then
-   assign each user's Auth UUID in `mm_memberships`. One active membership is
-   required. Membership management is deliberately administrator-only.
+3. Apply `202610070001_normalized_state.sql`, then
+   `202610080001_personal_workspaces.sql`. The latter provisions a private
+   tenant for each new Supabase Auth user and backfills users without a workspace.
+   If existing tenants have multiple active members, it stops with an error:
+   split their data into separate tenant IDs first, including state, storage,
+   vectors, and jobs. Never assign shared data to one user automatically.
+   Configure Supabase Auth email confirmation and allowed redirect URLs for
+   `/dashboard` before opening signup to the public.
 4. Configure a TLS Postgres connection/pooler URL as `SUPABASE_DB_URL`; percent-
    encode reserved password characters and include `sslmode=require` (or
    `sslmode=verify-full` with the required CA configuration). The backend role
@@ -303,9 +307,9 @@ default collection. No cloud failure silently falls back to local Ollama.
   transaction locks. At larger scale, normalize large source/graph/conversation
   collections into separate row tables. Monitor database state size and Redis
   memory. Configure backups, retention, budgets and alerting in your providers.
-- Auth UI uses password sign-in for invited users. Password reset/invite lifecycle
-  is managed through Supabase. Existing local extension/API consumers must supply
-  a Supabase bearer token and handle HTTP 202 in cloud mode.
+- Auth UI supports email/password signup and sign-in. Email confirmation and
+  password reset are configured through Supabase. API consumers must supply a
+  Supabase bearer token and handle HTTP 202 in cloud mode.
 - Liveness endpoints do not claim that workers or dependencies were smoke-tested.
   The detailed cloud endpoint explicitly reports dependency checks as not performed.
 

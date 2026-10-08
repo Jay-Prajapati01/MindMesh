@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { Nav } from "./Nav";
 import { ActiveProcessesBanner } from "./ActiveProcessesBanner";
@@ -9,8 +10,9 @@ import { ThemeToggle } from "./ThemeToggle";
 import { CommandPalette } from "./dashboard/CommandPalette";
 import { useAppStore } from "@/lib/store";
 import { applyThemeToDOM, applyAccentToDOM, applyDensityToDOM } from "./ThemeEffect";
+import { markIntroSeen } from "@/lib/intro";
 
-const CHROMELESS_ROUTES = ["/", "/contact"];
+const CHROMELESS_ROUTES = ["/", "/contact", "/login", "/signup", "/forgot-password", "/reset-password"];
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -55,7 +57,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <button onClick={() => setOpen((v) => !v)} aria-label="Toggle menu" className="text-foreground">
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
-          <span className="font-semibold text-foreground">MindMesh</span>
+          <Link
+            href="/"
+            onClick={markIntroSeen}
+            className="text-lg font-extrabold tracking-tight text-foreground"
+          >
+            MindMesh
+          </Link>
           <div className="ml-auto">
             <ThemeToggle className="-mr-2 rounded-lg p-1.5 text-foreground-3 transition-colors hover:bg-surface hover:text-foreground" />
           </div>

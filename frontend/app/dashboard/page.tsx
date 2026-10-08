@@ -40,6 +40,7 @@ import {
 } from "recharts";
 import { getStats } from "@/lib/api";
 import { useAppStore } from "@/lib/store";
+import { useAuth } from "@/components/CloudAuthGate";
 import { getChartTheme } from "@/lib/chartTheme";
 import { getSourceTheme } from "@/lib/sourceTheme";
 import {
@@ -87,6 +88,7 @@ const ADD_SOURCE_ITEMS = [
 ];
 
 export default function DashboardPage() {
+  const { session } = useAuth();
   const { data: stats, isLoading } = useQuery({
     queryKey: ["stats"],
     queryFn: getStats,
@@ -109,6 +111,11 @@ export default function DashboardPage() {
 
   const greeting = now ? getGreeting(now) : { text: "Hello", emoji: "👋" };
   const currentTime = now ? getCurrentTime(now) : { date: "", time: "" };
+  const profileMeta = (session?.user.user_metadata ?? {}) as Record<string, unknown>;
+  const greetingName =
+    (typeof profileMeta.preferred_name === "string" && profileMeta.preferred_name.trim()) ||
+    (typeof profileMeta.full_name === "string" && profileMeta.full_name.trim().split(/\s+/)[0]) ||
+    "";
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -168,7 +175,8 @@ export default function DashboardPage() {
               transition={{ delay: 0.2 }}
               className="text-[32px] font-bold text-foreground tracking-tight"
             >
-              {greeting.text}, Jay <span className="inline-block">{greeting.emoji}</span>
+              {greetingName ? `${greeting.text}, ${greetingName}` : greeting.text}{" "}
+              <span className="inline-block">{greeting.emoji}</span>
             </motion.h1>
             <motion.div
               initial={{ opacity: 0, x: -20 }}

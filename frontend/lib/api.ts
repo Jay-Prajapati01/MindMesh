@@ -16,6 +16,9 @@ export const api = axios.create({
 
 // Attach X-API-Key from settings store on every mutating request
 api.interceptors.request.use(async (config) => {
+  // Public endpoints (e.g. the contact form) must work signed-out — the auth
+  // helper intentionally throws when there is no session, so bypass it there.
+  if ((config.url ?? "").startsWith("/contact")) return config;
   Object.assign(config.headers, await authHeaders());
   const state = useAppStore.getState();
   if (state.settings.apiKey) {
@@ -33,7 +36,6 @@ api.interceptors.response.use(
   async (error) => {
     const original = error.config;
     if (
-      cloudMode &&
       error.response?.status === 401 &&
       original &&
       !original._sessionRetried
@@ -361,11 +363,13 @@ export const downloadSource = async (sourceId: string, fileName?: string) => {
     window.open(data.url, "_blank", "noopener,noreferrer");
     return;
   }
-  const url = `${API_URL}/api/sources/${sourceId}/download`;
+  const { data } = await api.get(`/sources/${encodeURIComponent(sourceId)}/download`, { responseType: "blob" });
+  const url = URL.createObjectURL(data);
   const link = document.createElement("a");
   link.href = url;
   link.download = fileName || "download";
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 };

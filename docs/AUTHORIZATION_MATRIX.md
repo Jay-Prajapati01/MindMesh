@@ -1,23 +1,23 @@
 # MindMesh Authorization Matrix (audit P0-3)
 
-Owner: backend. Last updated: 7 October 2026.
+Owner: backend. Last updated: 8 October 2026.
 Verified by: `backend/tests/test_auth_matrix.py` (deny-by-default assertions run in CI).
 
 ## Identity model
 
 | Mode | How identity is proven | How tenant is resolved | Client can forge? |
 |---|---|---|---|
-| modal (cloud) | `Authorization: Bearer <supabase JWT>` validated against `GET {SUPABASE_URL}/auth/v1/user` (`app/core/cloud_auth.py`) | `mm_memberships` row for that user id — exactly one active row or 403 | **No.** Tenant/user never read from path, query, header or body. `Scope` is a server-side ContextVar (`app/core/tenant.py`). |
+| modal (cloud) | `Authorization: Bearer <supabase JWT>` validated against `GET {SUPABASE_URL}/auth/v1/user` (`app/core/cloud_auth.py`) | Exactly one active membership for the user and exactly one active member in that workspace, or 403 | **No.** Tenant/user never read from path, query, header or body. `Scope` is a server-side ContextVar (`app/core/tenant.py`). |
 | local (dev) | Optional `X-API-Key` when `API_KEY` is configured (`app/core/security.py`); open when unset | Single-user; Qdrant ownership filter disabled by design | N/A (development only; production forces modal mode — `app/core/config.py`) |
 
 ## Tenant policy (audit P0-6) — decided
 
-**A tenant is a shared workspace.** Sources, notes, graph, stats, timeline and
-vector points are visible to every *active member* of the tenant.
-**Conversations and jobs are scoped to the individual user** (chat history is
-private even inside a shared workspace; jobs can only be read/cancelled by
-their creator). Membership revocation removes all access on the very next
-request (no membership caching).
+**A tenant is one user's personal workspace.** Signup provisions a new tenant
+and one membership in the same Auth transaction. A unique partial index prevents
+two active users from joining one workspace, and the backend checks membership
+count on every request. Existing shared workspaces must be split before the
+personal-workspace migration can apply. Membership revocation removes access on
+the next request (no membership caching).
 
 ## Deny-by-default matrix
 

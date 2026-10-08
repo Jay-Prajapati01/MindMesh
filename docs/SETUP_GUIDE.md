@@ -20,10 +20,9 @@
 11. [Adding Your First Content](#11-adding-your-first-content)
 12. [Using Semantic Search](#12-using-semantic-search)
 13. [Using AI Chat](#13-using-ai-chat)
-14. [Browser Extension (Optional)](#14-browser-extension-optional)
-15. [Useful Docker Commands](#15-useful-docker-commands)
-16. [Troubleshooting](#16-troubleshooting)
-17. [API Reference](#17-api-reference)
+14. [Useful Docker Commands](#14-useful-docker-commands)
+15. [Troubleshooting](#15-troubleshooting)
+16. [API Reference](#16-api-reference)
 
 ---
 
@@ -104,7 +103,7 @@ Just navigate to it:
 cd "J:\Mindmesh by gitlab\mindmesh-main"
 ```
 
-> **Verify you're in the right folder:** Type `dir` (Windows) or `ls` (Mac/Linux) and you should see `docker-compose.yml`, `backend/`, `frontend/`, and `extension/` folders.
+> **Verify you're in the right folder:** Type `dir` (Windows) or `ls` (Mac/Linux) and you should see `docker-compose.yml`, `backend/`, and `frontend/` folders.
 
 ---
 
@@ -119,14 +118,10 @@ mindmesh-main/
 │   ├── .env.example      ← Template for .env
 │   ├── requirements.txt
 │   └── app/              ← Python application code
-├── frontend/             ← Next.js web dashboard
+└── frontend/             ← Next.js web dashboard
 │   ├── Dockerfile
 │   ├── package.json
 │   └── app/              ← React pages and components
-└── extension/            ← Browser extension (optional)
-    ├── manifest.json
-    ├── popup.html
-    └── popup.js
 ```
 
 ---
@@ -363,7 +358,7 @@ Open your web browser and visit these URLs:
 | **Backend Health** | http://localhost:8000/health | `{"status":"healthy"}` |
 | **Qdrant Dashboard** | http://localhost:6333/dashboard | Qdrant web interface |
 
-> If any URL doesn't load, check the [Troubleshooting](#16-troubleshooting) section.
+> If any URL doesn't load, check the [Troubleshooting](#15-troubleshooting) section.
 
 ---
 
@@ -508,40 +503,7 @@ Click any item in the left sidebar to go to that page:
 
 ---
 
-## 14. Browser Extension (Optional)
-
-The MindMesh Clipper browser extension lets you save any web page with one click.
-
-### Step 14.1 — Load the Extension (Chrome/Edge)
-
-1. Open **Chrome** or **Edge** browser
-2. Type `chrome://extensions` in the address bar (Chrome) or `edge://extensions` (Edge)
-3. Turn on **"Developer mode"** (toggle in top-right corner)
-4. Click **"Load unpacked"** button (top-left)
-5. Navigate to `J:\Mindmesh by gitlab\mindmesh-main\extension`
-6. Select the `extension` folder and click **"Select Folder"**
-7. The "MindMesh Clipper" extension appears in your extensions list
-
-### Step 14.2 — Configure the Extension
-
-1. Click the **puzzle piece icon** 🧩 in your browser toolbar
-2. Click **"MindMesh Clipper"**
-3. In the popup, verify the Backend URL is set to:
-   ```
-   http://localhost:8000
-   ```
-4. Click **Save**
-
-### Step 14.3 — Save Any Page
-
-1. Navigate to any article or web page you want to save
-2. Click the **MindMesh Clipper** icon in your toolbar
-3. Click **"Save"**
-4. The page is sent to MindMesh and indexed automatically
-
----
-
-## 15. Useful Docker Commands
+## 14. Useful Docker Commands
 
 ### Start Services
 
@@ -627,7 +589,7 @@ docker compose up --build
 
 ---
 
-## 16. Troubleshooting
+## 15. Troubleshooting
 
 ### Problem: "Port 3000 already in use"
 
@@ -718,7 +680,7 @@ Then restart: `docker compose restart backend`
 
 ---
 
-## 17. API Reference
+## 16. API Reference
 
 The backend provides a REST API. Full interactive docs are at:
 

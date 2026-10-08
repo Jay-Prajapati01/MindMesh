@@ -3,10 +3,25 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowRight, Check, Copy, Github, MessageSquare, Network, Clock, GitCompare, Scissors, Activity, Unlink, BrainCircuit, Zap, MoveRight } from "lucide-react";
+import { ArrowRight, MessageSquare, Network, Clock, GitCompare, Globe, Activity, Unlink, BrainCircuit, Zap, MoveRight } from "lucide-react";
 import { Btn, FadeUp, Label } from "./ui";
 import { MiniGraph } from "./Hero";
 import { ThemeToggle } from "./ThemeToggle";
+import { useAuth } from "../CloudAuthGate";
+import { markIntroSeen } from "@/lib/intro";
+
+function useIdentity() {
+  const { session } = useAuth();
+  const meta = (session?.user.user_metadata ?? {}) as Record<string, unknown>;
+  const displayName =
+    (typeof meta.preferred_name === "string" && meta.preferred_name.trim()) ||
+    (typeof meta.full_name === "string" && meta.full_name.trim()) ||
+    session?.user.email?.split("@")[0] ||
+    "Your profile";
+  const initials =
+    displayName.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "M";
+  return { session, displayName: displayName.trim(), initials };
+}
 
 export function Marquee() {
   const t = "YOUTUBE • PDF • AUDIO • INSTAGRAM • WEB • DOCS • GRAPH RAG • CHAT • ";
@@ -78,7 +93,6 @@ export function HowItWorks() {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start 80%", "end 50%"] });
   const fill = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
-  const [copied, setCopied] = useState(false);
   const steps = [
     ["01", "CAPTURE", "Drop any link or file."],
     ["02", "UNDERSTAND", "Chunk + embed in Qdrant."],
@@ -86,7 +100,7 @@ export function HowItWorks() {
     ["04", "ASK", "Hybrid search + cited answers."],
   ];
   return (
-    <section id="how" className="border-y-2 border-ink bg-paper-alt px-4 py-28">
+    <section id="how" className="scroll-mt-24 border-y-2 border-ink bg-paper-alt px-4 py-28">
       <div className="mx-auto max-w-6xl">
         <Label>How it works</Label>
         <h2 className="font-display mt-4 uppercase leading-[0.9] text-[clamp(3rem,7vw,6.5rem)]">
@@ -107,17 +121,9 @@ export function HowItWorks() {
           </div>
         </div>
         <FadeUp className="mt-16">
-          <div className="brut flex items-center justify-between gap-4 bg-ink p-5 md:p-6">
-            <code className="font-mono text-base font-bold text-paper md:text-xl">
-              <span className="text-orange">$</span> docker compose up --build
-            </code>
-            <button
-              onClick={() => { navigator.clipboard?.writeText("docker compose up --build"); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
-              className="brut-btn flex items-center gap-2 bg-orange px-4 py-2 text-sm font-bold"
-              aria-label="Copy command"
-            >
-              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />} {copied ? "Copied" : "Copy"}
-            </button>
+          <div className="brut flex flex-col items-start justify-between gap-4 bg-ink p-5 md:flex-row md:items-center md:p-6">
+            <div><p className="font-mono text-xs font-bold uppercase tracking-widest text-orange">Ready when you are</p><p className="mt-1 text-lg font-bold text-paper md:text-xl">Create your account and start building your personal knowledge workspace.</p></div>
+            <Link href="/signup" className="brut-btn shrink-0 bg-orange px-4 py-2 text-sm font-bold">Create account <ArrowRight className="inline h-4 w-4" /></Link>
           </div>
         </FadeUp>
       </div>
@@ -127,7 +133,7 @@ export function HowItWorks() {
 
 export function Bento() {
   return (
-    <section id="graph" className="px-4 py-28">
+    <section id="graph" className="scroll-mt-24 px-4 py-28">
       <div className="mx-auto max-w-6xl">
         <Label>Showcase</Label>
         <h2 className="font-display mt-4 mb-14 uppercase leading-[0.9] text-[clamp(3rem,7vw,6.5rem)]">
@@ -164,8 +170,8 @@ export function Bento() {
             </Tile>
           </FadeUp>
           <FadeUp delay={0.2}>
-            <Tile icon={Scissors} title="Browser Extension" desc="One-click clip any page." className="bg-sheet">
-              <span className="brut-btn mt-4 inline-flex items-center gap-2 bg-orange px-4 py-2 text-sm font-bold"><Scissors className="h-4 w-4" />Clip to MindMesh</span>
+            <Tile icon={Globe} title="Save Web Pages" desc="Paste a link to add a page to your knowledge." className="bg-sheet">
+              <span className="brut-btn mt-4 inline-flex items-center gap-2 bg-orange px-4 py-2 text-sm font-bold"><Globe className="h-4 w-4" />Save to MindMesh</span>
             </Tile>
           </FadeUp>
           <FadeUp delay={0.3}>
@@ -196,12 +202,12 @@ function Tile({ icon: I, title, desc, className, children }: { icon: typeof Cloc
 
 export function Stats() {
   const rows = [
-    ["100%", "Private", "Self-hosted on your machine. Your data never leaves."],
-    ["3×", "Hybrid RAG", "Dense + Sparse + Graph, fused with RRF."],
-    ["66", "Tests Passing", "14+ APIs, battle-tested end to end."],
+    ["01", "Your Workspace", "Your sources and conversations stay with your account."],
+    ["02", "Connected Ideas", "Find connections across the knowledge you save."],
+    ["03", "Grounded Answers", "Ask questions and follow citations back to your sources."],
   ];
   return (
-    <section id="open-source" className="px-4 py-28">
+    <section id="your-workspace" className="scroll-mt-24 px-4 py-28">
       <div className="mx-auto max-w-6xl border-b-2 border-ink">
         {rows.map(([n, t, d]) => (
           <div key={t} className="group relative overflow-hidden border-t-2 border-ink">
@@ -225,32 +231,36 @@ export function FinalCTA() {
         <h2 className="font-display mx-auto max-w-5xl uppercase leading-[0.9] tracking-[-0.03em] text-[clamp(3.5rem,9vw,8.5rem)]">
           Stop searching. <span className="text-orange text-stroke">Start asking.</span>
         </h2>
-        <div className="mt-10"><Btn href="/dashboard">Get MindMesh Free <ArrowRight className="h-4 w-4" /></Btn></div>
-        <p className="mt-6 font-mono text-sm font-bold text-ink-muted">MIT Open Source • Docker • No credit card</p>
+        <div className="mt-10"><Btn href="/signup">Create Your Account <ArrowRight className="h-4 w-4" /></Btn></div>
+        <p className="mt-6 font-mono text-sm font-bold text-ink-muted">Your sources. Your ideas. One personal workspace.</p>
       </FadeUp>
     </section>
   );
 }
 
 export function Footer() {
+  const { session } = useAuth();
   return (
     <footer className="border-t-2 border-ink px-4 py-8">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 md:flex-row">
         <Logo />
         <div className="flex items-center gap-6 text-sm font-bold">
-          <a href="https://github.com" className="flex items-center gap-1 hover:text-orange"><Github className="h-4 w-4" />GitHub</a>
-          <a href="#" className="hover:text-orange">Docs</a>
-          <span className="text-ink-muted">Made by Jay Prajapati</span>
+          {session ? (
+            <Link href="/profile" className="hover:text-orange">Profile</Link>
+          ) : (
+            <Link href="/login" className="hover:text-orange">Sign in</Link>
+          )}
+          <Link href="/contact" className="hover:text-orange">Contact</Link>
+          <span className="text-ink-muted">© {new Date().getFullYear()} MindMesh</span>
         </div>
       </div>
     </footer>
   );
 }
 
-import { Star } from "lucide-react";
 export function Logo() {
   return (
-    <Link href="/" className="flex items-center gap-2">
+    <Link href="/" onClick={markIntroSeen} className="flex items-center gap-2">
       <span className="grid h-9 w-9 place-items-center overflow-hidden rounded-lg bg-[#111]">
         <Image src="/logo.png" alt="" width={36} height={36} className="h-full w-full object-contain p-1" />
       </span>
@@ -260,19 +270,36 @@ export function Logo() {
 }
 
 export function Navbar() {
+  const { session, displayName, initials } = useIdentity();
   return (
     <header className="sticky top-0 z-50 h-16 border-b-2 border-ink bg-paper/80 backdrop-blur-md">
       <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4">
         <Logo />
         <nav className="hidden items-center gap-8 text-sm font-bold lg:flex">
-          {[["Features", "#features"], ["How it works", "#how"], ["Graph", "#graph"], ["Open Source", "#open-source"]].map(([l, h]) => (
+          {[["Features", "/#features"], ["How it works", "/#how"], ["Graph", "/#graph"], ["Your Workspace", "/#your-workspace"]].map(([l, h]) => (
             <a key={l} href={h} className="hover:text-orange">{l}</a>
           ))}
         </nav>
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <a href="https://github.com" className="brut-btn hidden items-center gap-2 rounded-xl bg-paper px-3 py-2 text-sm font-bold sm:flex"><Star className="h-4 w-4" />Star</a>
-          <a href="/dashboard" className="brut-btn rounded-xl bg-orange px-4 py-2 text-sm font-bold hover:bg-orange-hover">Get Started</a>
+          {session ? (
+            <>
+              <Link href="/dashboard" className="hidden text-sm font-bold hover:text-orange sm:block">Open workspace</Link>
+              <Link
+                href="/profile"
+                title="Your profile"
+                className="brut-btn flex items-center gap-2 rounded-xl bg-paper px-2.5 py-1.5 text-sm font-bold"
+              >
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg border-2 border-ink bg-orange text-[10px] font-extrabold">{initials}</span>
+                <span className="hidden max-w-36 truncate sm:inline">{displayName}</span>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="text-sm font-bold hover:text-orange">Sign in</Link>
+              <Link href="/signup" className="brut-btn rounded-xl bg-orange px-3 py-2 text-sm font-bold hover:bg-orange-hover">Get Started</Link>
+            </>
+          )}
           <ContactWithPass />
         </div>
       </div>

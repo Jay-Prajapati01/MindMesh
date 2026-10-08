@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
     data_dir: str = "/app/data"
     mindmesh_execution_mode: str = "local"
+    auth_enabled: bool = False
     modal_app_name: str = "mindmesh-workers"
     modal_environment: str = "main"
     supabase_url: str = ""
@@ -150,6 +151,8 @@ class Settings(BaseSettings):
             raise ValueError("MINDMESH_EXECUTION_MODE must be local, modal or cloud")
         if self.environment == "production" and self.mindmesh_execution_mode == "local":
             raise ValueError("Production requires a cloud execution mode")
+        if self.auth_enabled and not (self.supabase_url and self.supabase_anon_key):
+            raise ValueError("Authentication requires SUPABASE_URL and SUPABASE_ANON_KEY")
         if self.mindmesh_execution_mode in {"modal", "cloud"}:
             from urllib.parse import urlparse
             if not all((self.supabase_url, self.supabase_anon_key, self.supabase_service_role_key,

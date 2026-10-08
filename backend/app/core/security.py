@@ -21,9 +21,9 @@ _api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
 async def require_key(key: str | None = Security(_api_key_header)) -> None:
-    from app.core.tenant import cloud, scope
+    from app.core.tenant import authenticated, scope
 
-    if cloud():
+    if authenticated():
         # Never accept tenant identity from the request: scope() reads the
         # ContextVar set by CloudAuthMiddleware from the validated token.
         scope()

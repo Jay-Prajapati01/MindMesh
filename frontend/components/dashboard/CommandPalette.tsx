@@ -17,6 +17,7 @@ import {
   MessageSquare,
   Library,
   Settings,
+  UserRound,
   Home,
   LayoutGrid,
   ArrowRight,
@@ -45,6 +46,7 @@ const NAVIGATION_ITEMS: Omit<CommandItem, "category">[] = [
   { id: "timeline", label: "Timeline", description: "Chronological view", icon: Clock, color: "var(--warning)", href: "/timeline" },
   { id: "compare", label: "Compare", description: "Compare sources", icon: GitCompare, color: "var(--success)", href: "/compare" },
   { id: "stored", label: "Stored", description: "Browse all sources", icon: Library, color: "var(--foreground-3)", href: "/stored" },
+  { id: "profile", label: "Profile", description: "Manage your account profile", icon: UserRound, color: "var(--foreground-3)", href: "/profile" },
   { id: "settings", label: "Settings", description: "App configuration", icon: Settings, color: "var(--foreground-3)", href: "/settings" },
 ];
 

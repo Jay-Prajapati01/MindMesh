@@ -7,8 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.core.config import get_settings
-from app.core.tenant import cloud
+from app.core.tenant import cloud, data_directory
 from app.services import cloud_storage
 from app.core.logging import get_logger, safe_log_str
 
@@ -22,8 +21,7 @@ _TYPE_DIR_MAP = {
 
 
 def _base_dir() -> Path:
-    settings = get_settings()
-    base = Path(settings.data_dir) / "files"
+    base = data_directory() / "files"
     base.mkdir(parents=True, exist_ok=True)
     return base
 
@@ -51,7 +49,7 @@ def save_file(source_id: str, data: bytes, source_type: str, filename: str) -> s
 
 def _safe_path(relative_path: str) -> Path | None:
     """Resolve a relative path, rejecting traversal outside data_dir."""
-    base = Path(get_settings().data_dir).resolve()
+    base = data_directory().resolve()
     full = (base / relative_path).resolve()
     try:
         full.relative_to(base)

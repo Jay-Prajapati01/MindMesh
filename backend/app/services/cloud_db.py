@@ -24,7 +24,12 @@ def connect():
 def member(tenant_id: str, user_id: str) -> bool:
     with connect() as conn:
         return conn.execute(
-            "SELECT 1 FROM public.mm_memberships WHERE tenant_id=%s AND user_id=%s AND active",
+            """SELECT 1 FROM public.mm_memberships m
+               WHERE m.tenant_id=%s AND m.user_id=%s AND m.active
+                 AND NOT EXISTS (
+                   SELECT 1 FROM public.mm_memberships other
+                   WHERE other.tenant_id=m.tenant_id AND other.user_id<>m.user_id AND other.active
+                 )""",
             (tenant_id, user_id),
         ).fetchone() is not None
 
