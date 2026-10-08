@@ -81,6 +81,51 @@ def save(kind: str, data: dict) -> None:
                      (scope().tenant_id, kind, Jsonb(data)))
 
 
+def quota_add(tenant_id: str, kind: str, day: str, amount: int) -> int:
+    """Atomically add amount to a daily quota counter. Returns the new total.
+
+    One UPSERT per call — concurrent API replicas share exact usage without
+    per-unit timestamp rows (the Redis-less replacement for INCRBY).
+    """
+    with connect() as conn:
+        row = conn.execute(
+            """INSERT INTO public.mm_quotas(tenant_id, kind, day, used, updated_at)
+               VALUES (%s,%s,%s,%s,now())
+               ON CONFLICT (tenant_id, kind, day)
+               DO UPDATE SET used = public.mm_quotas.used + EXCLUDED.used, updated_at=now()
+               RETURNING used""",
+            (tenant_id, kind, day, amount),
+        ).fetchone()
+        conn.commit()
+        return int(row[0])
+
+
+@contextmanager
+def resource_lock(tenant_id: str, resource_id: str):
+    """Serialize ingestion of the same resource (replaces the Redis lock).
+
+    Non-blocking PostgreSQL advisory lock held to transaction commit; raises
+    ConnectionError("Resource busy") when another worker holds it so the job
+    is requeued with backoff exactly like the Redis path.
+    """
+    key = f"{tenant_id}:{resource_id}"
+    with connect() as conn:
+        conn.execute("SET LOCAL statement_timeout = '30s'")
+        for _ in range(5):
+            row = conn.execute(
+                "SELECT pg_try_advisory_xact_lock(hashtextextended(%s, 0))", (key,)
+            ).fetchone()
+            if row and row[0]:
+                break
+            import time as _time
+
+            _time.sleep(0.2)
+        else:
+            raise ConnectionError("Resource busy")
+        yield
+        conn.commit()
+
+
 def save_result(job: dict) -> None:
     owner = scope()
     with connect() as conn:

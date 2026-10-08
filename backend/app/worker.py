@@ -1,4 +1,4 @@
-"""Private CPU worker. Redis supplies authoritative ownership; no public job API.
+"""Private worker. The active job backend (Redis or Postgres) supplies authoritative ownership; no public job API.
 
 Run one job in a child process with a hard deadline shorter than the Redis
 lease. A killed process leaves the lease for existing reconciliation/retries.
@@ -23,6 +23,12 @@ def main():
     configure_logging()
     logger = get_logger(__name__)
     from app.services import jobs
+    use_pg = jobs._pg()
+    jobs_pg = None
+    if use_pg:
+        from app.services import jobs_pg as _jobs_pg
+
+        jobs_pg = _jobs_pg
     context = multiprocessing.get_context("spawn")
     reconciled = 0.0
     while True:
@@ -30,11 +36,20 @@ def main():
             if time.monotonic() - reconciled >= 60:
                 jobs.reconcile()
                 reconciled = time.monotonic()
-            due = jobs.client().zrangebyscore(jobs.QUEUE, 0, time.time(), start=0, num=1)
-            if not due:
-                time.sleep(10)
-                continue
-            process = context.Process(target=execute, args=(due[0],))
+            if use_pg:
+                # Poll Postgres; the forked child claims inside run(), exactly
+                # like the Redis loop, so crashes resolve through leases.
+                job_id = jobs_pg.peek_due()
+                if job_id is None:
+                    time.sleep(10)
+                    continue
+            else:
+                due = jobs.client().zrangebyscore(jobs.QUEUE, 0, time.time(), start=0, num=1)
+                if not due:
+                    time.sleep(10)
+                    continue
+                job_id = due[0]
+            process = context.Process(target=execute, args=(job_id,))
             process.start()
             process.join(timeout=3600)
             if process.is_alive():

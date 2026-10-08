@@ -52,7 +52,7 @@ async def _retrieve(
     the user's stored data while answers stay grounded in their own content.
     """
     settings = get_settings()
-    query_vec = await embeddings.embed_text(question)
+    query_vec = await embeddings.embed_text(question, purpose="query")
     hits = vectorstore.search(query_vec, top_k, source_type=source_type, source_id=source_id)
     if not source_id:
         hits = hits + note_search.note_hits(question, source_type)

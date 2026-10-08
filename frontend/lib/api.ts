@@ -64,12 +64,17 @@ api.interceptors.response.use(
 );
 
 // Queue acknowledgements are polled behind the existing typed API functions.
+// Backoff (2s -> 30s cap) keeps long Cloud Run Job executions cheap; the
+// persisted job id lets ProcessManager resume tracking after a refresh.
 api.interceptors.response.use(async (response) => {
   if (response.status !== 202 || !response.data?.job_id) return response;
   const jobId = response.data.job_id;
+  try { localStorage.setItem("mindmesh-last-job", jobId); } catch { /* SSR/private mode */ }
   const deadline = Date.now() + 4 * 60 * 60 * 1000;
+  let attempt = 0;
   while (Date.now() < deadline) {
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    attempt += 1;
+    await new Promise(resolve => setTimeout(resolve, Math.min(2000 * Math.pow(1.6, attempt - 1), 30000)));
     const { data } = await api.get(`/jobs/${jobId}`);
     if (data.status === "completed") { response.data = data.result; return response; }
     if (data.status === "failed" || data.status === "cancelled") {

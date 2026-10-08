@@ -56,7 +56,7 @@ async def search(payload: SearchRequest) -> SearchResponse:
 
     store.add_search(query)
     start = time.time()
-    vector = await embeddings.embed_text(query)
+    vector = await embeddings.embed_text(query, purpose="query")
     raw_hits = vectorstore.search(vector, top_k, source_type=payload.source_type)
     search_time_ms = int((time.time() - start) * 1000)
     hits = []

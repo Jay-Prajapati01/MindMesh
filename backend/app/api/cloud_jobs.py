@@ -13,7 +13,7 @@ from app.core.config import get_settings
 from app.core.filesignature import FileSignatureError, validate_signature
 from app.core.logging import get_logger
 from app.core.ratelimit import quota_hit
-from app.core.uploads import read_upload
+from app.core.uploads import discard_spooled, read_upload, spool_upload
 from app.core.tenant import scope
 from app.services import jobs, cloud_storage
 from app.services.job_runner import HANDLERS
@@ -23,6 +23,26 @@ logger = get_logger(__name__)
 router = APIRouter()
 _upload_slots = asyncio.Semaphore(get_settings().max_concurrent_heavy_tasks)
 
+_UPLOAD_SUFFIXES = {"pdf": {".pdf"}, "documents": {".docx", ".pptx", ".xlsx", ".csv", ".txt", ".md", ".markdown"},
+                    "audio": {".mp3", ".wav", ".m4a", ".ogg", ".flac", ".aac", ".webm"}}
+
+
+def _check_upload_head(kind: str, filename: str) -> str:
+    suffix = PurePath(filename).suffix.lower()
+    if suffix not in _UPLOAD_SUFFIXES[kind]:
+        raise HTTPException(400, "Unsupported file format")
+    return suffix
+
+
+def _charge_upload_quota(size: int) -> None:
+    settings = get_settings()
+    allowed_quota, _used = quota_hit(
+        scope().tenant_id, "upload_bytes", size, settings.max_upload_bytes_per_tenant_per_day)
+    if not allowed_quota:
+        metrics.inc("quota_rejected_total", kind="upload_bytes")
+        raise HTTPException(429, "Daily upload quota reached",
+                            headers={"Retry-After": "3600"})
+
 
 async def stage_file(kind: str, request: Request) -> tuple[dict, str]:
     async with request.form() as form:
@@ -30,14 +50,12 @@ async def stage_file(kind: str, request: Request) -> tuple[dict, str]:
         if file is None or not getattr(file, "filename", None):
             raise HTTPException(400, "File required")
         filename = PurePath(file.filename.replace("\\", "/")).name
+        suffix = _check_upload_head(kind, filename)
+        if get_settings().mindmesh_execution_mode == "cloud":
+            return await _stage_file_spooled(kind, filename, suffix, file)
         data = await read_upload(file)
     if not data:
         raise HTTPException(400, "Empty file")
-    suffix = PurePath(filename).suffix.lower()
-    allowed = {"pdf": {".pdf"}, "documents": {".docx", ".pptx", ".xlsx", ".csv", ".txt", ".md", ".markdown"},
-               "audio": {".mp3", ".wav", ".m4a", ".ogg", ".flac", ".aac", ".webm"}}
-    if suffix not in allowed[kind]:
-        raise HTTPException(400, "Unsupported file format")
     # Content must match the extension before anything is staged (audit P0-10).
     try:
         validate_signature(filename, data)
@@ -45,16 +63,39 @@ async def stage_file(kind: str, request: Request) -> tuple[dict, str]:
         metrics.inc("upload_rejected_total", reason="signature")
         raise HTTPException(400, str(exc)) from None
     # Per-tenant daily upload quota (audit P0-9): reject BEFORE storing bytes.
-    settings = get_settings()
-    allowed_quota, used = quota_hit(
-        scope().tenant_id, "upload_bytes", len(data), settings.max_upload_bytes_per_tenant_per_day)
-    if not allowed_quota:
-        metrics.inc("quota_rejected_total", kind="upload_bytes")
-        raise HTTPException(429, "Daily upload quota reached",
-                            headers={"Retry-After": "3600"})
+    _charge_upload_quota(len(data))
     resource = hashlib.sha256(data).hexdigest()
     path = f"inputs/{resource}{suffix}"
     await asyncio.to_thread(cloud_storage.put, path, data)
+    payload = {"object": path, "filename": filename}
+    return payload, resource
+
+
+async def _stage_file_spooled(kind: str, filename: str, suffix: str, file) -> tuple[dict, str]:
+    """Cloud intake: spool to ephemeral disk, then stream to storage.
+
+    The quota is charged from the spooled size before any byte reaches
+    Supabase; the temp file is always removed, including on failure.
+    """
+    del kind  # suffix allow-list already enforced by the caller
+    spooled, size = await spool_upload(file)
+    try:
+        if size == 0:
+            raise HTTPException(400, "Empty file")
+        _charge_upload_quota(size)
+        with open(spooled, "rb") as handle:
+            data = handle.read()
+        try:
+            validate_signature(filename, data)
+        except FileSignatureError as exc:
+            metrics.inc("upload_rejected_total", reason="signature")
+            raise HTTPException(400, str(exc)) from None
+        resource = hashlib.sha256(data).hexdigest()
+        del data
+        path = f"inputs/{resource}{suffix}"
+        await asyncio.to_thread(cloud_storage.put_file, path, spooled)
+    finally:
+        discard_spooled(spooled)
     payload = {"object": path, "filename": filename}
     return payload, resource
 
@@ -82,7 +123,7 @@ async def enqueue(kind: str, request: Request):
     if len(idempotency) > 128:
         raise HTTPException(400, "Idempotency key too long")
     try:
-        return await asyncio.to_thread(jobs.create, kind, payload, resource, idempotency)
+        job = await asyncio.to_thread(jobs.create, kind, payload, resource, idempotency)
     except jobs.QuotaExceeded as exc:
         raise HTTPException(429, str(exc), headers={"Retry-After": "86400"}) from None
     except Exception:
@@ -93,6 +134,13 @@ async def enqueue(kind: str, request: Request):
             except Exception as cleanup_exc:  # noqa: BLE001
                 logger.warning("staged object cleanup failed object=%s err=%s", staged_object, cleanup_exc)
         raise
+    if get_settings().job_backend == "gcp":
+        # Schedule authenticated dispatch; never fails the request — when
+        # Cloud Tasks is unreachable the row stays queued for poll-mode.
+        from app.services import cloud_tasks
+
+        await asyncio.to_thread(cloud_tasks.enqueue_best_effort, job["job_id"])
+    return job
 
 
 def endpoint(kind: str, stream: bool):

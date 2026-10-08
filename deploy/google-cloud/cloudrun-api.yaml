@@ -1,0 +1,107 @@
+# Cloud Run service: mindmind-api (public FastAPI).
+# Deploy with: gcloud run services replace cloudrun-api.yaml --region=YOUR_REGION
+# Secrets must already exist in Secret Manager (see ../env.example and the
+# deployment guide). Image is built by .github/workflows/deploy-gcp.yml.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: mindmesh-api
+  annotations:
+    run.googleapis.com/ingress: all
+spec:
+  template:
+    metadata:
+      annotations:
+        run.googleapis.com/execution-environment: gen2
+        run.googleapis.com/cpu-throttling: "true"
+    spec:
+      serviceAccountName: mindmesh-api@YOUR-PROJECT-ID.iam.gserviceaccount.com
+      containers:
+        - image: YOUR-REGION-docker.pkg.dev/YOUR-PROJECT-ID/mindmesh-containers/mindmesh-api:LATEST
+          ports:
+            - containerPort: 8000
+          env:
+            - name: ENVIRONMENT
+              value: production
+            - name: MINDMESH_EXECUTION_MODE
+              value: cloud
+            - name: AUTH_ENABLED
+              value: "true"
+            - name: JOB_BACKEND
+              value: gcp
+            - name: LLM_PROVIDER
+              value: groq
+            - name: EMBEDDING_PROVIDER
+              value: gemini
+            - name: EMBEDDING_MODEL
+              value: gemini-embedding-2
+            - name: EMBEDDING_DIM
+              value: "768"
+            - name: QDRANT_COLLECTION
+              value: mindmesh_gemini_v1
+            - name: CORS_ORIGINS
+              value: https://yourdomain.com
+            - name: SUPABASE_URL
+              value: https://YOUR-PROJECT.supabase.co
+            - name: QDRANT_URL
+              value: https://YOUR-CLUSTER
+            - name: GCP_PROJECT_ID
+              value: YOUR-PROJECT-ID
+            - name: GCP_REGION
+              value: YOUR-REGION
+            - name: CLOUD_TASKS_QUEUE
+              value: mindmesh-jobs
+            - name: CLOUD_RUN_JOB_NAME
+              value: mindmesh-worker
+            - name: GROQ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: groq-api-key
+                  key: latest
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gemini-api-key
+                  key: latest
+            - name: SUPABASE_ANON_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: supabase-anon-key
+                  key: latest
+            - name: SUPABASE_SERVICE_ROLE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: supabase-service-role-key
+                  key: latest
+            - name: SUPABASE_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: supabase-db-url
+                  key: latest
+            - name: QDRANT_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: qdrant-api-key
+                  key: latest
+            - name: CLOUD_TASKS_DISPATCHER_URL
+              value: https://mindmesh-dispatcher-XXXX-YOUR-REGION.run.app
+            - name: CLOUD_TASKS_SERVICE_ACCOUNT
+              value: mindmesh-tasks@YOUR-PROJECT-ID.iam.gserviceaccount.com
+            - name: CLOUD_TASKS_DISPATCH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: cloud-tasks-dispatch-secret
+                  key: latest
+          resources:
+            limits:
+              cpu: "2"
+              memory: 2Gi
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            failureThreshold: 10
+            periodSeconds: 10
+  traffic:
+    - percent: 100
+      latestRevision: true

@@ -21,6 +21,7 @@ export interface ProcessState {
   url?: string;
   title?: string;
   jobId?: string;
+  jobPhase?: string; // last known cloud phase: "queued" | "processing"
 }
 
 type ProcessListener = (process: ProcessState) => void;
@@ -253,6 +254,9 @@ class ProcessManager {
   private async pollJob(processId: string, jobId: string) {
     if (this.polling.has(processId)) return;
     this.polling.add(processId);
+    // Exponential backoff (2s -> 30s cap): quiet on long Cloud Run Job
+    // executions instead of hammering /jobs every 2 seconds for hours.
+    let attempt = 0;
     try {
       while (this.processes.get(processId)?.status === "running") {
         const { data } = await api.get(`/jobs/${jobId}`);
@@ -262,7 +266,14 @@ class ProcessManager {
         if (data.status === "failed" || data.status === "cancelled") {
           this._addEvent(processId, { event: "error", data: { error: data.error?.message || "Job cancelled" } }); return;
         }
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        const proc = this.processes.get(processId);
+        if (proc && (data.status === "queued" || data.status === "processing") && proc.jobPhase !== data.status) {
+          proc.jobPhase = data.status;
+          this._addEvent(processId, { event: "phase", data: { phase: data.status } });
+        }
+        attempt += 1;
+        const delay = Math.min(2000 * Math.pow(1.6, attempt - 1), 30000);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     } catch (err) {
       const status = (err as { response?: { status?: number } })?.response?.status;

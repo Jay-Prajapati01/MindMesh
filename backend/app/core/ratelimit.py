@@ -209,7 +209,14 @@ class IdentityRateLimitMiddleware:
 
 
 def quota_hit(tenant_id: str, kind: str, amount: int, daily_limit: int) -> tuple[bool, int]:
-    """Accumulate a daily per-tenant quota. Returns (allowed, used)."""
+    """Accumulate a daily per-tenant quota. Returns (allowed, used).
+
+    Counter layers, in order: Redis INCRBY when configured, a single atomic
+    Postgres upsert when running in a cloud mode with a database, otherwise
+    the in-process store. The Postgres path is what makes large upload-byte
+    quotas safe without Redis: one numeric row per tenant/kind/day instead of
+    one timestamp per byte.
+    """
     if daily_limit <= 0:
         return True, 0
     day = time.strftime("%Y%m%d")
@@ -223,6 +230,16 @@ def quota_hit(tenant_id: str, kind: str, amount: int, daily_limit: int) -> tuple
             return (int(used) <= daily_limit, int(used))
         except Exception as exc:  # noqa: BLE001
             logger.warning("Quota accounting unavailable (%s); skipping", exc)
+            return True, 0
+    settings = get_settings()
+    if settings.mindmesh_execution_mode in {"modal", "cloud"} and settings.supabase_db_url:
+        try:
+            from app.services import cloud_db
+
+            used = cloud_db.quota_add(tenant_id, kind, day, amount)
+            return (used <= daily_limit, used)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Postgres quota accounting unavailable (%s); skipping", exc)
             return True, 0
     hits = _memory_store[key]
     now = time.time()

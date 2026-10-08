@@ -1,8 +1,22 @@
-"""Embedding generation via Ollama (nomic-embed-text by default).
+"""Embedding generation with a provider-independent interface.
 
-Uses Ollama's batch /api/embed endpoint (one HTTP round-trip per batch)
-and keeps a small process-wide LRU cache so repeated texts (search queries,
-re-ingests) are not re-embedded.
+Providers (selected by EMBEDDING_PROVIDER):
+* ollama — local Ollama batch /api/embed endpoint (nomic-embed-text default).
+* gemini — Google Gemini REST API (gemini-embedding-2 default, Matryoshka
+  truncation to EMBEDDING_DIM, default 768).
+
+Modal/CPU overrides predate the provider switch and keep working: modal mode
+routes through the Modal worker, legacy cloud mode through local CPU
+inference — both only when EMBEDDING_PROVIDER=ollama.
+
+Gemini integration details:
+* batchEmbedContents is called with exactly ONE request entry per chunk, so
+  every stored chunk gets its own vector. gemini-embedding-2 aggregates
+  multiple inputs of a single embedContent call into one vector — sending a
+  whole batch as one input would silently collapse chunks.
+* Indexed documents use taskType RETRIEVAL_DOCUMENT, search queries use
+  RETRIEVAL_QUERY; the cache key covers provider, model, dimension and
+  purpose so query and document vectors never collide.
 """
 from __future__ import annotations
 
@@ -16,12 +30,23 @@ from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+GEMINI_API_BASE = "https://generativelanguage.googleapis.com"
+_GEMINI_BATCH_SIZE = 32
+_GEMINI_MAX_CHARS = 10000  # well under the ~2048-token input limit
+
 _CACHE_MAX = 2048
 _cache: OrderedDict[str, list[float]] = OrderedDict()
 
 
-def _key(text: str) -> str:
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+def _key(text: str, purpose: str) -> str:
+    settings = get_settings()
+    scope = "|".join((
+        settings.embedding_provider,
+        settings.embedding_model,
+        str(settings.embedding_dim_for_model),
+        purpose,
+    ))
+    return hashlib.sha256(f"{scope}|{text}".encode("utf-8")).hexdigest()
 
 
 def _cache_get(key: str) -> list[float] | None:
@@ -36,6 +61,10 @@ def _cache_put(key: str, vec: list[float]) -> None:
     _cache.move_to_end(key)
     while len(_cache) > _CACHE_MAX:
         _cache.popitem(last=False)
+
+
+def reset_cache_for_tests() -> None:
+    _cache.clear()
 
 
 async def _embed_batch(client: httpx.AsyncClient, texts: list[str]) -> list[list[float]]:
@@ -82,27 +111,85 @@ async def _embed_batch(client: httpx.AsyncClient, texts: list[str]) -> list[list
         return vectors
 
 
-async def embed_texts(texts: list[str]) -> list[list[float]]:
-    """Return one embedding vector per input text (cached, batched)."""
+async def _embed_gemini(texts: list[str], purpose: str) -> list[list[float]]:
+    """Embed via the Gemini REST API — one vector per input text, always."""
+    settings = get_settings()
+    model = settings.embedding_model
+    dim = settings.embedding_dim_for_model
+    task_type = "RETRIEVAL_QUERY" if purpose == "query" else "RETRIEVAL_DOCUMENT"
+    base = (settings.gemini_api_base or GEMINI_API_BASE).rstrip("/")
+    headers = {"x-goog-api-key": settings.gemini_api_key, "Content-Type": "application/json"}
+    vectors: list[list[float]] = []
+    async with httpx.AsyncClient(base_url=base, timeout=120) as client:
+        for start in range(0, len(texts), _GEMINI_BATCH_SIZE):
+            batch = texts[start:start + _GEMINI_BATCH_SIZE]
+            requests = [
+                {
+                    "model": f"models/{model}",
+                    "content": {"parts": [{"text": t[:_GEMINI_MAX_CHARS]}]},
+                    "taskType": task_type,
+                    "outputDimensionality": dim,
+                }
+                for t in batch
+            ]
+            resp = await client.post(f"/v1beta/models/{model}:batchEmbedContents", json={"requests": requests}, headers=headers)
+            if resp.status_code >= 400:
+                raise RuntimeError(f"Gemini batchEmbedContents returned {resp.status_code}: {resp.text[:300]}")
+            payload = resp.json()
+            items = payload.get("embeddings", [])
+            if len(items) != len(batch):
+                raise RuntimeError(
+                    f"Gemini returned {len(items)} embeddings for {len(batch)} texts; refusing a partial batch"
+                )
+            for item in items:
+                values = item.get("values", [])
+                if len(values) != dim:
+                    raise RuntimeError(
+                        f"Gemini returned dim={len(values)}, expected {dim}; refusing to mix vector spaces"
+                    )
+                vectors.append(values)
+    return vectors
+
+
+async def embed_texts(texts: list[str], purpose: str = "document") -> list[list[float]]:
+    """Return one embedding vector per input text (cached, batched).
+
+    purpose is "document" for indexed chunks and "query" for search/ask
+    inputs; providers that distinguish retrieval roles (Gemini taskType) and
+    the cache key both honour it.
+    """
     if not texts:
         return []
 
-    if get_settings().mindmesh_execution_mode == "cloud":
+    settings = get_settings()
+    if settings.embedding_provider == "gemini":
+        if not settings.gemini_api_key:
+            raise RuntimeError("EMBEDDING_PROVIDER=gemini requires GEMINI_API_KEY")
+        keys = [_key(t, purpose) for t in texts]
+        results: list[list[float] | None] = [_cache_get(k) for k in keys]
+        missing_idx = [i for i, v in enumerate(results) if v is None]
+        if missing_idx:
+            vectors = await _embed_gemini([texts[i] for i in missing_idx], purpose)
+            for i, vec in zip(missing_idx, vectors):
+                results[i] = vec
+                _cache_put(keys[i], vec)
+        return [v for v in results if v is not None]
+
+    if settings.mindmesh_execution_mode == "cloud":
         import asyncio
         from app.services.cpu_inference import embed
         return await asyncio.to_thread(embed, texts)
 
-    if get_settings().mindmesh_execution_mode == "modal":
+    if settings.mindmesh_execution_mode == "modal":
         from app.services.modal_client import embed
         return await embed(texts)
 
-    keys = [_key(t) for t in texts]
-    results: list[list[float] | None] = [_cache_get(k) for k in keys]
+    keys = [_key(t, purpose) for t in texts]
+    results = [_cache_get(k) for k in keys]
     missing_idx = [i for i, v in enumerate(results) if v is None]
     if not missing_idx:
         return [v for v in results if v is not None]
 
-    settings = get_settings()
     missing_texts = [texts[i] for i in missing_idx]
     async with httpx.AsyncClient(base_url=settings.ollama_url, timeout=120) as client:
         vectors = await _embed_batch(client, missing_texts)
@@ -117,7 +204,7 @@ async def embed_texts(texts: list[str]) -> list[list[float]]:
     return [v for v in results if v is not None]
 
 
-async def embed_text(text: str) -> list[float]:
+async def embed_text(text: str, purpose: str = "document") -> list[float]:
     """Convenience wrapper for embedding a single string."""
-    result = await embed_texts([text])
+    result = await embed_texts([text], purpose=purpose)
     return result[0]

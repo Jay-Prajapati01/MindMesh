@@ -1,0 +1,79 @@
+# Cloud Run Job: mindmesh-worker (heavy ingestion, run-to-completion).
+# One execution per dispatched job (MINDMESH_JOB_ID override), task timeout
+# 60 minutes. Start with maxRetries=0 and a single concurrent execution for
+# the beta: retries are owned by the job row (claim/lease/reconcile), not by
+# re-running the whole Cloud Run task blindly. Benchmark PDFs and browser
+# extraction before raising parallelism.
+apiVersion: run.googleapis.com/v1
+kind: Job
+metadata:
+  name: mindmesh-worker
+spec:
+  template:
+    spec:
+      taskCount: 1
+      timeoutSeconds: 3600
+      maxRetries: 0
+      template:
+        spec:
+          serviceAccountName: mindmesh-worker@YOUR-PROJECT-ID.iam.gserviceaccount.com
+          containers:
+            - image: YOUR-REGION-docker.pkg.dev/YOUR-PROJECT-ID/mindmesh-containers/mindmesh-worker:LATEST
+              command: ["python", "-m", "app.gcp_worker"]
+              env:
+                - name: ENVIRONMENT
+                  value: production
+                - name: MINDMESH_EXECUTION_MODE
+                  value: cloud
+                - name: JOB_BACKEND
+                  value: gcp
+                - name: LLM_PROVIDER
+                  value: groq
+                - name: EMBEDDING_PROVIDER
+                  value: gemini
+                - name: EMBEDDING_MODEL
+                  value: gemini-embedding-2
+                - name: EMBEDDING_DIM
+                  value: "768"
+                - name: QDRANT_COLLECTION
+                  value: mindmesh_gemini_v1
+                - name: SUPABASE_URL
+                  value: https://YOUR-PROJECT.supabase.co
+                - name: QDRANT_URL
+                  value: https://YOUR-CLUSTER
+                - name: GROQ_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: groq-api-key
+                      key: latest
+                - name: GEMINI_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: gemini-api-key
+                      key: latest
+                - name: GROQ_WHISPER_MODEL
+                  value: whisper-large-v3-turbo
+                - name: SUPABASE_ANON_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: supabase-anon-key
+                      key: latest
+                - name: SUPABASE_SERVICE_ROLE_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: supabase-service-role-key
+                      key: latest
+                - name: SUPABASE_DB_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: supabase-db-url
+                      key: latest
+                - name: QDRANT_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: qdrant-api-key
+                      key: latest
+              resources:
+                limits:
+                  cpu: "4"
+                  memory: 8Gi

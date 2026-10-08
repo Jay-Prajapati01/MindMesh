@@ -31,6 +31,22 @@ LEASE = 3900  # Must exceed Modal's 3600-second hard timeout.
 TERMINAL = {"completed", "failed", "cancelled"}
 
 
+def _pg() -> bool:
+    """True when job rows live in Postgres (JOB_BACKEND=postgres|gcp).
+
+    The Redis implementation below is kept byte-for-byte for the legacy
+    redis backend and the existing test suite; every public function
+    delegates to app.services.jobs_pg when the Postgres backend is active.
+    """
+    return get_settings().job_backend in {"postgres", "gcp"}
+
+
+def _delegate(name: str, *args, **kwargs):
+    from app.services import jobs_pg
+
+    return getattr(jobs_pg, name)(*args, **kwargs)
+
+
 @lru_cache
 def client() -> Redis:
     return Redis.from_url(get_settings().redis_url, decode_responses=True,
@@ -42,6 +58,8 @@ def key(job_id: str) -> str:
 
 
 def raw(job_id: str) -> dict:
+    if _pg():
+        return _delegate("raw", job_id)
     data = client().get(key(job_id))
     if not data:
         raise KeyError("Job not found")
@@ -49,6 +67,8 @@ def raw(job_id: str) -> dict:
 
 
 def owned(job_id: str) -> dict:
+    if _pg():
+        return _delegate("owned", job_id)
     job = raw(job_id)
     owner = scope()
     if job["tenant_id"] != owner.tenant_id or job["user_id"] != owner.user_id:
@@ -67,6 +87,8 @@ def public(job: dict) -> dict:
 
 
 def create(job_type: str, payload: dict, resource_id: str, idempotency_key: str = "") -> dict:
+    if _pg():
+        return _delegate("create", job_type, payload, resource_id, idempotency_key)
     owner = scope()
     settings = get_settings()
     # Daily job quota per tenant: cheap first line of defence against GPU
@@ -138,6 +160,8 @@ def transition(job_id: str, update) -> dict:
 
 
 def claim(job_id: str) -> tuple[dict, str]:
+    if _pg():
+        return _delegate("claim", job_id)
     token = str(uuid.uuid4())
     def update(job):
         if job["status"] in TERMINAL or (job["status"] == "processing" and job["next_at"] > time.time()):
@@ -150,6 +174,8 @@ def claim(job_id: str) -> tuple[dict, str]:
 
 
 def finish(job_id: str, token: str, result=None, error=None) -> dict:
+    if _pg():
+        return _delegate("finish", job_id, token, result=result, error=error)
     def update(job):
         if job.get("lease") != token or job["status"] != "processing":
             raise PermissionError("Stale worker lease")
@@ -163,6 +189,8 @@ def finish(job_id: str, token: str, result=None, error=None) -> dict:
 
 
 def cancel(job_id: str) -> dict:
+    if _pg():
+        return _delegate("cancel", job_id)
     owned(job_id)
     def update(job):
         # Processing may already have durable side effects. Do not promise
@@ -175,6 +203,8 @@ def cancel(job_id: str) -> dict:
 
 def replay(job_id: str) -> dict:
     """Operator action: move a dead-lettered job back onto the queue."""
+    if _pg():
+        return _delegate("replay", job_id)
     def update(job):
         if job["status"] != "failed":
             raise ValueError("Only failed jobs can be replayed")
@@ -187,6 +217,8 @@ def replay(job_id: str) -> dict:
 
 def reconcile() -> dict:
     """Self-heal queue drift. Returns counts for logging/metrics."""
+    if _pg():
+        return _delegate("reconcile")
     r = client()
     stats = {"orphans_pruned": 0, "terminal_pruned": 0, "dlq_size": 0}
     now = time.time()

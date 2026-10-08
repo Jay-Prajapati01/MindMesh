@@ -67,11 +67,12 @@ def ensure_collection() -> None:
     if info.config.params.vectors.size != settings.embedding_dim_for_model:
         raise ValueError("Embedding dimension mismatch; reindex into a new collection")
     if cloud():
+        expected = settings.embedding_label
         incompatible = client.count(collection_name=settings.qdrant_collection,
             count_filter=qmodels.Filter(must_not=[qmodels.FieldCondition(
-                key="embedding_model", match=qmodels.MatchValue(value="BAAI/bge-m3"))]), exact=True).count
+                key="embedding_model", match=qmodels.MatchValue(value=expected))]), exact=True).count
         if incompatible:
-            raise ValueError("Collection contains another embedding model; select an empty BGE-M3 collection")
+            raise ValueError(f"Collection contains another embedding model; select an empty {expected} collection")
     if authenticated():
         for field in ("tenant_id", "user_id", "source_id"):
             client.create_payload_index(settings.qdrant_collection, field, qmodels.PayloadSchemaType.KEYWORD, wait=True)
@@ -109,7 +110,7 @@ def upsert_chunks(
         owner = scope()
         payloads = [{**p, "tenant_id": owner.tenant_id, "user_id": owner.user_id,
                      "document_id": p.get("source_id"), "chunk_id": str(p.get("chunk_index")),
-                     "embedding_model": "BAAI/bge-m3" if cloud() else settings.embedding_model} for p in payloads]
+                     "embedding_model": settings.embedding_label} for p in payloads]
     points = [
         qmodels.PointStruct(id=_point_id(payload), vector=vec, payload=payload)
         for vec, payload in zip(vectors, payloads)

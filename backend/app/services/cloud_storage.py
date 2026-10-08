@@ -33,6 +33,43 @@ def put(relative: str, data: bytes) -> str:
     return relative
 
 
+def put_file(relative: str, local_path: str) -> str:
+    """Upload a spooled temp file, streaming from disk with a fixed length.
+
+    The API container never holds the whole file in heap for the outbound
+    leg; Content-Length is set explicitly so no chunked encoding is needed.
+    """
+    import os
+
+    cfg = get_settings()
+    path = quote(key(relative), safe="/")
+    size = os.path.getsize(local_path)
+
+    def _chunks():
+        with open(local_path, "rb") as handle:
+            while True:
+                piece = handle.read(1024 * 1024)
+                if not piece:
+                    break
+                yield piece
+
+    headers = {
+        "Authorization": f"Bearer {cfg.supabase_service_role_key}",
+        "apikey": cfg.supabase_service_role_key,
+        "x-upsert": "true",
+        "Content-Type": mimetypes.guess_type(relative)[0] or "application/octet-stream",
+        "Content-Length": str(size),
+    }
+    with httpx.Client(timeout=300) as client:
+        response = client.post(
+            f"{cfg.supabase_url}/storage/v1/object/{cfg.supabase_storage_bucket}/{path}",
+            headers=headers,
+            content=_chunks(),
+        )
+        response.raise_for_status()
+    return relative
+
+
 def get(relative: str) -> bytes:
     cfg = get_settings()
     path = quote(key(relative), safe="/")

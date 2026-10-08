@@ -28,11 +28,25 @@ class Settings(BaseSettings):
     qdrant_api_key: str = ""
     job_ttl_seconds: int = 604800
     worker_process: bool = False
+    # Job lifecycle store: redis (legacy/Modal), postgres (durable rows in
+    # Supabase), gcp (Postgres rows + Cloud Tasks dispatch + Cloud Run Jobs).
+    job_backend: str = "redis"
+    # Google Cloud dispatch (only required when JOB_BACKEND=gcp).
+    gcp_project_id: str = ""
+    gcp_region: str = ""
+    cloud_tasks_queue: str = "mindmesh-jobs"
+    cloud_tasks_dispatcher_url: str = ""
+    cloud_tasks_service_account: str = ""
+    # Shared secret the dispatcher checks on every task (Cloud Tasks sends it
+    # as X-Dispatch-Secret alongside the OIDC token; both live in Secret Manager).
+    cloud_tasks_dispatch_secret: str = ""
+    cloud_run_job_name: str = "mindmesh-worker"
     llm_provider: str = ""
     xai_api_key: str = ""
     xai_model: str = ""
     groq_api_key: str = ""
     groq_model: str = "llama-3.1-8b-instant"
+    groq_whisper_model: str = "whisper-large-v3-turbo"
 
     # Security — when set (any environment), mutating endpoints require a
     # matching X-API-Key header. Empty keeps local development open.
@@ -94,8 +108,14 @@ class Settings(BaseSettings):
     # GPU, switch to llm_model=qwen3:8b and embedding_model=bge-m3 (dim 1024).
     ollama_url: str = "http://ollama:11434"
     llm_model: str = "qwen2.5:3b"
+    # Embedding provider: ollama (local dev / Modal CPU fallback) or gemini
+    # (Google Cloud production). embedding_model names the model for the
+    # active provider, e.g. nomic-embed-text or gemini-embedding-2.
+    embedding_provider: str = "ollama"
     embedding_model: str = "nomic-embed-text"
     embedding_dim: int = 768
+    gemini_api_key: str = ""
+    gemini_api_base: str = "https://generativelanguage.googleapis.com"
 
     # Instagram (optional - enables authenticated access to posts)
     # Set ig_username and ig_password to access private posts or posts
@@ -129,6 +149,10 @@ class Settings(BaseSettings):
     @property
     def embedding_dim_for_model(self) -> int:
         """Return the correct embedding dimension for the configured model."""
+        if self.embedding_model.startswith("gemini-embedding"):
+            # Gemini truncates to outputDimensionality via Matryoshka; the
+            # operator chooses the size through EMBEDDING_DIM (768 default).
+            return self.embedding_dim
         model_dims = {
             "nomic-embed-text": 768,
             "bge-m3": 1024,
@@ -136,6 +160,19 @@ class Settings(BaseSettings):
             "all-minilm": 384,
         }
         return model_dims.get(self.embedding_model, self.embedding_dim)
+
+    @property
+    def embedding_label(self) -> str:
+        """Stable payload label identifying the embedding vector space.
+
+        Collections must never mix vector spaces, so the label always encodes
+        the provider and model. Legacy Modal collections keep "BAAI/bge-m3".
+        """
+        if self.embedding_provider == "gemini":
+            return f"gemini:{self.embedding_model}"
+        if self.mindmesh_execution_mode == "modal" and self.embedding_model == "bge-m3":
+            return "BAAI/bge-m3"
+        return f"{self.embedding_provider}:{self.embedding_model}"
 
     @model_validator(mode="after")
     def validate_critical_settings(self) -> "Settings":
@@ -153,25 +190,62 @@ class Settings(BaseSettings):
             raise ValueError("Production requires a cloud execution mode")
         if self.auth_enabled and not (self.supabase_url and self.supabase_anon_key):
             raise ValueError("Authentication requires SUPABASE_URL and SUPABASE_ANON_KEY")
+        if self.embedding_provider not in {"ollama", "gemini"}:
+            raise ValueError("EMBEDDING_PROVIDER must be ollama or gemini")
+        if self.job_backend not in {"redis", "postgres", "gcp"}:
+            raise ValueError("JOB_BACKEND must be redis, postgres or gcp")
         if self.mindmesh_execution_mode in {"modal", "cloud"}:
             from urllib.parse import urlparse
             if not all((self.supabase_url, self.supabase_anon_key, self.supabase_service_role_key,
-                        self.supabase_db_url, self.redis_url, self.qdrant_api_key)):
-                raise ValueError("Cloud mode requires Supabase, database, Redis and Qdrant credentials")
-            if not self.redis_url.startswith("rediss://"):
-                raise ValueError("Cloud Redis must use TLS (rediss://)")
+                        self.supabase_db_url, self.qdrant_api_key)):
+                raise ValueError("Cloud mode requires Supabase, database and Qdrant credentials")
             for endpoint in (self.supabase_url, self.qdrant_url):
                 parsed = urlparse(endpoint)
                 if parsed.scheme != "https" or parsed.hostname in {"localhost", "127.0.0.1", "qdrant"}:
                     raise ValueError("Cloud service endpoints must use public HTTPS")
             if "sslmode=require" not in self.supabase_db_url and "sslmode=verify-full" not in self.supabase_db_url:
                 raise ValueError("SUPABASE_DB_URL must require TLS")
-            if self.embedding_model != "bge-m3" or self.embedding_dim != 1024:
-                raise ValueError("Modal mode requires EMBEDDING_MODEL=bge-m3 and EMBEDDING_DIM=1024")
-            if self.qdrant_collection == "mindmesh":
-                raise ValueError("Use a new collection for BGE-M3, e.g. mindmesh_bge_m3_v1")
             if not self.ssrf_block_private or not self.crawl4ai_headless or self.crawl4ai_cache_mode != "bypass":
                 raise ValueError("Cloud browsers require SSRF protection, headless mode and disabled page caching")
+            if self.mindmesh_execution_mode == "modal":
+                if not self.redis_url:
+                    raise ValueError("Modal mode requires a Redis URL")
+                if not self.redis_url.startswith("rediss://"):
+                    raise ValueError("Cloud Redis must use TLS (rediss://)")
+                if self.embedding_model != "bge-m3" or self.embedding_dim != 1024:
+                    raise ValueError("Modal mode requires EMBEDDING_MODEL=bge-m3 and EMBEDDING_DIM=1024")
+                if self.qdrant_collection == "mindmesh":
+                    raise ValueError("Use a new collection for BGE-M3, e.g. mindmesh_bge_m3_v1")
+            else:
+                # Google Cloud execution. Redis is only authoritative for the
+                # legacy redis job backend; postgres/gcp persist jobs in
+                # Supabase and must not require any Redis server.
+                if self.redis_url and not self.redis_url.startswith("rediss://"):
+                    raise ValueError("Cloud Redis must use TLS (rediss://)")
+                if self.job_backend == "redis" and not self.redis_url:
+                    raise ValueError("JOB_BACKEND=redis requires REDIS_URL")
+                if self.embedding_provider == "gemini":
+                    if not self.gemini_api_key:
+                        raise ValueError("EMBEDDING_PROVIDER=gemini requires GEMINI_API_KEY")
+                    if not 128 <= self.embedding_dim <= 3072:
+                        raise ValueError("Gemini EMBEDDING_DIM must be between 128 and 3072")
+                    if self.qdrant_collection == "mindmesh":
+                        raise ValueError("Use a new collection for Gemini, e.g. mindmesh_gemini_v1")
+                if self.job_backend == "gcp":
+                    missing = [name for name, value in (
+                        ("GCP_PROJECT_ID", self.gcp_project_id),
+                        ("GCP_REGION", self.gcp_region),
+                        ("CLOUD_TASKS_QUEUE", self.cloud_tasks_queue),
+                        ("CLOUD_TASKS_DISPATCHER_URL", self.cloud_tasks_dispatcher_url),
+                        ("CLOUD_TASKS_SERVICE_ACCOUNT", self.cloud_tasks_service_account),
+                        ("CLOUD_TASKS_DISPATCH_SECRET", self.cloud_tasks_dispatch_secret),
+                        ("CLOUD_RUN_JOB_NAME", self.cloud_run_job_name),
+                    ) if not value]
+                    if missing:
+                        raise ValueError(f"JOB_BACKEND=gcp requires {', '.join(missing)}")
+                    dispatcher = urlparse(self.cloud_tasks_dispatcher_url)
+                    if dispatcher.scheme != "https":
+                        raise ValueError("CLOUD_TASKS_DISPATCHER_URL must use public HTTPS")
         if self.mindmesh_execution_mode == "cloud":
             if self.llm_provider not in {"xai", "groq"}:
                 raise ValueError("Cloud mode requires an explicit LLM_PROVIDER: xai or groq")

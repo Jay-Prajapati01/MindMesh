@@ -58,11 +58,11 @@ def _fake_hits() -> list[dict]:
     ]
 
 
-async def _fake_embed_text(text: str) -> list[float]:
+async def _fake_embed_text(text: str, purpose: str = "document") -> list[float]:
     return _vec(text)
 
 
-async def _fake_embed_texts(texts: list[str]) -> list[list[float]]:
+async def _fake_embed_texts(texts: list[str], purpose: str = "document") -> list[list[float]]:
     return [_vec(t) for t in texts]
 
 

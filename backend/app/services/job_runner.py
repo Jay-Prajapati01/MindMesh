@@ -73,6 +73,29 @@ def classify(exc: Exception) -> dict:
             "retryable": not invalid}
 
 
+class _PgResourceLock:
+    """Expose the Redis lock's acquire/release surface over PG advisory locks."""
+
+    def __init__(self, tenant_id: str, resource_id: str):
+        from app.services import cloud_db
+
+        self._cm = cloud_db.resource_lock(tenant_id, resource_id)
+        self._entered = False
+
+    def acquire(self) -> bool:
+        try:
+            self._cm.__enter__()
+        except ConnectionError:
+            return False
+        self._entered = True
+        return True
+
+    def release(self) -> None:
+        if self._entered:
+            self._entered = False
+            self._cm.__exit__(None, None, None)
+
+
 async def run(job_id: str):
     from app.core.logging import configure_logging, get_logger
     configure_logging()
@@ -91,7 +114,10 @@ async def run(job_id: str):
         return
     started = time.monotonic()
     # Serialize ingestion of the same resource across separate job IDs.
-    lock = jobs.client().lock(f"mindmesh:resource:{owner.tenant_id}:{owner.resource_id}", timeout=jobs.LEASE, blocking_timeout=1)
+    if jobs._pg():
+        lock = _PgResourceLock(owner.tenant_id, owner.resource_id)
+    else:
+        lock = jobs.client().lock(f"mindmesh:resource:{owner.tenant_id}:{owner.resource_id}", timeout=jobs.LEASE, blocking_timeout=1)
     acquired = False
     try:
         authorize(owner.envelope())
