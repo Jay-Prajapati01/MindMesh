@@ -17,6 +17,20 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
+from app.core.config import get_settings
+
+
+@pytest.fixture(autouse=True)
+def isolated_data_dir(tmp_path, monkeypatch):
+    """Keep every test inside its own temp data directory.
+
+    The default data_dir (/app/data) only exists in the Docker setup. On a
+    bare CI runner the root filesystem is not writable, mkdir raises
+    PermissionError and the app's global handler turns that into a 403 on
+    every data-touching endpoint. Hermetic tests must never depend on it.
+    """
+    monkeypatch.setattr(get_settings(), "data_dir", str(tmp_path))
+
 # Deterministic fake embedding — same input, same vector, no model needed.
 _EMBED_DIM = 32
 
