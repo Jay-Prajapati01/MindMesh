@@ -100,26 +100,21 @@ async def _stage_file_spooled(kind: str, filename: str, suffix: str, file) -> tu
     return payload, resource
 
 
-async def enqueue(kind: str, request: Request):
+async def enqueue_payload(kind: str, incoming: dict, idempotency: str = "") -> dict:
+    """Validate and enqueue a JSON job for another authenticated facade."""
     module, _, schema = HANDLERS[kind]
     staged_object: str | None = None
     if schema is None:
-        async with _upload_slots:
-            payload, resource = await stage_file(kind, request)
-            staged_object = payload.get("object")
+        raise HTTPException(400, "This endpoint accepts URLs only")
+    api = importlib.import_module("app.api." + module)
+    try:
+        payload = getattr(api, schema).model_validate(incoming).model_dump(mode="json")
+    except (ValidationError, ValueError):
+        raise HTTPException(422, "Invalid request") from None
+    if kind == "chat" and payload.get("conversation_id"):
+        resource = "conversation:" + payload["conversation_id"]
     else:
-        api = importlib.import_module("app.api." + module)
-        try:
-            payload = getattr(api, schema).model_validate(await request.json()).model_dump(mode="json")
-        except (ValidationError, ValueError):
-            raise HTTPException(422, "Invalid request") from None
-        if kind == "chat" and payload.get("conversation_id"):
-            # Serialize concurrent turns to the same conversation.
-            resource = "conversation:" + payload["conversation_id"]
-        else:
-            resource = hashlib.sha256(json.dumps([kind, payload], sort_keys=True).encode()).hexdigest()
-        # Schemas discard extra fields; tenant/user IDs are never copied into the envelope.
-    idempotency = request.headers.get("Idempotency-Key", "")
+        resource = hashlib.sha256(json.dumps([kind, payload], sort_keys=True).encode()).hexdigest()
     if len(idempotency) > 128:
         raise HTTPException(400, "Idempotency key too long")
     try:
@@ -141,6 +136,21 @@ async def enqueue(kind: str, request: Request):
 
         await asyncio.to_thread(cloud_tasks.enqueue_best_effort, job["job_id"])
     return job
+
+
+async def enqueue(kind: str, request: Request):
+    module, _, schema = HANDLERS[kind]
+    if schema is None:
+        async with _upload_slots:
+            payload, resource = await stage_file(kind, request)
+        idempotency = request.headers.get("Idempotency-Key", "")
+        if len(idempotency) > 128:
+            raise HTTPException(400, "Idempotency key too long")
+        try:
+            return await asyncio.to_thread(jobs.create, kind, payload, resource, idempotency)
+        except jobs.QuotaExceeded as exc:
+            raise HTTPException(429, str(exc), headers={"Retry-After": "86400"}) from None
+    return await enqueue_payload(kind, await request.json(), request.headers.get("Idempotency-Key", ""))
 
 
 def endpoint(kind: str, stream: bool):

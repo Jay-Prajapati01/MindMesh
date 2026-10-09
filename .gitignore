@@ -69,6 +69,22 @@ credentials*.json
 supabase/.temp/
 mindmesh-backup-*.tar.gz
 
+# ---------- Android / Gradle (native companion) ----------
+# Local SDK path + dev secrets (API URL, Supabase keys). The committed
+# companion.properties.example is the template; never commit the real file.
+local.properties
+companion.properties
+# Signing keys and Firebase config — never commit these.
+*.keystore
+*.jks
+google-services.json
+# Build outputs and Gradle caches.
+*.apk
+*.aab
+.gradle/
+.kotlin/
+build/
+
 # ---------- AI tooling ----------
 .claude/
 .cursor/

@@ -30,6 +30,19 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const [error, setError] = useState("");
   const newPassword = mode === "signup" || mode === "reset";
 
+  async function googleSignIn() {
+    setBusy(true); setError(""); setMessage("");
+    try {
+      const { error: failure } = await getSupabase().auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}${destination()}` },
+      });
+      if (failure) throw failure;
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Unable to start Google sign-in.");
+    } finally { setBusy(false); }
+  }
+
   useEffect(() => {
     if (ready && session && (mode === "login" || mode === "signup")) router.replace(destination());
   }, [ready, session, mode, router]);
@@ -86,6 +99,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
           {message && <p role="status" className="flex gap-2 rounded-xl border border-ink bg-paper p-3 text-sm"><Mail className="h-5 w-5 shrink-0" />{message}</p>}
           <button type="submit" disabled={busy || !ready || !!configError || (mode === "reset" && !session)} className="brut-btn flex w-full items-center justify-center gap-2 rounded-xl bg-orange px-5 py-3 font-bold disabled:cursor-not-allowed disabled:opacity-50">{busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="h-5 w-5" />}{busy ? "Please wait…" : actions[mode]}</button>
         </form>
+        {(mode === "login" || mode === "signup") && <button type="button" onClick={googleSignIn} disabled={busy || !ready || !!configError} className="mt-4 w-full rounded-xl border-2 border-ink px-5 py-3 font-bold disabled:opacity-50">Continue with Google</button>}
         <p className="mt-6 text-sm">{mode === "signup" ? "Already have an account? " : mode === "login" ? "New to MindMesh? " : "Ready to continue? "}<Link href={mode === "login" ? "/signup" : mode === "reset" && session ? "/dashboard" : "/login"} className="font-bold underline">{mode === "login" ? "Create account" : mode === "reset" && session ? "Open workspace" : "Sign in"}</Link></p>
       </section>
     </div>

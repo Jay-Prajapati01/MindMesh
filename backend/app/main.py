@@ -24,6 +24,7 @@ from app.api import (
     graph,
     health,
     instagram,
+    mobile,
     notes,
     pdf,
     search,
@@ -189,6 +190,16 @@ class ResponseGuardMiddleware:
                 metrics.inc("http_duration_seconds_sum", time.perf_counter() - started, route=route)
             await send(message)
 
+        # Account-based clients must never silently use the anonymous local
+        # development workspace. This header requests a stricter policy; it
+        # supplies no identity and never bypasses bearer verification.
+        if headers.get("x-mindmesh-require-auth") == "true":
+            cfg = get_settings()
+            if not cfg.auth_enabled and cfg.mindmesh_execution_mode not in {"modal", "cloud"}:
+                return await JSONResponse(
+                    {"detail": "Enable AUTH_ENABLED=true on the local backend before using the companion app.",
+                     "error_code": "AUTH_CONFIGURATION_REQUIRED"}, status_code=503,
+                )(scope, receive, send_wrapper)
         return await self.app(scope, receive, send_wrapper)
 
 
@@ -358,6 +369,9 @@ def create_app() -> FastAPI:
     # Public contact intake: intentionally outside `mutating`/`read_deps` so
     # anonymous visitors can reach it (CloudAuthMiddleware exempts the path).
     app.include_router(contact.router, prefix=settings.api_prefix)
+    # The companion receives an immediate, durable receipt here; it reuses the
+    # same verified scope and ingestion handlers as the website.
+    app.include_router(mobile.router, prefix=settings.api_prefix, dependencies=mutating)
     for router in post_only:
         app.include_router(router.router, prefix=settings.api_prefix, dependencies=mutating)
     for router in read_routers:

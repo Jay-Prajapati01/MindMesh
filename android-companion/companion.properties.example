@@ -1,0 +1,5 @@
+# Copy these entries into untracked local.properties.
+# For a physical USB-connected phone, run adb reverse and use 127.0.0.1 below.
+MINDMESH_API_BASE_URL=http://127.0.0.1:8000/api/
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_PUBLISHABLE_KEY=your-public-anon-or-publishable-key

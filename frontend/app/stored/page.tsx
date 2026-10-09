@@ -23,6 +23,8 @@ export default function StoredPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["sources", filter, page],
     queryFn: () => listSources(filter || undefined, page, pageSize),
+    refetchInterval: 5000,
+    refetchIntervalInBackground: false,
   });
 
   const deleteMutation = useMutation({
