@@ -59,7 +59,8 @@ def create_dispatcher_app() -> FastAPI:
                 if jobs_pg is None:
                     continue  # legacy redis backend is polled by worker.py
                 job_id = await asyncio.to_thread(jobs_pg.peek_due)
-                if job_id is None or launched.get(job_id, 0.0) > time.monotonic() - _LAUNCH_GUARD_SECONDS:
+                last_launch = launched.get(job_id) if job_id is not None else None
+                if job_id is None or (last_launch is not None and last_launch > time.monotonic() - _LAUNCH_GUARD_SECONDS):
                     continue
                 from app.services import cloud_run_launcher
 
@@ -96,7 +97,8 @@ def create_dispatcher_app() -> FastAPI:
             return {"duplicate": True, "reason": "unknown-job"}
         if job["status"] != "queued":
             return {"duplicate": True, "status": job["status"]}
-        if launched.get(job_id, 0.0) > time.monotonic() - _LAUNCH_GUARD_SECONDS:
+        last_launch = launched.get(job_id)
+        if last_launch is not None and last_launch > time.monotonic() - _LAUNCH_GUARD_SECONDS:
             return {"duplicate": True, "reason": "recently-launched"}
         from app.services import cloud_run_launcher
 

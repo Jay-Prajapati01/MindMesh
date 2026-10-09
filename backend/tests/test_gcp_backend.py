@@ -492,11 +492,18 @@ def test_cloud_tasks_unavailable_leaves_job_queued(monkeypatch):
 
 @pytest.fixture
 def dispatcher_client(monkeypatch):
+    import types
+
     from app import dispatcher
     from app.services import jobs
 
     cfg = get_settings()
     monkeypatch.setattr(cfg, "cloud_tasks_dispatch_secret", "secret")
+    # Simulate a freshly started dispatcher process: with a real monotonic clock
+    # that has already run past the launch guard, the "never launched" path
+    # would silently pass even with a broken guard (it failed only on CI's
+    # fresh VMs before).
+    monkeypatch.setattr(dispatcher, "time", types.SimpleNamespace(monotonic=lambda: 100.0))
     store = {"job": {"job_id": "j", "status": "queued"}, "launched": []}
     monkeypatch.setattr(jobs, "raw", lambda job_id: dict(store["job"]))
 
