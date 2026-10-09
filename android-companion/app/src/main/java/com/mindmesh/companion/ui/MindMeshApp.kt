@@ -29,6 +29,7 @@ import kotlinx.coroutines.launch
 @androidx.compose.runtime.Composable
 fun MindMeshApp(sharedUrl: String?, authCallback: Uri?) {
     val context = LocalContext.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
     val session = remember { AuthSessionStore(context) }
     var signedIn by remember { mutableStateOf(session.userId != null) }
     var url by remember { mutableStateOf(sharedUrl.orEmpty()) }
@@ -39,10 +40,10 @@ fun MindMeshApp(sharedUrl: String?, authCallback: Uri?) {
     }.collectAsState(initial = emptyList())
     var notice by remember { mutableStateOf(if (sharedUrl == null) "Share a link from YouTube, Instagram, or your browser." else "Shared link ready to save.") }
     androidx.compose.runtime.LaunchedEffect(authCallback) {
-        if (authCallback != null) {
+        if (authCallback != null && session.userId == null) {
             com.mindmesh.companion.auth.SupabaseAuth.completeGoogle(context, authCallback)
                 .onSuccess { session.save(it.user.id, it.accessToken); signedIn = true; notice = "Signed in as ${it.user.email}." }
-                .onFailure { notice = it.message ?: "Google sign-in failed." }
+                .onFailure { notice = it.message ?: "Google sign-in failed (${it.javaClass.simpleName})." }
         }
     }
     Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -54,14 +55,14 @@ fun MindMeshApp(sharedUrl: String?, authCallback: Uri?) {
                     OutlinedTextField(email, { email = it }, label = { Text("Email") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                     OutlinedTextField(password, { password = it }, label = { Text("Password") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
                     Button(onClick = {
-                        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
-                            val result = com.mindmesh.companion.auth.SupabaseAuth.signIn(email, password)
-                            result.onSuccess { session.save(it.user.id, it.accessToken); signedIn = true; notice = "Signed in as ${it.user.email}." }
+                        scope.launch {
+                            com.mindmesh.companion.auth.SupabaseAuth.signIn(email, password)
+                                .onSuccess { session.save(it.user.id, it.accessToken); signedIn = true; notice = "Signed in as ${it.user.email}." }
                                 .onFailure { notice = it.message ?: "Sign-in failed." }
                         }
                     }) { Text("Sign in") }
                     Button(onClick = {
-                        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                        scope.launch {
                             com.mindmesh.companion.auth.SupabaseAuth.signUp(email, password)
                                 .onSuccess { notice = "Check your email to confirm your MindMesh account." }
                                 .onFailure { notice = it.message ?: "Sign-up failed." }
