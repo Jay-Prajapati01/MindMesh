@@ -50,6 +50,9 @@ coverage/
 
 # ---------- Runtime data / models ----------
 data/
+# Android companion Room source is code, not runtime data.
+!android-companion/app/src/main/java/com/mindmesh/companion/data/
+!android-companion/app/src/main/java/com/mindmesh/companion/data/**
 uploads/
 media/
 qdrant_storage/

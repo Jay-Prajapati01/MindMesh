@@ -1,0 +1,85 @@
+name: mindmesh
+
+# AWS EC2 hybrid deployment. Supabase, Qdrant Cloud, and AI APIs remain external.
+# Invoke explicitly: docker compose --env-file .env -f compose.yaml up -d --build
+services:
+  caddy:
+    image: caddy:2.8.4-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443", "443:443/udp"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      frontend: { condition: service_healthy }
+      api: { condition: service_healthy }
+    networks: [public, private]
+    deploy:
+      resources: { limits: { cpus: "0.50", memory: 256M } }
+
+  frontend:
+    image: ${FRONTEND_IMAGE:-mindmesh-frontend}:${IMAGE_TAG:-local}
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile.prod
+      args:
+        NEXT_PUBLIC_EXECUTION_MODE: cloud
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?set public API URL}
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:?set Supabase URL}
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:?set public Supabase key}
+    restart: unless-stopped
+    expose: ["3000"]
+    networks: [private]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources: { limits: { cpus: "1.0", memory: 1G } }
+
+  api:
+    image: ${API_IMAGE:-mindmesh-api}:${IMAGE_TAG:-local}
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile.cloud
+    env_file: .env
+    restart: unless-stopped
+    expose: ["8000"]
+    networks: [private]
+    volumes: ["api_data:/app/data"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources: { limits: { cpus: "2.0", memory: 2G } }
+
+  worker:
+    image: ${WORKER_IMAGE:-mindmesh-worker}:${IMAGE_TAG:-local}
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile.worker
+    env_file: .env
+    environment:
+      WORKER_PROCESS: "true"
+    restart: unless-stopped
+    networks: [private]
+    volumes: ["worker_data:/app/data"]
+    deploy:
+      resources: { limits: { cpus: "3.0", memory: 5G } }
+
+networks:
+  public: {}
+  private:
+    internal: true
+
+volumes:
+  caddy_data: {}
+  caddy_config: {}
+  api_data: {}
+  worker_data: {}

@@ -10,6 +10,7 @@ mocked — used by the authorization and contract suites. No network, no DB.
 """
 from __future__ import annotations
 
+import os
 from collections.abc import AsyncIterator, Iterator
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
@@ -17,7 +18,14 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from app.core.config import get_settings
+# `app.main` builds its middleware stack at import time (module-level `app =
+# create_app()`), so the auth mode has to be pinned before any test module
+# imports it. backend/.env carries AUTH_ENABLED=true for the Android companion;
+# the default suite still exercises the anonymous local workspace. Set
+# AUTH_ENABLED explicitly in the process environment to opt out.
+os.environ.setdefault("AUTH_ENABLED", "false")
+
+from app.core.config import get_settings  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -103,6 +111,26 @@ def _rate_limits_off():
     yield
     settings.rate_limit_enabled = previous
     ratelimit.reset_for_tests()
+
+
+@pytest.fixture(autouse=True)
+def _anonymous_local_mode():
+    """Pin auth off so a developer's .env cannot change test results.
+
+    `get_settings()` reads backend/.env once. That file may carry
+    AUTH_ENABLED=true for the Android companion, which correctly turns every
+    unauthenticated route into a 401 — the default suite, though, exercises the
+    anonymous local-workspace API. Auth-enabled behaviour is covered
+    explicitly by test_auth_matrix.py / test_personal_workspace_auth.py and by
+    any test that sets `auth_enabled` itself.
+    """
+    from app.core.config import get_settings
+
+    settings = get_settings()
+    previous = settings.auth_enabled
+    settings.auth_enabled = False
+    yield
+    settings.auth_enabled = previous
 
 
 @pytest.fixture

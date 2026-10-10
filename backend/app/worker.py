@@ -30,6 +30,7 @@ def main():
 
         jobs_pg = _jobs_pg
     context = multiprocessing.get_context("spawn")
+    poll_seconds = cfg.worker_poll_seconds
     reconciled = 0.0
     while True:
         try:
@@ -41,12 +42,12 @@ def main():
                 # like the Redis loop, so crashes resolve through leases.
                 job_id = jobs_pg.peek_due()
                 if job_id is None:
-                    time.sleep(10)
+                    time.sleep(poll_seconds)
                     continue
             else:
                 due = jobs.client().zrangebyscore(jobs.QUEUE, 0, time.time(), start=0, num=1)
                 if not due:
-                    time.sleep(10)
+                    time.sleep(poll_seconds)
                     continue
                 job_id = due[0]
             process = context.Process(target=execute, args=(job_id,))
@@ -58,7 +59,7 @@ def main():
             process.close()
         except Exception:
             logger.warning("Worker iteration deferred")
-            time.sleep(10)
+            time.sleep(poll_seconds)
 
 
 if __name__ == "__main__":

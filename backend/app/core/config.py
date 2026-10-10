@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     qdrant_api_key: str = ""
     job_ttl_seconds: int = 604800
     worker_process: bool = False
+    worker_poll_seconds: int = 10
     # Job lifecycle store: redis (legacy/Modal), postgres (durable rows in
     # Supabase), gcp (Postgres rows + Cloud Tasks dispatch + Cloud Run Jobs).
     job_backend: str = "redis"
@@ -194,6 +195,8 @@ class Settings(BaseSettings):
             raise ValueError("EMBEDDING_PROVIDER must be ollama or gemini")
         if self.job_backend not in {"redis", "postgres", "gcp"}:
             raise ValueError("JOB_BACKEND must be redis, postgres or gcp")
+        if not 1 <= self.worker_poll_seconds <= 300:
+            raise ValueError("WORKER_POLL_SECONDS must be between 1 and 300")
         if self.mindmesh_execution_mode in {"modal", "cloud"}:
             from urllib.parse import urlparse
             if not all((self.supabase_url, self.supabase_anon_key, self.supabase_service_role_key,

@@ -36,14 +36,17 @@ async def health_detailed():
     checks: dict[str, str] = {"app": "ok"}
 
     if settings.mindmesh_execution_mode in {"modal", "cloud"}:
-        # Redis: job queue availability.
-        try:
-            from app.services.jobs import client as redis_client
+        # Redis is authoritative only for the legacy redis backend. AWS
+        # Postgres polling and GCP dispatch must not be marked unready just
+        # because they intentionally have no Redis service.
+        if settings.job_backend == "redis":
+            try:
+                from app.services.jobs import client as redis_client
 
-            await asyncio.to_thread(redis_client().ping)
-            checks["redis"] = "ok"
-        except Exception:  # noqa: BLE001
-            checks["redis"] = "error"
+                await asyncio.to_thread(redis_client().ping)
+                checks["redis"] = "ok"
+            except Exception:  # noqa: BLE001
+                checks["redis"] = "error"
         # Postgres: tenant/state store.
         try:
             from app.services.cloud_db import connect

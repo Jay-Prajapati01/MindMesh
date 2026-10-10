@@ -253,16 +253,20 @@ docker compose exec ollama ollama pull bge-m3
 
 ## 🛠️ Deployment
 
-Four supported deployment targets — pick what fits:
+Deployment options share one application codebase — pick the infrastructure adapter that fits:
 
 | Target | Command / Guide | Use for |
 |--------|-----------------|---------|
 | ☁️ **Live product** | [`DEPLOYMENT.md`](DEPLOYMENT.md) | Public MindMesh service |
+| 🟧 **AWS EC2 hybrid** | [`docs/AWS_DEPLOYMENT.md`](docs/AWS_DEPLOYMENT.md) | EC2 + Docker Compose + Caddy; external Supabase/Qdrant |
+| ☁️ **Google Cloud hybrid** | [`docs/GOOGLE_CLOUD_DEPLOYMENT.md`](docs/GOOGLE_CLOUD_DEPLOYMENT.md) | Cloud Run, Cloud Tasks, Cloud Run Jobs |
 | 🧠 **AI workers** | [`docs/MODAL_DEPLOYMENT.md`](docs/MODAL_DEPLOYMENT.md) | YouTube, PDF, and audio processing |
 
 > Production configs live in [`deploy/`](deploy/) (`docker-compose.prod.yml`,
 > `Caddyfile`, `.env.production.example`). Production mode requires
 > `MINDMESH_EXECUTION_MODE=modal` (see [`docs/MODAL_DEPLOYMENT.md`](docs/MODAL_DEPLOYMENT.md)).
+> For cloud mode, select AWS Postgres polling or GCP dispatch deliberately; see
+> [`docs/DEPLOYMENT_OPTIONS.md`](docs/DEPLOYMENT_OPTIONS.md).
 
 ---
 

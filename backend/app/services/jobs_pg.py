@@ -24,7 +24,6 @@ import uuid
 from app.core import metrics
 from app.core.config import get_settings
 from app.core.logging import get_logger
-from app.core.ratelimit import quota_hit
 from app.core.tenant import scope
 from app.services import cloud_db
 from app.services.jobs import LEASE, TERMINAL, QuotaExceeded
@@ -96,17 +95,34 @@ def owned(job_id: str) -> dict:
 def create(job_type: str, payload: dict, resource_id: str, idempotency_key: str = "") -> dict:
     owner = scope()
     settings = get_settings()
-    if idempotency_key == "":
-        allowed, used = quota_hit(owner.tenant_id, "jobs", 1, settings.max_jobs_per_tenant_per_day)
-        if not allowed:
-            metrics.inc("quota_rejected_total", kind="jobs")
-            raise QuotaExceeded(f"Daily job quota reached ({used})")
     fingerprint = hashlib.sha256(json.dumps([job_type, payload], sort_keys=True).encode()).hexdigest()
     identity = f"{owner.tenant_id}:{owner.user_id}:{idempotency_key}"
     job_id = str(uuid.uuid5(uuid.NAMESPACE_URL, identity)) if idempotency_key else str(uuid.uuid4())
     from psycopg.types.json import Jsonb
     with cloud_db.connect() as conn:
         with conn.cursor() as cur:
+            # Serialize a tenant's new-job admission. The previous Redis-only
+            # quota path skipped all idempotency-keyed requests, allowing an
+            # attacker to mint fresh keys and bypass the daily limit.
+            cur.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))", (owner.tenant_id,))
+            if idempotency_key:
+                cur.execute("SELECT fingerprint FROM public.mm_jobs WHERE job_id=%s", (job_id,))
+                existing = cur.fetchone()
+                if existing is not None:
+                    if existing[0] != fingerprint:
+                        raise ValueError("Idempotency key already used for another request")
+                    conn.commit()
+                    metrics.inc("jobs_enqueued_total", type=job_type)
+                    return raw(job_id)
+            if settings.max_jobs_per_tenant_per_day:
+                cur.execute(
+                    "SELECT count(*) FROM public.mm_jobs WHERE tenant_id=%s AND created_at >= date_trunc('day', now())",
+                    (owner.tenant_id,),
+                )
+                used = cur.fetchone()[0]
+                if used >= settings.max_jobs_per_tenant_per_day:
+                    metrics.inc("quota_rejected_total", kind="jobs")
+                    raise QuotaExceeded(f"Daily job quota reached ({used})")
             cur.execute(
                 """INSERT INTO public.mm_jobs(job_id, tenant_id, user_id, resource_id,
                        job_type, payload, fingerprint, status, attempts)

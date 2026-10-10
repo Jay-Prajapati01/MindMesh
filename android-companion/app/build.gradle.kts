@@ -61,4 +61,5 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation(libs.androidx.security)
     implementation(libs.kotlinx.coroutines.android)
+    testImplementation(libs.junit)
 }

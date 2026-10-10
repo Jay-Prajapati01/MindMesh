@@ -1,0 +1,63 @@
+name: Prepare AWS images
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Immutable image tag to build
+        required: true
+        default: manual
+      push:
+        description: Push images to ECR after OIDC authentication
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment: aws-staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Configure AWS credentials through OIDC
+        if: inputs.push
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Log in to ECR
+        if: inputs.push
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build API image
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          file: backend/Dockerfile.cloud
+          push: ${{ inputs.push }}
+          tags: ${{ inputs.push && format('{0}/mindmesh-api:{1}', steps.ecr.outputs.registry, inputs.image_tag) || format('mindmesh-api:{0}', inputs.image_tag) }}
+      - name: Build worker image
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          file: backend/Dockerfile.worker
+          push: ${{ inputs.push }}
+          tags: ${{ inputs.push && format('{0}/mindmesh-worker:{1}', steps.ecr.outputs.registry, inputs.image_tag) || format('mindmesh-worker:{0}', inputs.image_tag) }}
+      - name: Build frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          file: frontend/Dockerfile.prod
+          push: ${{ inputs.push }}
+          build-args: |
+            NEXT_PUBLIC_EXECUTION_MODE=cloud
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_SUPABASE_URL=${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${{ vars.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          tags: ${{ inputs.push && format('{0}/mindmesh-frontend:{1}', steps.ecr.outputs.registry, inputs.image_tag) || format('mindmesh-frontend:{0}', inputs.image_tag) }}
+
+# Intentionally no SSH/EC2 deployment step. Operator approval and the EC2 scripts control rollout.
