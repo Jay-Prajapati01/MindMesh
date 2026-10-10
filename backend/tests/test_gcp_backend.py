@@ -252,6 +252,8 @@ class _FakePG:
 
     def _run(self, sql, params=()):
         head = " ".join(sql.split())[:60]
+        if head.startswith("SELECT pg_advisory_xact_lock"):
+            return _FakeResult([(0,)])
         if head.startswith("SELECT job_id, tenant_id"):
             job = self.jobs.get(str(params[0]))
             return _FakeResult([self._row(job)] if job else [])
@@ -293,6 +295,9 @@ class _FakePG:
                    if j["status"] == "queued" and j.get("next_at", 0) <= time.time()]
             due.sort(key=lambda j: j.get("next_at", 0))
             return _FakeResult([(due[0]["job_id"],)] if due else [])
+        if head.startswith("SELECT count(*) FROM public.mm_jobs WHERE tenant_id"):
+            n = sum(1 for j in self.jobs.values() if j["tenant_id"] == str(params[0]))
+            return _FakeResult([(n,)])
         if head.startswith("SELECT count(*) FROM public.mm_jobs WHERE status NOT IN"):
             n = sum(1 for j in self.jobs.values() if j["status"] not in {"completed", "failed", "cancelled"})
             return _FakeResult([(n,)])
