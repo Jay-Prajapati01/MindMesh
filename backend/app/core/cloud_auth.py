@@ -54,6 +54,7 @@ class CloudAuthMiddleware:
             cfg.api_prefix + "/health",
             cfg.api_prefix + "/health/detailed",
             cfg.api_prefix + "/contact",
+            cfg.api_prefix + "/v1/public/plans",
         }:
             return await self.app(scope, receive, send)
         request = Request(scope, receive)

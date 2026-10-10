@@ -54,6 +54,8 @@ def _get_extract_document():
 
 @router.post("/process", response_model=SourceItem)
 async def process_pdf(file: UploadFile = File(...)) -> SourceItem:
+    from app.services.commerce import reserve
+    reserve("pdf")
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Please upload a .pdf file")
     data = await read_upload(file, get_settings().pdf_max_file_size)
@@ -82,6 +84,8 @@ async def process_pdf(file: UploadFile = File(...)) -> SourceItem:
 
 @router.post("/process/stream")
 async def process_pdf_stream(file: UploadFile = File(...)):
+    from app.services.commerce import reserve
+    reserve("pdf")
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Please upload a .pdf file")
     file_data = await read_upload(file, get_settings().pdf_max_file_size)

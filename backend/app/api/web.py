@@ -24,6 +24,8 @@ class WebRequest(BaseModel):
 
 @router.post("/process", response_model=SourceItem)
 async def process_web(payload: WebRequest) -> SourceItem:
+    from app.services.commerce import reserve
+    reserve("web")
     if web._is_youtube_video(payload.url):
         raise HTTPException(
             status_code=400,
@@ -44,6 +46,8 @@ async def process_web(payload: WebRequest) -> SourceItem:
 
 @router.post("/process/stream")
 async def process_web_stream(payload: WebRequest):
+    from app.services.commerce import reserve
+    reserve("web")
     async def event_generator():
         t0 = time.time()
         def ms(): return round((time.time() - t0) * 1000)

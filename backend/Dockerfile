@@ -17,9 +17,10 @@ RUN apt-get update \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Playwright and system dependencies for Crawl4AI
-RUN playwright install chromium \
-    && playwright install-deps chromium
+# Keep the Chromium binary outside root's home. The API runs as `appuser`, so
+# a browser installed in /root/.cache cannot be launched by Instagram scraping.
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN playwright install --with-deps chromium
 
 # Run Crawl4AI setup (fail loudly if it fails)
 RUN crawl4ai-setup
@@ -31,7 +32,7 @@ RUN groupadd --system --gid 1001 appgroup && \
 COPY . .
 
 # Ensure data dir is writable by appuser
-RUN mkdir -p /app/data && chown -R appuser:appgroup /app/data
+RUN mkdir -p /app/data && chown -R appuser:appgroup /app/data /ms-playwright
 
 EXPOSE 8000
 

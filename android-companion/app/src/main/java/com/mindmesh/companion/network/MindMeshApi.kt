@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import okhttp3.MultipartBody
 import okhttp3.Request
 import retrofit2.HttpException
 import retrofit2.Retrofit
@@ -14,12 +15,18 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.Multipart
+import retrofit2.http.Part
 import retrofit2.http.POST
 import retrofit2.http.Path
 
 data class QuickSaveRequest(val url: String)
-data class QuickSaveResponse(val item_id: String?, val job_id: String?, val status: String?)
+data class ResourceNotice(val provider: String?, val feature: String?, val plan: String?)
+data class QuickSaveResponse(val item_id: String?, val job_id: String?, val status: String?, val resource_notice: ResourceNotice? = null)
 data class QuickSaveStatus(val job_id: String?, val status: String?, val error: ErrorBody? = null)
+data class UsageLimit(val used: Int, val limit: Int, val remaining: Int)
+data class EntitlementsResponse(val role: String, val base_plan: String, val effective_plan: String, val ai_mode: String, val usage: Map<String, UsageLimit>)
+data class UploadResponse(val source_id: String?, val title: String?)
 data class ErrorBody(val message: String?)
 data class ApiError(val detail: String?, val errorCode: String?)
 
@@ -29,6 +36,17 @@ interface MindMeshApi {
 
     @GET("mobile/quick-saves/{jobId}")
     suspend fun status(@Path("jobId") jobId: String): QuickSaveStatus
+
+    @GET("v1/me/entitlements")
+    suspend fun entitlements(): EntitlementsResponse
+
+    @Multipart
+    @POST("documents/process")
+    suspend fun uploadDocument(@Part file: MultipartBody.Part): UploadResponse
+
+    @Multipart
+    @POST("audio/process")
+    suspend fun uploadAudio(@Part file: MultipartBody.Part): UploadResponse
 
     companion object {
         private val gson = Gson()
@@ -62,9 +80,11 @@ fun HttpException.apiError(): ApiError = runCatching {
     else {
         @Suppress("UNCHECKED_CAST")
         val json = Gson().fromJson(raw, Map::class.java) as? Map<*, *>
+        val detailValue = json?.get("detail")
+        val detailObject = detailValue as? Map<*, *>
         ApiError(
-            detail = (json?.get("detail") as? String) ?: (json?.get("message") as? String) ?: json?.get("msg") as? String,
-            errorCode = json?.get("error_code") as? String,
+            detail = (detailValue as? String) ?: (detailObject?.get("message") as? String) ?: (json?.get("message") as? String) ?: json?.get("msg") as? String,
+            errorCode = (json?.get("error_code") as? String) ?: detailObject?.get("code") as? String,
         )
     }
 }.getOrDefault(ApiError(null, null))
@@ -102,9 +122,14 @@ object BackendHealth {
                 Status.Online(version)
             }
         } catch (error: Exception) {
+            val endpointHint = when {
+                BuildConfig.API_BASE_URL.contains("127.0.0.1") || BuildConfig.API_BASE_URL.contains("localhost") ->
+                    " Android loopback only reaches this device. Use 10.0.2.2 for the Android Emulator, or adb reverse / a reachable LAN HTTPS URL for a phone."
+                else -> ""
+            }
             Status.Unreachable(
                 "Backend not reachable at ${BuildConfig.API_BASE_URL} (${error.javaClass.simpleName}). " +
-                    "Start it locally or fix MINDMESH_API_BASE_URL.",
+                    "Start it locally or fix MINDMESH_API_BASE_URL.$endpointHint",
             )
         }
     }

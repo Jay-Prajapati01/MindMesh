@@ -18,7 +18,7 @@ export const api = axios.create({
 api.interceptors.request.use(async (config) => {
   // Public endpoints (e.g. the contact form) must work signed-out — the auth
   // helper intentionally throws when there is no session, so bypass it there.
-  if ((config.url ?? "").startsWith("/contact")) return config;
+  if ((config.url ?? "").startsWith("/contact") || (config.url ?? "").startsWith("/v1/public/")) return config;
   Object.assign(config.headers, await authHeaders());
   const state = useAppStore.getState();
   if (state.settings.apiKey) {

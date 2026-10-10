@@ -6,6 +6,9 @@ services:
       - ./backend/.env
     environment:
       AUTH_ENABLED: "true"
+      # Persist the browser outside the container layer. The backend runs as
+      # appuser, so this is also the location Playwright must use at runtime.
+      PLAYWRIGHT_BROWSERS_PATH: /home/appuser/.cache/ms-playwright
       # Supabase credentials come from backend/.env (single source of truth).
     ports:
       # Loopback-only: never expose the (unauthenticated in dev) API to the LAN.
@@ -18,7 +21,13 @@ services:
     volumes:
       - ./backend:/app
       - backend_data:/app/data
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      - playwright_browsers:/home/appuser/.cache/ms-playwright
+    # A Docker recreate used to discard the manually downloaded Chromium
+    # binary and made Instagram saves fail. Populate the named volume once,
+    # then launch the API as the same non-root user that runs the scraper.
+    command: >
+      sh -c 'if ! find "$${PLAYWRIGHT_BROWSERS_PATH}" -maxdepth 1 -type d -name "chromium-*" -print -quit | grep -q .; then playwright install chromium; fi;
+      exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload'
 
   frontend:
     build: ./frontend
@@ -57,4 +66,6 @@ volumes:
   qdrant_storage:
     driver: local
   backend_data:
+    driver: local
+  playwright_browsers:
     driver: local

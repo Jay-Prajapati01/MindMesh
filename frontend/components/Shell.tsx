@@ -11,7 +11,7 @@ import { CommandPalette } from "./dashboard/CommandPalette";
 import { useAppStore } from "@/lib/store";
 import { applyThemeToDOM, applyAccentToDOM, applyDensityToDOM } from "./ThemeEffect";
 
-const CHROMELESS_ROUTES = ["/", "/contact", "/login", "/signup", "/forgot-password", "/reset-password"];
+const CHROMELESS_ROUTES = ["/", "/contact", "/pricing", "/login", "/signup", "/forgot-password", "/reset-password"];
 const NAV_COLLAPSED_KEY = "mindmesh-nav-collapsed";
 
 export function Shell({ children }: { children: React.ReactNode }) {
@@ -74,13 +74,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setOpen(false)}
           />
-          <div className="absolute left-0 top-0 h-full w-56 border-r-2 border-ink bg-card shadow-brut-lg">
+          <div className="absolute left-0 top-0 h-full w-[min(18rem,calc(100vw-2rem))] border-r-2 border-ink bg-card shadow-brut-lg">
             <Nav onNavigate={() => setOpen(false)} />
           </div>
         </div>
       )}
 
-      <div className="flex flex-1 flex-col min-w-0">
+      <div className="flex min-w-0 flex-1 flex-col">
         {/* Mobile top bar */}
         <header className="flex items-center gap-3 border-b-2 border-ink bg-card px-4 py-3 md:hidden">
           <button onClick={() => setOpen((v) => !v)} aria-label="Toggle menu" className="text-foreground">
@@ -97,7 +97,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-8">{children}</main>
+        <main className="flex-1 p-3 sm:p-6 lg:p-8">{children}</main>
       </div>
 
       {/* Global command palette (Ctrl+K) — available on every app page */}

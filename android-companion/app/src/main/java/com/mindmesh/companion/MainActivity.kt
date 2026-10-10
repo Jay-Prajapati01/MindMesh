@@ -5,6 +5,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import com.mindmesh.companion.share.SharedUrlParser
 import com.mindmesh.companion.ui.MindMeshApp
 import com.mindmesh.companion.ui.theme.MindMeshTheme
@@ -21,7 +23,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         handle(intent)
         setContent {
-            MindMeshTheme {
+            val darkTheme by viewModel.darkTheme.collectAsState()
+            MindMeshTheme(darkTheme) {
                 MindMeshApp(viewModel)
             }
         }

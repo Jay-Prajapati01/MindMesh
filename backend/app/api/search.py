@@ -54,6 +54,13 @@ async def search(payload: SearchRequest) -> SearchResponse:
             sources_searched=0,
         )
 
+    from app.services.commerce import CommerceError, reserve
+    try:
+        reserve("search")
+    except CommerceError as exc:
+        from fastapi import HTTPException
+        raise HTTPException(exc.status, {"code": exc.code, "message": str(exc)}) from None
+
     store.add_search(query)
     start = time.time()
     vector = await embeddings.embed_text(query, purpose="query")

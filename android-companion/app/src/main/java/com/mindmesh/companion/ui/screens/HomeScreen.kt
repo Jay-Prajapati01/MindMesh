@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,10 +17,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
@@ -31,6 +34,8 @@ import com.mindmesh.companion.AuthUiState
 import com.mindmesh.companion.BuildConfig
 import com.mindmesh.companion.MainViewModel
 import com.mindmesh.companion.UiNotice
+import com.mindmesh.companion.UploadKind
+import com.mindmesh.companion.UploadState
 import com.mindmesh.companion.data.QuickSave
 import com.mindmesh.companion.data.SaveStates
 import com.mindmesh.companion.network.BackendHealth
@@ -43,6 +48,7 @@ import com.mindmesh.companion.ui.components.BrutTextField
 import com.mindmesh.companion.ui.components.Eyebrow
 import com.mindmesh.companion.ui.components.NoticeBanner
 import com.mindmesh.companion.ui.components.StatusPill
+import com.mindmesh.companion.ui.components.ThemeToggle
 import com.mindmesh.companion.ui.theme.MindMeshColors
 import com.mindmesh.companion.ui.theme.MonoStyle
 import com.mindmesh.companion.util.RelativeTime
@@ -52,12 +58,20 @@ import com.mindmesh.companion.util.RelativeTime
  * real backend status without leaving the app.
  */
 @Composable
-fun HomeScreen(vm: MainViewModel) {
+fun HomeScreen(vm: MainViewModel, darkTheme: Boolean) {
     val auth by vm.auth.collectAsState()
     val saves by vm.saves.collectAsState()
     val draft by vm.draftUrl.collectAsState()
     val backend by vm.backend.collectAsState()
     val notice by vm.notice.collectAsState()
+    val entitlements by vm.entitlements.collectAsState()
+    val upload by vm.upload.collectAsState()
+    val documentPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let { vm.uploadFile(it, UploadKind.DOCUMENT) }
+    }
+    val audioPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let { vm.uploadFile(it, UploadKind.AUDIO) }
+    }
 
     val email = (auth as? AuthUiState.SignedIn)?.email
     val needsSignIn = saves.any { it.state == SaveStates.AUTH_ERROR }
@@ -71,24 +85,52 @@ fun HomeScreen(vm: MainViewModel) {
             .fillMaxSize()
             .background(MindMeshColors.Paper)
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 22.dp),
+            .padding(horizontal = 16.dp, vertical = 18.dp),
     ) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            BrandHeader(Modifier.weight(1f), subtitle = email ?: "Signed in")
-            BrutButton("Sign out", style = BrutButtonStyle.SECONDARY, compact = true, onClick = { vm.signOut() })
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val narrow = maxWidth < 390.dp
+            if (narrow) {
+                Column(Modifier.fillMaxWidth()) {
+                    BrandHeader(Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(12.dp))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        ThemeToggle(darkTheme = darkTheme, onToggle = vm::toggleTheme)
+                        BrutButton("Sign out", style = BrutButtonStyle.SECONDARY, compact = true, onClick = { vm.signOut() })
+                    }
+                }
+            } else {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    BrandHeader(Modifier.weight(1f))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ThemeToggle(darkTheme = darkTheme, onToggle = vm::toggleTheme)
+                        BrutButton("Sign out", style = BrutButtonStyle.SECONDARY, compact = true, onClick = { vm.signOut() })
+                    }
+                }
+            }
         }
 
         Spacer(Modifier.height(12.dp))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                email ?: "Your account",
-                style = MaterialTheme.typography.bodySmall,
-                color = MindMeshColors.InkMuted,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp),
-            )
-            BackendChip(backend, onRecheck = vm::checkBackend)
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val narrow = maxWidth < 390.dp
+            if (narrow) {
+                Column(Modifier.fillMaxWidth()) {
+                    Text(email ?: "Your account", style = MaterialTheme.typography.bodySmall, color = MindMeshColors.InkMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Spacer(Modifier.height(6.dp))
+                    BackendChip(backend, onRecheck = vm::checkBackend)
+                }
+            } else {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        email ?: "Your account",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MindMeshColors.InkMuted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp),
+                    )
+                    BackendChip(backend, onRecheck = vm::checkBackend)
+                }
+            }
         }
         val backendProblem = when (val status = backend) {
             is BackendHealth.Status.Unreachable -> status.reason
@@ -108,6 +150,22 @@ fun HomeScreen(vm: MainViewModel) {
             )
             Spacer(Modifier.height(8.dp))
             BrutButton("Sign in again", style = BrutButtonStyle.SECONDARY, compact = true, onClick = { vm.signOut("Session expired — sign in again to keep syncing.") })
+        }
+
+        entitlements?.let { account ->
+            Spacer(Modifier.height(14.dp))
+            BrutCard(Modifier.fillMaxWidth()) {
+                Eyebrow("Your MindMesh account")
+                Spacer(Modifier.height(6.dp))
+                Text("${account.effective_plan.replaceFirstChar { it.uppercase() }} plan", style = MaterialTheme.typography.titleLarge, color = MindMeshColors.Ink)
+                Spacer(Modifier.height(4.dp))
+                Text(if (account.ai_mode == "byok") "Your connected AI key is active for selected tasks." else "MindMesh managed resources are active.", style = MaterialTheme.typography.bodyMedium, color = MindMeshColors.InkMuted)
+                Spacer(Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    StatusPill("${account.usage["web"]?.remaining ?: 0} web left", MindMeshColors.InfoSoft, MindMeshColors.Info)
+                    StatusPill("${account.usage["instagram"]?.remaining ?: 0} reels left", MindMeshColors.SuccessSoft, MindMeshColors.Success)
+                }
+            }
         }
 
         notice?.let {
@@ -138,6 +196,38 @@ fun HomeScreen(vm: MainViewModel) {
             )
             Spacer(Modifier.height(14.dp))
             BrutButton("Save to MindMesh", onClick = vm::saveDraft, enabled = draft.isNotBlank())
+        }
+
+        Spacer(Modifier.height(16.dp))
+        BrutCard(Modifier.fillMaxWidth()) {
+            Eyebrow("Upload to save")
+            Spacer(Modifier.height(8.dp))
+            Text("Add a document or audio file", style = MaterialTheme.typography.titleLarge, color = MindMeshColors.Ink)
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "Choose a file from your phone. It is processed directly into this same MindMesh account and appears in your web workspace.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MindMeshColors.InkMuted,
+            )
+            Spacer(Modifier.height(14.dp))
+            BrutButton("Upload document", onClick = { documentPicker.launch(arrayOf("application/pdf", "text/plain", "text/markdown", "text/csv", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.openxmlformats-officedocument.presentationml.presentation", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) }, enabled = upload !is UploadState.Uploading)
+            Spacer(Modifier.height(10.dp))
+            BrutButton("Upload audio", style = BrutButtonStyle.SECONDARY, onClick = { audioPicker.launch(arrayOf("audio/*")) }, enabled = upload !is UploadState.Uploading)
+            when (val current = upload) {
+                is UploadState.Uploading -> {
+                    Spacer(Modifier.height(12.dp))
+                    Text("Uploading ${current.name}…", style = MaterialTheme.typography.bodySmall, color = MindMeshColors.Info)
+                }
+                is UploadState.Complete -> {
+                    Spacer(Modifier.height(12.dp))
+                    Text("Saved ${current.title ?: current.name} to your workspace.", style = MaterialTheme.typography.bodySmall, color = MindMeshColors.Success)
+                }
+                is UploadState.Failed -> {
+                    Spacer(Modifier.height(12.dp))
+                    Text("${current.name}: ${current.message}", style = MaterialTheme.typography.bodySmall, color = MindMeshColors.Danger)
+                }
+                UploadState.Idle -> Unit
+            }
         }
 
         if (saves.isNotEmpty()) {

@@ -39,6 +39,12 @@ async def chat(payload: ChatRequest) -> ChatResponse:
             sources_searched=0,
         )
 
+    from app.services.commerce import CommerceError, reserve
+    try:
+        reserve("chat")
+    except CommerceError as exc:
+        raise HTTPException(exc.status, {"code": exc.code, "message": str(exc)}) from None
+
     store.add_question(payload.question)
     answer, citations, metrics = await rag.answer(
         payload.question,

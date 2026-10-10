@@ -337,6 +337,7 @@ type-checking, linting, and a production build. See
 
 ```
 MindMesh/
+├── .github/workflows/    ✅ GitHub CI and manual cloud build workflows
 ├── backend/              ⚙️  FastAPI service
 │   ├── app/
 │   │   ├── api/          REST endpoints (15+ routers, incl. cloud jobs)
@@ -350,15 +351,25 @@ MindMesh/
 │   ├── components/       60+ reusable components
 │   ├── hooks/            Custom React hooks
 │   └── lib/              API client, auth, utilities
+├── android-companion/    📱 Native Kotlin + Jetpack Compose companion
+│   ├── app/              Android application source and resources
+│   ├── scripts/          USB development installer
+│   └── companion.properties.example  Local configuration template
 ├── workers/              🧠 Modal serverless AI workers
 ├── supabase/migrations/  🗄️  SQL migrations (cloud workers, normalized state)
 ├── deploy/               🚀 Deployment configs (dev/prod/cloud + hf-spaces/)
 │   └── hf-spaces/        🤗 Hugging Face Space worker (Docker, port 7860)
 ├── scripts/              🛠️  ops scripts (purge_tenant.py, migrate_cloud.py, qa/)
 ├── docs/                 📚 Architecture, security, runbooks, QA, screenshots
+├── supabase/             🗄️  Auth, tenancy, commerce, and admin migrations
 ├── docker-compose.yml    🐳 Full stack orchestration
-└── .gitlab-ci.yml        GitLab CI pipeline
+├── website + companion app manual testing.md  Manual release checklist
+└── .gitignore            🔒 Keeps secrets, runtime data, caches, and builds out of Git
 ```
+
+Android APKs, generated Android artifacts, runtime data, local environment
+files, and build caches are deliberately excluded from Git. The current local
+debug APK is kept under `android-companion/artifacts/` for device installation.
 
 ## ⚙️ Configuration
 

@@ -12,6 +12,9 @@ desktop.ini
 !.env.example
 !*.env.example
 !deploy/.env.*.example
+# Created locally by the administrator provisioning script. It contains a
+# password and one-time promo codes and must never be committed.
+admin-portal-test-credentials.md
 
 # ---------- Python ----------
 __pycache__/
@@ -84,6 +87,8 @@ google-services.json
 # Build outputs and Gradle caches.
 *.apk
 *.aab
+android-companion/artifacts/
+android-companion/native-assemble-debug.log
 .gradle/
 .kotlin/
 build/

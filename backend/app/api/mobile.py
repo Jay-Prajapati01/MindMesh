@@ -28,15 +28,27 @@ async def quick_save(payload: QuickSaveRequest, request: Request):
     if not idempotency or len(idempotency) > 128:
         raise HTTPException(400, "A stable Idempotency-Key is required")
     kind = _kind(payload.url)
+    from app.services.commerce import CommerceError, reserve, provider_mode
+    resource_notice = {"provider": provider_mode(), "feature": {"videos": "youtube", "instagram": "instagram", "web": "web"}[kind]}
     if get_settings().mindmesh_execution_mode in {"modal", "cloud"}:
+        try:
+            resource_notice = reserve(resource_notice["feature"], idempotency)
+        except CommerceError as exc:
+            raise HTTPException(exc.status, {"code": exc.code, "message": str(exc)}) from None
         from app.api.cloud_jobs import enqueue_payload
         job = await enqueue_payload(kind, {"url": payload.url}, idempotency)
-        return {"item_id": job["resource_id"], "job_id": job["job_id"], "status": job["status"]}
+        return {"item_id": job["resource_id"], "job_id": job["job_id"], "status": job["status"], "resource_notice": resource_notice}
     from app.services import mobile_saves
-    job = mobile_saves.create(kind, payload.url, idempotency)
+    job, is_new = mobile_saves.create(kind, payload.url, idempotency)
+    if is_new:
+        try:
+            resource_notice = reserve(resource_notice["feature"], idempotency)
+        except CommerceError as exc:
+            mobile_saves.remove(job["job_id"])
+            raise HTTPException(exc.status, {"code": exc.code, "message": str(exc)}) from None
     if job["status"] == "queued":
         mobile_saves.schedule(job["job_id"])
-    return {"item_id": job["job_id"], "job_id": job["job_id"], "status": job["status"]}
+    return {"item_id": job["job_id"], "job_id": job["job_id"], "status": job["status"], "resource_notice": resource_notice}
 
 
 @router.get("/quick-saves/{job_id}")
@@ -49,7 +61,7 @@ async def quick_save_status(job_id: str):
             raise HTTPException(404, "Save not found") from None
     from app.services import mobile_saves
     try:
-        job = mobile_saves.owned(job_id)
+        job = mobile_saves.recover_orphaned(job_id)
         if job["status"] == "queued":
             mobile_saves.schedule(job_id)
         return job

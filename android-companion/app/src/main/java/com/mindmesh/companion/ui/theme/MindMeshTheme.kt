@@ -4,7 +4,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -14,14 +17,16 @@ import androidx.compose.ui.unit.sp
 
 /** Print-brutalism palette, mirrored from the MindMesh website (frontend/app/globals.css). */
 object MindMeshColors {
-    val Paper = Color(0xFFFFF6E9)
-    val PaperAlt = Color(0xFFF7EBDC)
-    val PaperCard = Color(0xFFEEE0CA)
-    val Ink = Color(0xFF111111)
-    val InkMuted = Color(0xFF5E4837)
+    private val darkMode = mutableStateOf(false)
+    internal fun applyMode(isDark: Boolean) { darkMode.value = isDark }
+    val Paper get() = if (darkMode.value) Color(0xFF15110F) else Color(0xFFFFF6E9)
+    val PaperAlt get() = if (darkMode.value) Color(0xFF211914) else Color(0xFFF7EBDC)
+    val PaperCard get() = if (darkMode.value) Color(0xFF32261F) else Color(0xFFEEE0CA)
+    val Ink get() = if (darkMode.value) Color(0xFFFFF6E9) else Color(0xFF111111)
+    val InkMuted get() = if (darkMode.value) Color(0xFFE6D1BE) else Color(0xFF5E4837)
     val Orange = Color(0xFFFF5A00)
     val OrangeHover = Color(0xFFE34B00)
-    val Sheet = Color(0xFFFFFFFF)
+    val Sheet get() = if (darkMode.value) Color(0xFF211914) else Color(0xFFFFFFFF)
     val Success = Color(0xFF168A4A)
     val SuccessSoft = Color(0xFFE4F3E9)
     val Warning = Color(0xFFB96A00)
@@ -63,9 +68,16 @@ val MonoStyle = TextStyle(
 )
 
 @Composable
-fun MindMeshTheme(content: @Composable () -> Unit) {
+fun MindMeshTheme(darkTheme: Boolean = false, content: @Composable () -> Unit) {
+    SideEffect { MindMeshColors.applyMode(darkTheme) }
     MaterialTheme(
-        colorScheme = lightColorScheme(
+        colorScheme = if (darkTheme) darkColorScheme(
+            primary = MindMeshColors.Orange, onPrimary = MindMeshColors.Ink,
+            background = Color(0xFF15110F), onBackground = Color(0xFFFFF6E9),
+            surface = Color(0xFF211914), onSurface = Color(0xFFFFF6E9),
+            surfaceVariant = Color(0xFF32261F), onSurfaceVariant = Color(0xFFE6D1BE),
+            outline = Color(0xFFFFF6E9), error = MindMeshColors.Danger,
+        ) else lightColorScheme(
             primary = MindMeshColors.Orange,
             onPrimary = MindMeshColors.Ink,
             primaryContainer = MindMeshColors.Orange,

@@ -223,6 +223,11 @@ export function Stats() {
   );
 }
 
+export function PricingTeaser() {
+  const plans = [["Free", "₹0", "Capture the essentials"], ["Plus", "₹299", "Build a serious knowledge habit"], ["Pro", "₹799", "Go deeper across every source"]];
+  return <section id="pricing" className="px-4 py-24"><div className="mx-auto max-w-6xl"><Label>Simple plans</Label><div className="mt-4 flex flex-col justify-between gap-4 md:flex-row md:items-end"><h2 className="font-display max-w-3xl uppercase leading-[.9] text-[clamp(3rem,7vw,6rem)]">Grow with your <span className="text-orange">knowledge.</span></h2><Link href="/pricing" className="brut-btn h-fit bg-orange px-5 py-3 font-bold">See all plans <ArrowRight className="inline h-4 w-4" /></Link></div><div className="mt-8 grid gap-4 md:grid-cols-3">{plans.map(([name,price,description])=><article key={name} className={`brut p-6 ${name === "Pro" ? "bg-ink text-paper" : "bg-card"}`}><p className="font-mono text-xs font-bold uppercase tracking-widest text-orange">{name}</p><p className="mt-2 text-4xl font-black">{price}<span className="text-sm font-normal">/mo</span></p><p className="mt-3 text-sm">{description}</p></article>)}</div></div></section>;
+}
+
 export function FinalCTA() {
   return (
     <section className="border-t-2 border-ink bg-paper-alt px-4 py-32 text-center">
@@ -259,11 +264,11 @@ export function Footer() {
 
 export function Logo() {
   return (
-    <Link href="/" className="flex items-center gap-2">
+    <Link href="/" className="flex min-w-0 items-center gap-2">
       <span className="grid h-9 w-9 place-items-center overflow-hidden rounded-lg bg-[#111]">
         <Image src="/logo.png" alt="" width={36} height={36} className="h-full w-full object-contain p-1" />
       </span>
-      <span className="text-xl font-extrabold tracking-tight">MindMesh</span>
+      <span className="truncate text-lg font-extrabold tracking-tight sm:text-xl">MindMesh</span>
     </Link>
   );
 }
@@ -272,14 +277,15 @@ export function Navbar() {
   const { session, displayName, initials } = useIdentity();
   return (
     <header className="sticky top-0 z-50 h-16 border-b-2 border-ink bg-paper/80 backdrop-blur-md">
-      <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4">
+      <div className="mx-auto flex h-full max-w-7xl items-center justify-between gap-2 px-3 sm:gap-4 sm:px-4">
         <Logo />
         <nav className="hidden items-center gap-8 text-sm font-bold lg:flex">
           {[["Features", "/#features"], ["How it works", "/#how"], ["Graph", "/#graph"], ["Your Workspace", "/#your-workspace"]].map(([l, h]) => (
             <a key={l} href={h} className="hover:text-orange">{l}</a>
           ))}
+          <Link href="/pricing" className="hover:text-orange">Pricing</Link>
         </nav>
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
           <ThemeToggle />
           {session ? (
             <>
@@ -295,8 +301,8 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <Link href="/login" className="text-sm font-bold hover:text-orange">Sign in</Link>
-              <Link href="/signup" className="brut-btn rounded-xl bg-orange px-3 py-2 text-sm font-bold hover:bg-orange-hover">Get Started</Link>
+              <Link href="/login" className="hidden text-sm font-bold hover:text-orange min-[420px]:block">Sign in</Link>
+              <Link href="/signup" className="brut-btn rounded-xl bg-orange px-2.5 py-2 text-xs font-bold hover:bg-orange-hover sm:px-3 sm:text-sm">Get Started</Link>
             </>
           )}
           <ContactWithPass />
@@ -322,7 +328,7 @@ function ContactWithPass() {
   const contact = useCallback(() => { router.push("/contact"); }, [router]);
   return (
     <div className="relative">
-      <Link href="/contact" className="brut-btn relative z-10 flex items-center rounded-xl bg-paper px-3 py-2 text-sm font-bold">Contact</Link>
+      <Link href="/contact" className="brut-btn relative z-10 flex items-center rounded-xl bg-paper px-2.5 py-2 text-xs font-bold sm:px-3 sm:text-sm">Contact</Link>
       {show && !onContact && <Suspense fallback={null}><LanyardPass onTap={contact} /></Suspense>}
     </div>
   );

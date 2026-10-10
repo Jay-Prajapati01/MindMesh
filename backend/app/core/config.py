@@ -47,6 +47,16 @@ class Settings(BaseSettings):
     xai_model: str = ""
     groq_api_key: str = ""
     groq_model: str = "llama-3.1-8b-instant"
+    # Commerce and BYOK secrets stay server-only. BYOK_ENCRYPTION_KEY is a
+    # base64url-encoded 32-byte AES-256 key from Secret Manager; never a
+    # NEXT_PUBLIC value or a checked-in development default.
+    byok_encryption_key: str = ""
+    promo_hmac_pepper: str = ""
+    owner_bootstrap_user_id: str = ""
+    razorpay_key_id: str = ""
+    razorpay_key_secret: str = ""
+    razorpay_webhook_secret: str = ""
+    payments_enabled: bool = False
     groq_whisper_model: str = "whisper-large-v3-turbo"
 
     # Security — when set (any environment), mutating endpoints require a

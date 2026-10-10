@@ -20,6 +20,8 @@ class InstagramRequest(BaseModel):
 
 @router.post("/process", response_model=SourceItem)
 async def process_instagram(payload: InstagramRequest) -> SourceItem:
+    from app.services.commerce import reserve
+    reserve("instagram")
     """Ingest an Instagram post/reel: caption, OCR, and speech."""
     try:
         post = instagram.fetch_post(payload.url)
@@ -42,6 +44,8 @@ async def process_instagram(payload: InstagramRequest) -> SourceItem:
 
 @router.post("/process/stream")
 async def process_instagram_stream(payload: InstagramRequest):
+    from app.services.commerce import reserve
+    reserve("instagram")
     """Ingest an Instagram post/reel with real-time SSE progress events."""
 
     async def event_generator():

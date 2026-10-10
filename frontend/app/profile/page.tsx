@@ -5,6 +5,7 @@ import { BadgeCheck, Building2, CalendarDays, CheckCircle2, Globe2, Mail, MapPin
 import { useAuth } from "@/components/CloudAuthGate";
 import { getSupabase } from "@/lib/supabaseClient";
 import { useToast } from "@/components/ui";
+import { getEntitlement, type Entitlement } from "@/lib/commerce";
 
 type ProfileData = {
   full_name: string;
@@ -31,6 +32,7 @@ export default function ProfilePage() {
   const user = session?.user;
   const [profile, setProfile] = useState<ProfileData>(emptyProfile);
   const [saving, setSaving] = useState(false);
+  const [entitlement, setEntitlement] = useState<Entitlement | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -45,6 +47,7 @@ export default function ProfilePage() {
       bio: metadataValue(metadata, "bio"),
     });
   }, [user]);
+  useEffect(() => { if (user) getEntitlement().then(setEntitlement).catch(() => undefined); }, [user]);
 
   const displayName = profile.preferred_name || profile.full_name || user?.email?.split("@")[0] || "Member";
   const initials = useMemo(() => displayName.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join("").toUpperCase(), [displayName]);
@@ -76,7 +79,7 @@ export default function ProfilePage() {
         <h1 className="mt-1 truncate text-3xl font-extrabold">{displayName}</h1>
         <p className="mt-1 flex items-center gap-2 text-sm text-muted"><Mail className="h-4 w-4" />{user.email}</p>
       </div>
-      <div className="flex items-center gap-2 rounded-full border-2 border-ink bg-surface px-3 py-2 text-sm font-bold"><ShieldCheck className="h-4 w-4 text-brand" />Personal workspace</div>
+      <div className="flex items-center gap-2 rounded-full border-2 border-ink bg-surface px-3 py-2 text-sm font-bold"><ShieldCheck className="h-4 w-4 text-brand" /><span className="capitalize">{entitlement?.effective_plan || "Free"} plan</span></div>
     </div>
 
     <div className="grid gap-6 lg:grid-cols-[1fr_290px]">
@@ -99,6 +102,7 @@ export default function ProfilePage() {
         <InfoCard icon={BadgeCheck} label="Email status" value={user.email_confirmed_at ? "Confirmed" : "Confirmation pending"} />
         <InfoCard icon={CalendarDays} label="Member since" value={joined} />
         <InfoCard icon={CheckCircle2} label="Last sign in" value={lastSignIn} />
+        <InfoCard icon={ShieldCheck} label="Current plan" value={entitlement ? `${entitlement.effective_plan} · ${entitlement.ai_mode === "byok" ? "Your AI key" : "MindMesh managed"}` : "Free"} />
         {(profile.organization || profile.role || profile.location || profile.website) && <div className="rounded-2xl border-2 border-ink bg-card p-5 shadow-card"><p className="font-mono text-xs font-bold uppercase tracking-widest text-muted">Profile summary</p>{profile.organization && <p className="mt-3 flex gap-2 text-sm"><Building2 className="h-4 w-4 shrink-0" />{profile.organization}{profile.role && ` · ${profile.role}`}</p>}{profile.location && <p className="mt-3 flex gap-2 text-sm"><MapPin className="h-4 w-4 shrink-0" />{profile.location}</p>}{profile.website && <p className="mt-3 flex gap-2 break-all text-sm"><Globe2 className="h-4 w-4 shrink-0" />{profile.website}</p>}</div>}
       </aside>
     </div>

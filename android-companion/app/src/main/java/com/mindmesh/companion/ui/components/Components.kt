@@ -14,8 +14,10 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -85,6 +87,62 @@ fun BrutCard(
 }
 
 enum class BrutButtonStyle { PRIMARY, SECONDARY, GHOST }
+
+/** A two-position theme control sized to stay clear of adjacent account actions. */
+@Composable
+fun ThemeToggle(
+    darkTheme: Boolean,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val thumbOffset by animateDpAsState(if (darkTheme) 72.dp else 2.dp, label = "themeThumb")
+    val track = if (darkTheme) MindMeshColors.Ink else MindMeshColors.PaperCard
+    val inactive = if (darkTheme) MindMeshColors.PaperCard else MindMeshColors.InkMuted
+    val thumb = if (darkTheme) MindMeshColors.PaperCard else MindMeshColors.Ink
+    val thumbText = if (darkTheme) MindMeshColors.Ink else MindMeshColors.PaperCard
+
+    Box(
+        modifier
+            .width(136.dp)
+            .height(48.dp),
+    ) {
+        Box(
+            Modifier
+                .matchParentSize()
+                .padding(start = 4.dp, top = 4.dp)
+                .background(MindMeshColors.Ink, ControlShape),
+        )
+        Box(
+            Modifier
+                .matchParentSize()
+                .background(track, ControlShape)
+                .border(2.dp, MindMeshColors.Ink, ControlShape)
+                .clickable(onClick = onToggle),
+        ) {
+            Box(
+                Modifier
+                    .align(Alignment.CenterStart)
+                    .offset(x = thumbOffset)
+                    .width(62.dp)
+                    .fillMaxHeight()
+                    .padding(4.dp)
+                    .background(thumb, RoundedCornerShape(9.dp)),
+            )
+            Text(
+                "Light",
+                style = MaterialTheme.typography.labelMedium,
+                color = if (darkTheme) inactive else thumbText,
+                modifier = Modifier.align(Alignment.CenterStart).padding(start = 12.dp),
+            )
+            Text(
+                "Dark",
+                style = MaterialTheme.typography.labelMedium,
+                color = if (darkTheme) thumbText else inactive,
+                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 12.dp),
+            )
+        }
+    }
+}
 
 /** Pressable button that sinks into its hard shadow, like the website's brut-btn. */
 @Composable
@@ -263,12 +321,14 @@ fun BrandHeader(modifier: Modifier = Modifier, subtitle: String? = null) {
                 .clip(RoundedCornerShape(11.dp)),
         )
         Spacer(Modifier.width(12.dp))
-        Column {
+        Column(Modifier.weight(1f)) {
             Text(
                 "MindMesh",
                 style = MaterialTheme.typography.titleLarge,
                 color = MindMeshColors.Ink,
                 fontWeight = FontWeight.Black,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
             if (subtitle != null) {
                 Text(subtitle, style = MaterialTheme.typography.labelMedium, color = MindMeshColors.InkMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)

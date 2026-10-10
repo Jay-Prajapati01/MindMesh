@@ -70,7 +70,12 @@ class QuickSaveWorker(context: Context, params: WorkerParameters) : CoroutineWor
             val outcome = try {
                 val receipt = api.quickSave(key, QuickSaveRequest(item.url))
                 jobId = receipt.job_id
-                SyncOutcomes.accepted(receipt.job_id)
+                val resourceMessage = when (receipt.resource_notice?.provider) {
+                    "byok" -> "MindMesh accepted this save — processing uses your connected AI key."
+                    "managed" -> "MindMesh accepted this save — processing uses MindMesh managed resources."
+                    else -> null
+                }
+                SyncOutcomes.accepted(receipt.job_id, resourceMessage)
             } catch (error: HttpException) {
                 val body = error.apiError()
                 SyncOutcomes.forHttp(error.code(), body.detail, body.errorCode)

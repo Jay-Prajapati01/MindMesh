@@ -19,6 +19,8 @@ router = APIRouter(prefix="/videos", tags=["videos"])
 
 @router.post("/process", response_model=VideoProcessResponse)
 async def process_video(payload: VideoProcessRequest) -> VideoProcessResponse:
+    from app.services.commerce import reserve
+    reserve("youtube")
     """Ingest a YouTube video: metadata, transcript, summary, embeddings."""
     try:
         metadata = youtube.fetch_metadata(payload.url)
@@ -54,6 +56,8 @@ async def process_video(payload: VideoProcessRequest) -> VideoProcessResponse:
 
 @router.post("/process/stream")
 async def process_video_stream(payload: VideoProcessRequest):
+    from app.services.commerce import reserve
+    reserve("youtube")
     """Ingest a YouTube video with real-time SSE progress events."""
 
     async def event_generator():

@@ -22,8 +22,8 @@ android {
         applicationId = "com.mindmesh.companion"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 3
+        versionName = "2.0.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     val apiBaseUrl = localValue("MINDMESH_API_BASE_URL", "http://10.0.2.2:8000/api/")

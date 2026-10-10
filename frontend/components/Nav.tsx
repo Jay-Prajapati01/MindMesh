@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   Home,
   Search,
@@ -19,12 +20,15 @@ import {
   LayoutGrid,
   Library,
   Settings,
+  CreditCard,
   UserRound,
   PanelLeftClose,
   PanelLeftOpen,
+  TicketPercent,
 } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 import { useAuth } from "./CloudAuthGate";
+import { getEntitlement } from "@/lib/commerce";
 
 const links = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
@@ -42,6 +46,7 @@ const links = [
   { href: "/chat", label: "Ask AI", icon: MessageSquare },
   { href: "/stored", label: "Stored", icon: Library },
   { href: "/profile", label: "Profile", icon: UserRound },
+  { href: "/plans", label: "Plans & pricing", icon: CreditCard },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -59,6 +64,24 @@ export function Nav({
 }) {
   const pathname = usePathname();
   const { session } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const userId = session?.user.id;
+  useEffect(() => {
+    let mounted = true;
+    if (!userId) {
+      setIsAdmin(false);
+      return;
+    }
+    getEntitlement()
+      .then((entitlement) => {
+        if (mounted) setIsAdmin(entitlement.role === "owner" || entitlement.role === "admin");
+      })
+      .catch(() => { if (mounted) setIsAdmin(false); });
+    return () => { mounted = false; };
+  }, [userId]);
+  const visibleLinks = isAdmin
+    ? [...links, { href: "/admin/promo-codes", label: "Promo codes", icon: TicketPercent }]
+    : links;
   const name = typeof session?.user.user_metadata?.preferred_name === "string" ? session.user.user_metadata.preferred_name : typeof session?.user.user_metadata?.full_name === "string" ? session.user.user_metadata.full_name : session?.user.email?.split("@")[0];
   return (
     <aside
@@ -121,8 +144,8 @@ export function Nav({
         </div>
       )}
       <nav className="w-full space-y-1.5">
-        {links.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href;
+        {visibleLinks.map(({ href, label, icon: Icon }) => {
+          const active = pathname === href || pathname.startsWith(`${href}/`);
           return (
             <Link
               key={href}

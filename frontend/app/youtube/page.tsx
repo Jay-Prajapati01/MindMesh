@@ -90,7 +90,7 @@ export default function YouTubePage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="mb-8 rounded-[24px] border-2 border-ink bg-gradient-to-br from-card via-card to-brand-soft p-8">
+      <div className="mb-6 rounded-[24px] border-2 border-ink bg-gradient-to-br from-card via-card to-brand-soft p-5 sm:mb-8 sm:p-8">
         <div className="flex items-start gap-5">
           <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-[20px] bg-brand-soft shadow-brut">
             <Play className="h-7 w-7 text-brand" fill="currentColor" />

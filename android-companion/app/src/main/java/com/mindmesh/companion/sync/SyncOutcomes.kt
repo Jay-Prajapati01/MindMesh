@@ -30,9 +30,9 @@ object SyncOutcomes {
     fun offline(detail: String? = null): SyncOutcome =
         SyncOutcome(SaveStates.OFFLINE, detail ?: OFFLINE_MESSAGE, retryable = true)
 
-    fun accepted(jobId: String?): SyncOutcome =
+    fun accepted(jobId: String?, resourceMessage: String? = null): SyncOutcome =
         if (jobId.isNullOrBlank()) failed(NO_JOB_MESSAGE)
-        else SyncOutcome(SaveStates.ACCEPTED, ACCEPTED_MESSAGE, retryable = false)
+        else SyncOutcome(SaveStates.ACCEPTED, resourceMessage ?: ACCEPTED_MESSAGE, retryable = false)
 
     fun authError(): SyncOutcome = SyncOutcome(SaveStates.AUTH_ERROR, AUTH_MESSAGE, retryable = false)
 
@@ -48,6 +48,10 @@ object SyncOutcomes {
         return when {
             cleanCode == "AUTH_CONFIGURATION_REQUIRED" ->
                 failed("$cleanDetail Companion saves need a backend started with AUTH_ENABLED=true.")
+            cleanCode == "QUOTA_EXCEEDED" ->
+                failed(cleanDetail ?: "This plan's allowance for this source type has been used. Choose a plan with more capacity, then try again.")
+            cleanCode == "RATE_LIMITED" ->
+                SyncOutcome(SaveStates.QUEUED, cleanDetail ?: "MindMesh is receiving requests quickly — retrying after the server cooldown.", retryable = true)
             code == 401 ->
                 authError()
             code == 403 ->

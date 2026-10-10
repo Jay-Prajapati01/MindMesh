@@ -21,6 +21,7 @@ import com.mindmesh.companion.ui.screens.WelcomeScreen
 fun MindMeshApp(viewModel: MainViewModel) {
     val screen by viewModel.screen.collectAsState()
     val auth by viewModel.auth.collectAsState()
+    val darkTheme by viewModel.darkTheme.collectAsState()
 
     if (auth is AuthUiState.Restoring) {
         SplashScreen("Checking your MindMesh session…")
@@ -32,6 +33,6 @@ fun MindMeshApp(viewModel: MainViewModel) {
         Screen.LOGIN -> LoginScreen(viewModel)
         Screen.SIGNUP -> SignupScreen(viewModel)
         Screen.VERIFY -> VerifyScreen(viewModel)
-        Screen.HOME -> HomeScreen(viewModel)
+        Screen.HOME -> HomeScreen(viewModel, darkTheme)
     }
 }

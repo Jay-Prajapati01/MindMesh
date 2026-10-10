@@ -556,6 +556,8 @@ html[data-theme-transition="active"]::view-transition-new(root) { z-index: 9999;
 html[data-theme-transition="active"]::view-transition-old(root) { z-index: 1; }
 
 @media (max-width: 639px) {
+  html, body { min-width: 320px; overflow-x: clip; }
+  input, select, textarea { font-size: 16px; }
   .particle-heading { height: clamp(12.5rem, 56vw, 16rem); }
   .dashboard-grid { min-height: 0; }
   .hero-scroll { height: 165dvh; }

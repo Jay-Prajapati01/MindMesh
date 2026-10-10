@@ -57,7 +57,7 @@ export function ContactPage() {
   return (
     <div className="paper-grain flex min-h-screen flex-col overflow-x-clip bg-paper text-ink">
       <Navbar />
-      <main className="mx-auto grid w-full max-w-6xl flex-1 gap-10 px-6 py-10 md:grid-cols-[1fr_1.15fr] md:py-14">
+      <main className="mx-auto grid w-full max-w-6xl flex-1 gap-7 px-4 py-8 sm:gap-10 sm:px-6 sm:py-10 md:grid-cols-[1fr_1.15fr] md:py-14">
         <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE }}>
           <Link href="/" className="mb-8 flex w-fit items-center gap-2 font-mono text-xs font-bold uppercase tracking-widest"><ArrowLeft className="h-4 w-4" />Back home</Link>
           <Label>Contact</Label>
@@ -65,14 +65,14 @@ export function ContactPage() {
             Let&apos;s talk <span className="text-orange">brains.</span>
           </h1>
           <p className="mt-6 max-w-md text-lg text-ink-muted">Questions about your account, help with MindMesh, or a partnership idea — drop us a line and the team will reply.</p>
-          <div className="brut mt-8 rounded-3xl bg-paper-card p-6">
+          <div className="brut mt-8 rounded-3xl bg-paper-card p-4 sm:p-6">
             <p className="font-mono text-xs font-bold uppercase tracking-widest text-ink-muted">[ Here to help ]</p>
             <p className="mt-2 font-display text-2xl uppercase">Your knowledge, connected</p>
           </div>
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE, delay: 0.1 }}
-          className="brut rounded-3xl bg-paper-card p-6 md:p-8">
+          className="brut rounded-3xl bg-paper-card p-4 sm:p-6 md:p-8">
           {state === "done" ? (
             <div className="flex min-h-[420px] flex-col items-start justify-center gap-5">
               <span className="brut grid h-16 w-16 place-items-center rounded-2xl bg-orange"><Check className="h-8 w-8" /></span>

@@ -103,6 +103,10 @@ async def _stage_file_spooled(kind: str, filename: str, suffix: str, file) -> tu
 async def enqueue_payload(kind: str, incoming: dict, idempotency: str = "") -> dict:
     """Validate and enqueue a JSON job for another authenticated facade."""
     module, _, schema = HANDLERS[kind]
+    from app.services.commerce import reserve
+    feature = {"videos": "youtube", "instagram": "instagram", "pdf": "pdf", "documents": "documents", "audio": "audio", "web": "web", "search": "search", "chat": "chat"}.get(kind)
+    if feature:
+        reserve(feature, idempotency)
     staged_object: str | None = None
     if schema is None:
         raise HTTPException(400, "This endpoint accepts URLs only")

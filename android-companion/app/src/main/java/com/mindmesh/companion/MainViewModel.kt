@@ -2,6 +2,7 @@ package com.mindmesh.companion
 
 import android.app.Application
 import android.net.Uri
+import android.provider.OpenableColumns
 import android.util.Patterns
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,9 +15,14 @@ import com.mindmesh.companion.data.MindMeshDatabase
 import com.mindmesh.companion.data.QuickSave
 import com.mindmesh.companion.data.SaveStates
 import com.mindmesh.companion.network.BackendHealth
+import com.mindmesh.companion.network.EntitlementsResponse
+import com.mindmesh.companion.network.MindMeshApi
+import com.mindmesh.companion.network.apiError
 import com.mindmesh.companion.share.SharedUrlParser
 import com.mindmesh.companion.sync.QuickSaveWorker
 import java.util.UUID
+import java.io.File
+import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +32,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import retrofit2.HttpException
 
 /** Destination of the companion's small state machine. */
 enum class Screen { WELCOME, LOGIN, SIGNUP, VERIFY, HOME }
@@ -40,6 +50,14 @@ sealed interface AuthUiState {
 /** One-shot message rendered as a banner. */
 data class UiNotice(val kind: Kind, val text: String) {
     enum class Kind { INFO, SUCCESS, WARNING, ERROR }
+}
+
+enum class UploadKind { DOCUMENT, AUDIO }
+sealed interface UploadState {
+    data object Idle : UploadState
+    data class Uploading(val name: String) : UploadState
+    data class Complete(val name: String, val title: String?) : UploadState
+    data class Failed(val name: String, val message: String) : UploadState
 }
 
 /**
@@ -71,6 +89,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _busy = MutableStateFlow(false)
     val busy: StateFlow<Boolean> = _busy.asStateFlow()
+    private val _upload = MutableStateFlow<UploadState>(UploadState.Idle)
+    val upload: StateFlow<UploadState> = _upload.asStateFlow()
+    private val _entitlements = MutableStateFlow<EntitlementsResponse?>(null)
+    val entitlements: StateFlow<EntitlementsResponse?> = _entitlements.asStateFlow()
+    private val _darkTheme = MutableStateFlow(context.getSharedPreferences("mindmesh-ui", 0).getBoolean("dark_theme", false))
+    val darkTheme: StateFlow<Boolean> = _darkTheme.asStateFlow()
 
     private val _verifyEmail = MutableStateFlow("")
     val verifyEmail: StateFlow<String> = _verifyEmail.asStateFlow()
@@ -256,10 +280,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) { dao.requeueAuthErrors() }
         QuickSaveWorker.enqueue(context)
         checkBackend()
+        refreshEntitlements()
         _pendingShare.value?.let { shared ->
             _draftUrl.value = shared
             _pendingShare.value = null
             setNotice(UiNotice.Kind.INFO, "Link from ${source(shared).replaceFirstChar { it.uppercase() }} is ready — tap Save to MindMesh.")
+        }
+    }
+
+    /** Reads the same account plan and limits that the website displays. */
+    fun refreshEntitlements() {
+        val token = session.accessToken ?: return
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching { MindMeshApi.create { token }.entitlements() }
+                .onSuccess { _entitlements.value = it }
+                .onFailure { /* Existing save/sync flow stays available when commerce is not deployed yet. */ }
         }
     }
 
@@ -319,6 +354,50 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         setNotice(UiNotice.Kind.INFO, "Retrying — watch this save's status below.")
     }
 
+    /** Uploads a user-picked document or audio file into the same account workspace as the web app. */
+    fun uploadFile(uri: Uri, kind: UploadKind) {
+        val token = session.accessToken
+        if (token.isNullOrBlank()) {
+            setNotice(UiNotice.Kind.ERROR, "Sign in before uploading files to MindMesh.")
+            return
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            val name = displayName(uri) ?: if (kind == UploadKind.DOCUMENT) "document" else "audio"
+            _upload.value = UploadState.Uploading(name)
+            val cached = File.createTempFile("mindmesh-", "-upload", context.cacheDir)
+            try {
+                context.contentResolver.openInputStream(uri)?.use { input -> cached.outputStream().use(input::copyTo) }
+                    ?: throw IOException("MindMesh could not open that file.")
+                if (cached.length() == 0L) throw IOException("That file is empty.")
+                val contentType = context.contentResolver.getType(uri)?.toMediaTypeOrNull()
+                val filePart = MultipartBody.Part.createFormData("file", name, cached.asRequestBody(contentType))
+                val api = MindMeshApi.create { token }
+                val saved = when (kind) {
+                    UploadKind.DOCUMENT -> api.uploadDocument(filePart)
+                    UploadKind.AUDIO -> api.uploadAudio(filePart)
+                }
+                _upload.value = UploadState.Complete(name, saved.title)
+                setNotice(UiNotice.Kind.SUCCESS, "$name is saved to your MindMesh workspace.")
+                refreshEntitlements()
+            } catch (error: HttpException) {
+                val detail = error.apiError().detail ?: "Upload failed (HTTP ${error.code()})."
+                _upload.value = UploadState.Failed(name, detail)
+                setNotice(UiNotice.Kind.ERROR, detail)
+            } catch (error: Exception) {
+                val detail = error.message ?: "The file could not be uploaded."
+                _upload.value = UploadState.Failed(name, detail)
+                setNotice(UiNotice.Kind.ERROR, detail)
+            } finally {
+                cached.delete()
+            }
+        }
+    }
+
+    private fun displayName(uri: Uri): String? = context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+        val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+        if (index >= 0 && cursor.moveToFirst()) cursor.getString(index) else null
+    }
+
     // --- app chrome --------------------------------------------------------
 
     fun navigate(to: Screen) {
@@ -339,6 +418,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun dismissNotice() {
         _notice.value = null
+    }
+
+    fun toggleTheme() {
+        _darkTheme.value = !_darkTheme.value
+        context.getSharedPreferences("mindmesh-ui", 0).edit().putBoolean("dark_theme", _darkTheme.value).apply()
     }
 
     companion object {

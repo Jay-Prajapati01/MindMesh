@@ -18,6 +18,7 @@ from app import __version__
 from app.api import (
     audio,
     chat,
+    commerce,
     compare,
     contact,
     documents,
@@ -325,6 +326,12 @@ def create_app() -> FastAPI:
             content={"detail": "Invalid request" if is_production else str(exc)},
         )
 
+    from app.services.commerce import CommerceError
+
+    @app.exception_handler(CommerceError)
+    async def commerce_error_handler(request: Request, exc: CommerceError) -> JSONResponse:
+        return JSONResponse(status_code=exc.status, content={"detail": {"code": exc.code, "message": str(exc)}})
+
     @app.exception_handler(PermissionError)
     async def permission_error_handler(request: Request, exc: PermissionError) -> JSONResponse:
         """Ownership/scope failures are 403 — never a leaked 500 stack."""
@@ -369,6 +376,8 @@ def create_app() -> FastAPI:
     # Public contact intake: intentionally outside `mutating`/`read_deps` so
     # anonymous visitors can reach it (CloudAuthMiddleware exempts the path).
     app.include_router(contact.router, prefix=settings.api_prefix)
+    app.include_router(commerce.public_router, prefix=settings.api_prefix)
+    app.include_router(commerce.router, prefix=settings.api_prefix, dependencies=mutating)
     # The companion receives an immediate, durable receipt here; it reuses the
     # same verified scope and ingestion handlers as the website.
     app.include_router(mobile.router, prefix=settings.api_prefix, dependencies=mutating)

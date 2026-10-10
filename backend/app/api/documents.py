@@ -18,6 +18,8 @@ router = APIRouter(prefix="/documents", tags=["documents"])
 
 @router.post("/process", response_model=SourceItem)
 async def process_document(file: UploadFile = File(...)) -> SourceItem:
+    from app.services.commerce import reserve
+    reserve("documents")
     if not file.filename:
         raise HTTPException(status_code=400, detail="Missing filename")
     data = await read_upload(file)
@@ -41,6 +43,8 @@ async def process_document(file: UploadFile = File(...)) -> SourceItem:
 
 @router.post("/process/stream")
 async def process_document_stream(file: UploadFile = File(...)):
+    from app.services.commerce import reserve
+    reserve("documents")
     if not file.filename:
         raise HTTPException(status_code=400, detail="Missing filename")
     file_data = await read_upload(file)

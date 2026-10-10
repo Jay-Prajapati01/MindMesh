@@ -6,7 +6,7 @@ import { IntroReveal } from "./IntroReveal";
 import { Hero } from "./Hero";
 import { Manifesto } from "./Manifesto";
 import { Features } from "./Features";
-import { Navbar, Marquee, ProblemSolution, HowItWorks, Bento, Stats, FinalCTA, Footer } from "./Sections";
+import { Navbar, Marquee, ProblemSolution, HowItWorks, Bento, Stats, PricingTeaser, FinalCTA, Footer } from "./Sections";
 
 const NAV_OFFSET = 72; // sticky navbar height + breathing room
 
@@ -60,6 +60,7 @@ export function LandingPage() {
           <HowItWorks />
           <Bento />
           <Stats />
+          <PricingTeaser />
           <FinalCTA />
         </main>
         <Footer />

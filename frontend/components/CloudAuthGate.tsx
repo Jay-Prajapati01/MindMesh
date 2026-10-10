@@ -10,7 +10,7 @@ import { useAppStore } from "@/lib/store";
 import { processManager } from "@/lib/processManager";
 import { NotificationBridge } from "./NotificationBridge";
 
-const PUBLIC_ROUTES = ["/", "/contact", "/login", "/signup", "/forgot-password", "/reset-password"];
+const PUBLIC_ROUTES = ["/", "/contact", "/pricing", "/login", "/signup", "/forgot-password", "/reset-password"];
 const AuthContext = createContext<{ session: Session | null; ready: boolean; error: string }>({ session: null, ready: false, error: "" });
 export const useAuth = () => useContext(AuthContext);
 
