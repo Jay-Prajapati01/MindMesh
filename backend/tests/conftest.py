@@ -193,12 +193,18 @@ def modal_app(auth_state: _AuthState, request):
     """App instance built in modal mode with all auth backends mocked."""
     from app.core.config import get_settings
 
+    def _fake_reserve(feature: str, idempotency_key: str = "") -> dict:
+        # Metering is out of scope for the contract/auth suites: charging
+        # would touch Postgres (no DB in unit tests) via commerce.
+        return {"provider": "managed", "feature": feature, "plan": "free"}
+
     settings = get_settings()
     previous_mode = settings.mindmesh_execution_mode
     settings.mindmesh_execution_mode = request.param
     with (
         patch("httpx.AsyncClient.get", new=auth_state.httpx_get()),
         patch("app.core.cloud_auth.resolve_user", new=auth_state.resolver()),
+        patch("app.services.commerce.reserve", new=_fake_reserve),
         # Cloud state and vectors are out of scope here: return empty defaults.
         patch(
             "app.services.cloud_db.load",

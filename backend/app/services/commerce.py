@@ -19,7 +19,7 @@ from typing import Any
 import httpx
 
 from app.core.config import get_settings
-from app.core.tenant import cloud, data_directory, scope
+from app.core.tenant import cloud, current_scope, data_directory, scope
 from app.services.cloud_db import connect
 
 FEATURES = ("youtube", "instagram", "pdf", "documents", "audio", "web", "search", "chat")
@@ -109,8 +109,11 @@ def bootstrap_account() -> None:
         state = _local()
         # The configured UUID is the only local-development bootstrap route.
         # It must match a real authenticated Supabase user; email and promos
-        # never confer an administrative role.
-        if get_settings().owner_bootstrap_user_id and get_settings().owner_bootstrap_user_id == scope().user_id:
+        # never confer an administrative role. Anonymous local users simply
+        # have no scope, so resolve it defensively instead of 403ing them.
+        owner_bootstrap = get_settings().owner_bootstrap_user_id
+        current = current_scope.get()
+        if owner_bootstrap and current is not None and owner_bootstrap == current.user_id:
             state["roles"] = sorted(set(state.get("roles", []) + ["owner"]))
         _save_local(state)
         return
@@ -157,9 +160,13 @@ def entitlement() -> dict:
 
 
 def get_usage(plan: str | None = None) -> dict[str, dict]:
-    user, period = scope().user_id, _period()
+    # Identity is only needed for per-user cloud counters. The anonymous
+    # local workspace shares one JSON quota file, so resolving scope here
+    # would 403 every metered endpoint for signed-out local users.
+    period = _period()
     used: dict[str, int] = {}
     if cloud():
+        user = scope().user_id
         bootstrap_account()
         with connect() as conn:
             rows = conn.execute("SELECT feature_key,consumed FROM public.mm_usage_counters WHERE user_id=%s AND period_key=%s", (user, period)).fetchall()
@@ -177,10 +184,14 @@ def reserve(feature: str, idempotency_key: str = "") -> dict:
         raise CommerceError("UNKNOWN_FEATURE", "Unsupported metered feature")
     ent = entitlement()
     limit = PLANS[ent["effective_plan"]]["limits"][feature]
-    user, period = scope().user_id, _period()
+    # Same as get_usage: the local quota file is shared, so identity is
+    # only resolved for per-user cloud counters (middleware guarantees a
+    # scope there; anonymous local users must not 403 here).
+    period = _period()
     if ent["role"] == "owner":
         return {"provider": provider_mode(), "feature": feature, "owner_access": True}
     if cloud():
+        user = scope().user_id
         with connect() as conn:
             row = conn.execute("""INSERT INTO public.mm_usage_counters(user_id,feature_key,period_key,consumed)
               VALUES(%s,%s,%s,1) ON CONFLICT(user_id,feature_key,period_key)
