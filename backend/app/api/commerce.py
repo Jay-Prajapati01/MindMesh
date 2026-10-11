@@ -58,34 +58,44 @@ async def plans():
 
 @router.get("/v1/me/entitlements")
 async def entitlements():
-    try: return commerce.entitlement()
-    except commerce.CommerceError as exc: raise _error(exc) from None
+    try:
+        return commerce.entitlement()
+    except commerce.CommerceError as exc:
+        raise _error(exc) from None
 
 
 @router.get("/v1/me/usage")
 async def usage():
-    try: return {"period": commerce.entitlement()["period"], "usage": commerce.get_usage()}
-    except commerce.CommerceError as exc: raise _error(exc) from None
+    try:
+        return {"period": commerce.entitlement()["period"], "usage": commerce.get_usage()}
+    except commerce.CommerceError as exc:
+        raise _error(exc) from None
 
 
 @router.get("/v1/me/grants")
 async def grants():
-    try: return {"grants": commerce.entitlement()["grants"]}
-    except commerce.CommerceError as exc: raise _error(exc) from None
+    try:
+        return {"grants": commerce.entitlement()["grants"]}
+    except commerce.CommerceError as exc:
+        raise _error(exc) from None
 
 
 @router.post("/v1/promos/preview")
 async def preview_promo(payload: PromoInput):
-    try: return commerce.preview_promo(payload.code)
-    except commerce.CommerceError as exc: raise _error(exc) from None
+    try:
+        return commerce.preview_promo(payload.code)
+    except commerce.CommerceError as exc:
+        raise _error(exc) from None
 
 
 @router.post("/v1/promos/redeem")
 async def redeem_promo(payload: PromoRedeem, request: Request):
     if not request.headers.get("Idempotency-Key"):
         raise HTTPException(400, {"code":"IDEMPOTENCY_REQUIRED","message":"Retry safely with an Idempotency-Key."})
-    try: return commerce.redeem_promo(payload.code, payload.selected_plan)
-    except commerce.CommerceError as exc: raise _error(exc) from None
+    try:
+        return commerce.redeem_promo(payload.code, payload.selected_plan)
+    except commerce.CommerceError as exc:
+        raise _error(exc) from None
 
 
 @router.get("/v1/me/provider-keys")
@@ -95,20 +105,26 @@ async def provider_keys():
 
 @router.post("/v1/me/provider-keys/{provider}")
 async def connect_provider(provider: Literal["groq", "gemini"], payload: ProviderKey):
-    try: return await commerce.save_provider_key(provider, payload.key)
-    except commerce.CommerceError as exc: raise _error(exc) from None
+    try:
+        return await commerce.save_provider_key(provider, payload.key)
+    except commerce.CommerceError as exc:
+        raise _error(exc) from None
 
 
 @router.delete("/v1/me/provider-keys/{provider}", status_code=204)
 async def disconnect_provider(provider: Literal["groq", "gemini"]):
-    try: commerce.remove_provider_key(provider)
-    except commerce.CommerceError as exc: raise _error(exc) from None
+    try:
+        commerce.remove_provider_key(provider)
+    except commerce.CommerceError as exc:
+        raise _error(exc) from None
 
 
 @router.put("/v1/me/provider-preferences")
 async def update_preferences(payload: Preferences):
-    try: return {"preferences": commerce.set_preferences([item.model_dump() for item in payload.preferences])}
-    except commerce.CommerceError as exc: raise _error(exc) from None
+    try:
+        return {"preferences": commerce.set_preferences([item.model_dump() for item in payload.preferences])}
+    except commerce.CommerceError as exc:
+        raise _error(exc) from None
 
 
 @router.get("/v1/billing/subscription")
@@ -126,12 +142,16 @@ async def checkout():
 
 @router.get("/v1/admin/promos")
 async def admin_promos():
-    try: return {"promos": commerce.list_promos()}
-    except commerce.CommerceError as exc: raise _error(exc) from None
+    try:
+        return {"promos": commerce.list_promos()}
+    except commerce.CommerceError as exc:
+        raise _error(exc) from None
 
 
 @router.post("/v1/admin/promos", status_code=201)
 async def admin_create_promo(payload: PromoCreate):
-    try: return commerce.create_promo(payload.model_dump())
-    except commerce.CommerceError as exc: raise _error(exc) from None
+    try:
+        return commerce.create_promo(payload.model_dump())
+    except commerce.CommerceError as exc:
+        raise _error(exc) from None
 
