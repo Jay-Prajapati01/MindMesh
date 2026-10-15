@@ -1,412 +1,177 @@
 <div align="center">
 
-<img src="MindMesh_logo.png" alt="MindMesh logo" width="130">
+<img src="MindMesh_logo.png" alt="MindMesh logo" width="112">
 
-# **MindMesh**
+# MindMesh
 
-### *Your buddy who remembers everything you save*
+**A personal knowledge workspace for everything you save.**
 
-**Capture → Understand → Connect → Ask.**  
-Stop remembering *where* you saw something — just ask MindMesh naturally.
+Capture videos, articles, documents, audio, and notes. Search your library, explore connected ideas, and ask questions with source citations.
 
-![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)
-![Next.js](https://img.shields.io/badge/Next.js-15-000000?style=flat-square&logo=nextdotjs&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![Tailwind](https://img.shields.io/badge/Tailwind_CSS-3.4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
-![Qdrant](https://img.shields.io/badge/Qdrant-Vector%20DB-DC2626?style=flat-square&logo=qdrant&logoColor=white)
+[Features](#features) · [Architecture](#architecture) · [Get started](#getting-started) · [Development](#development) · [Security](#security) · [Contributing](CONTRIBUTING.md)
 
-<br/>
-
-<img src="docs/screenshots/dashboard.png" alt="MindMesh Dashboard" width="88%">
-
-<br/>
-
-**[Quick Start](#-quick-start) · [Features](#-features) · [Architecture](#-architecture) · [API](#-api-overview) · [QA Report](docs/QA_REPORT.md)**
+![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-15-000000?logo=nextdotjs)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
 
 </div>
 
 ---
 
-<div align="center">
+## About
 
-> ### 🧩 *“Everything you watch, read, hear and save, unified into one brain you can talk to.”*
+MindMesh brings personal research into one searchable workspace. It ingests content from common formats and sources, indexes it for semantic retrieval, and uses retrieval-augmented generation (RAG) to answer questions against that library.
 
-</div>
+MindMesh is free and open-source software under the [MIT License](LICENSE). You can run it locally and configure your own model and service credentials. MindMesh does not include hosted infrastructure or a managed service.
 
----
+## Features
 
-## 📑 Table of Contents
+- **Content capture:** YouTube, web pages, PDFs, documents, audio, Instagram, and notes.
+- **Grounded answers:** Ask questions across saved sources and inspect citations.
+- **Search and organization:** Semantic search, timelines, source filters, and knowledge graph views.
+- **Processing updates:** Streaming progress for ingestion and chat.
+- **Web and Android companion:** Next.js workspace plus an Android share companion.
+- **Bring your own services:** Local Ollama inference by default, with optional integrations configured by each operator.
 
-<details>
-<summary><b>Click to expand</b></summary>
+## Screenshots
 
-1. [✨ Why MindMesh](#-why-mindmesh)
-2. [🎯 Features](#-features)
-3. [🖼️ Screenshots](#️-screenshots)
-4. [🏗 Architecture](#-architecture)
-5. [🧰 Tech Stack](#-tech-stack)
-6. [🤖 AI Backend Selection](#-ai-backend-selection)
-7. [🚀 Quick Start](#-quick-start)
-8. [🛠️ Deployment](#️-deployment)
-9. [🧪 Development & Testing](#-development--testing)
-10. [📦 API Overview](#-api-overview)
-11. [🗂 Repository Structure](#-repository-structure)
-12. [⚙️ Configuration](#-configuration)
-13. [📚 Documentation](#-documentation)
+| Workspace | Ask AI | Knowledge graph |
+|---|---|---|
+| ![MindMesh dashboard](docs/screenshots/dashboard.png) | ![MindMesh Ask AI](docs/screenshots/ask-ai.png) | ![MindMesh graph](docs/screenshots/graph.png) |
 
-</details>
+## Architecture
 
----
+- **Frontend:** Next.js 15, React, TypeScript, Tailwind CSS.
+- **API:** FastAPI and Python 3.11+.
+- **Vector search:** Qdrant.
+- **Language models and embeddings:** Ollama locally; optional configured model APIs.
+- **Accounts and workspace data:** Supabase integration is available for authentication and cloud-backed features. Bring your own Supabase project and keys.
+- **Android companion:** Kotlin and Jetpack libraries.
 
-## ✨ Why MindMesh
+The default Docker Compose setup runs the web frontend, API, and Qdrant locally. Ollama runs on the host machine. Optional integrations are part of the application source; the repository does not include AWS, Google Cloud, or other hosted deployment recipes.
 
-<table>
-<tr>
-<td align="center" width="33%">
+## Getting started
 
-### 😵 The Problem
-YouTube videos, PDFs, reels, articles, lectures, notes — scattered everywhere. Finding that *one thing* you saw last week is impossible.
+### Requirements
 
-</td>
-<td align="center" width="34%">
+- Docker Desktop or Docker Engine with Compose v2
+- Ollama installed on the host
+- A Supabase project for sign-in and account-based workspace access
+- 16 GB RAM recommended for local AI models; more memory improves model performance
 
-### 🧠 The MindMesh Way
-Ingest anything — **video, audio, PDF, doc, web, social** — and ask questions in plain English. Answers come back **grounded with citations** from *your* content.
-
-</td>
-<td align="center" width="33%">
-
-### 🚀 The Result
-A **personal knowledge workspace**: semantic search, knowledge graphs, timelines, and cross-source comparisons built around each account's data.
-
-</td>
-</tr>
-</table>
-
-**🌟 Highlights**
-
-| | |
-|---|---|
-| 🗣️ **Grounded Ask AI** | Answers only from *your* content — with citations, mic & file uploads |
-| 🤖 **Adaptive AI Backend** | Auto-selects **Groq Cloud → Hugging Face Spaces → local** — works with *or* without API keys |
-| 🕸️ **Hybrid RAG** | Dense + sparse + graph retrieval fused with **RRF** |
-| 🧠 **GraphRAG** | Entity/relation extraction → knowledge graph → community summaries |
-| ⚡ **Streaming UX** | SSE live ingestion progress + token-streamed chat |
-| 🛡️ **Type-safe** | End-to-end **TypeScript** + **Pydantic v2** validation |
-| 🧩 **Extensible** | Plugin-style ingestion pipelines |
-| 🏭 **Production-ready** | Docker, health checks, structured logging, rate limits, CI/CD |
-
----
-
-## 🎯 Features
-
-<table>
-<tr>
-<td width="50%">
-
-| | Feature | What it does |
-|---|---------|--------------|
-| 🎥 | **YouTube Intelligence** | Transcribe, summarize, chapterize & chat with any video |
-| 📄 | **PDF Intelligence** | Multi-stage pipeline: extract → clean → chunk → embed → graph |
-| 🎙️ | **Audio Intelligence** | Whisper transcription + speaker diarization + summarization |
-| 📸 | **Instagram Intelligence** | Download posts/reels/stories, captions, OCR, embeddings |
-| 🌐 | **Web Intelligence** | Crawl, extract, summarize and index any webpage |
-| 📚 | **Document Intelligence** | PDF, DOCX, TXT, MD, EPUB — one universal processor |
-
-</td>
-<td width="50%">
-
-| | Feature | What it does |
-|---|---------|--------------|
-| 🗣️ | **Grounded Ask AI** | Context-only answers with citations — refuses to guess, voice input + file uploads |
-| 🕸️ | **Knowledge Graph** | Auto-extracted entities & relations, interactive React Flow viz |
-| ⏰ | **Memory Timeline** | Chronological view of everything you've ingested |
-| 🔀 | **Cross-Source Intel** | Compare, contrast & synthesize across multiple sources |
-| 🤖 | **AI Workspace** | Persistent threads, follow-ups, source filters |
-| 🔔 | **Real-time Processing** | SSE live pipeline updates with progress tracking |
-| 🌓 | **Light & Dark** | One-click theme toggle across the whole app |
-
-</td>
-</tr>
-</table>
-
----
-
-## 🖼️ Screenshots
-
-| 🌙 Landing — Dark | 💡 Landing — Light |
-|---|---|
-| ![Landing dark](docs/screenshots/landing-dark.png) | ![Landing light](docs/screenshots/landing-light.png) |
-| 💬 Ask AI — Dark | 🕸️ Knowledge Graph |
-| ![Ask AI](docs/screenshots/ask-ai.png) | ![Knowledge graph](docs/screenshots/graph.png) |
-
----
-
-## 🏗 Architecture
-
-```
-┌─────────────┐     ┌─────────────┐     ┌───────────────────────────────────────┐
-│  Frontend   │────▶│   Backend   │────▶│  AI backend (auto-selected at boot)   │
-│  (Next.js)  │     │  (FastAPI)  │     │  1. Groq Cloud   — GPU, free tier     │
-└─────────────┘     └──────┬──────┘     │  2. HF Spaces    — CPU, free tier     │
-                           │            │  3. Local        — Ollama / workers   │
-                           │            └───────────────────────────────────────┘
-              ┌────────────┼────────────┐
-              ▼            ▼            ▼
-         ┌─────────┐ ┌──────────┐ ┌───────────┐
-         │  Qdrant │ │PostgreSQL│ │   Redis   │
-         │(Vectors)│ │(Relational)│ │(Cache/Queue)│
-         └─────────┘ └──────────┘ └───────────┘
-```
-
-**Ingestion pipelines:** `🎥 YouTube · 📄 PDF · 🎙️ Audio · 📸 Instagram · 🌐 Web · 📚 Documents`  
-→ chunk → embed → index → graph-extract → **ask anything**.
-
-**Heavy jobs** (YouTube / PDF / audio) can run in-process (local Docker) or on
-**Modal serverless workers** backed by **Supabase** (Postgres · Auth · Storage) —
-selected via `MINDMESH_EXECUTION_MODE=local|modal`.
-
----
-
-## 🧰 Tech Stack
-
-| Layer | 🛠 Technology |
-|-------|--------------|
-| **Frontend** | Next.js 15, TypeScript, Tailwind CSS, React Query, Zustand, Axios, React Flow, Framer Motion, Lenis, Three.js |
-| **Backend** | FastAPI, Python 3.11+, AsyncIO, Pydantic v2 |
-| **AI / ML** | Groq Cloud (Llama 3.1 8B Instant), Hugging Face Spaces (BART, CPU), Ollama (Qwen2.5 / Qwen3), nomic-embed-text / BGE-M3, Faster-Whisper, yt-dlp, Docling + Tesseract OCR |
-| **Vector DB** | Qdrant (HNSW, payload filtering) |
-| **Relational DB** | PostgreSQL (asyncpg, SQLAlchemy 2.0) |
-| **Cache / Queue** | Redis (BullMQ-style) |
-| **Cloud services** | Supabase (contact form, cloud auth, storage, SQL migrations), Modal (serverless AI workers) |
-| **Infra** | Docker, Docker Compose, Caddy/Nginx, GitLab CI/CD, Hugging Face Spaces |
-
----
-
-## 🤖 AI Backend Selection
-
-MindMesh picks an LLM backend **at startup** — no code changes needed, just set
-an environment variable:
-
-| Priority | Backend | Trigger | Notes |
-|----------|---------|---------|-------|
-| 1️⃣ | **Groq Cloud** | `GROQ_API_KEY` set | GPU-accelerated, OpenAI-compatible API. Free tier: **30 RPM · 30K TPM · 500K TPD** (8B models), Whisper 2,000 RPD |
-| 2️⃣ | **Hugging Face Spaces** | `HF_SPACE_URL` set | Your own free CPU Space runs the worker (`deploy/hf-spaces/`) |
-| 3️⃣ | **Local** (default) | neither set | Ollama (Qwen) + local `transformers` / `yt-dlp` / Docling — fully offline, private |
+### 1. Clone and configure
 
 ```bash
-# Fastest — Groq free tier
-export GROQ_API_KEY="gsk_..."           # optional: GROQ_MODEL=llama-3.1-8b-instant
-
-# Free CPU worker on Hugging Face
-export HF_SPACE_URL="https://your-space.hf.space"
-
-# No keys at all → everything runs locally (default)
+git clone https://github.com/Jay-Prajapati01/MindMesh.git
+cd MindMesh
+cp backend/.env.example backend/.env
 ```
 
-- Selection lives in [`backend/app/core/backend_config.py`](backend/app/core/backend_config.py)
-  and is logged on boot: `Active AI backend: groq (...)` (secrets never logged).
-- Chat + streaming route through [`backend/app/services/llm.py`](backend/app/services/llm.py);
-  answers stay grounded in *your* content regardless of backend.
-- Your own Space as a worker: see [`deploy/hf-spaces/`](deploy/hf-spaces/)
-  (Docker Space, port 7860, `yt-dlp` + `facebook/bart-large-cnn` summarizer).
+Create a Supabase project, then configure `backend/.env`:
 
----
+1. Set `AUTH_ENABLED=true`.
+2. Set `SUPABASE_URL` and `SUPABASE_ANON_KEY` from your project.
+3. Set `SUPABASE_SERVICE_ROLE_KEY` only if you enable server-side features that require it. Never use this key in the frontend or commit it.
 
-## 🚀 Quick Start
+Create `frontend/.env.local` with the public project settings:
 
-The Docker quick start runs in single-user local mode. For a public multi-user
-deployment, use cloud mode with Supabase Auth and apply all SQL migrations,
-including `202610080001_personal_workspaces.sql`. Each signup then receives its
-own private workspace. See [cloud deployment](docs/MODAL_DEPLOYMENT.md).
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_SUPABASE_PUBLISHABLE_KEY
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
 
-Create an account at the MindMesh website, confirm your email, and sign in to
-your personal workspace. Your saved sources, notes, chats, and profile stay
-separate from every other account.
+Only use keys from a Supabase project you control. Keep all real environment files out of Git.
 
-### 🤖 First Run — Pull AI Models
+### 2. Start Ollama and download models
+
+Install and start [Ollama](https://ollama.com/download), then pull the default chat and embedding models:
 
 ```bash
-# Default (16 GB RAM, CPU-friendly)
-docker compose exec ollama ollama pull qwen2.5:3b
-docker compose exec ollama ollama pull nomic-embed-text
-
-# High-end / GPU (edit backend/.env first)
-docker compose exec ollama ollama pull qwen3:8b
-docker compose exec ollama ollama pull bge-m3
+ollama pull qwen2.5:3b
+ollama pull nomic-embed-text
 ```
 
-> 💡 **No GPU / no models?** Add `GROQ_API_KEY=...` to `backend/.env` and the
-> backend switches to Groq Cloud for chat — see [AI Backend Selection](#-ai-backend-selection).
+The Compose configuration connects to Ollama at `http://ollama:11434`. If Ollama runs directly on your host, set `OLLAMA_URL` in `backend/.env` to the host address reachable from Docker (for Docker Desktop, `http://host.docker.internal:11434`).
 
-### 🌐 Access Points
-
-| Service | URL |
-|---------|-----|
-| 🎛️ Frontend Dashboard | http://localhost:3000 |
-| 📚 API Docs (Swagger) | http://localhost:8000/docs |
-| 🔍 Qdrant Dashboard | http://localhost:6333/dashboard |
-| 📊 Grafana *(if enabled)* | http://localhost:3001 |
-
----
-
-## 🛠️ Deployment
-
-Deployment options share one application codebase — pick the infrastructure adapter that fits:
-
-| Target | Command / Guide | Use for |
-|--------|-----------------|---------|
-| ☁️ **Live product** | [`DEPLOYMENT.md`](DEPLOYMENT.md) | Public MindMesh service |
-| 🟧 **AWS EC2 hybrid** | [`docs/AWS_DEPLOYMENT.md`](docs/AWS_DEPLOYMENT.md) | EC2 + Docker Compose + Caddy; external Supabase/Qdrant |
-| ☁️ **Google Cloud hybrid** | [`docs/GOOGLE_CLOUD_DEPLOYMENT.md`](docs/GOOGLE_CLOUD_DEPLOYMENT.md) | Cloud Run, Cloud Tasks, Cloud Run Jobs |
-| 🧠 **AI workers** | [`docs/MODAL_DEPLOYMENT.md`](docs/MODAL_DEPLOYMENT.md) | YouTube, PDF, and audio processing |
-
-> Production configs live in [`deploy/`](deploy/) (`docker-compose.prod.yml`,
-> `Caddyfile`, `.env.production.example`). Production mode requires
-> `MINDMESH_EXECUTION_MODE=modal` (see [`docs/MODAL_DEPLOYMENT.md`](docs/MODAL_DEPLOYMENT.md)).
-> For cloud mode, select AWS Postgres polling or GCP dispatch deliberately; see
-> [`docs/DEPLOYMENT_OPTIONS.md`](docs/DEPLOYMENT_OPTIONS.md).
-
----
-
-## 🧪 Development & Testing
-
-<details>
-<summary><b>🖥️ Frontend only (with mock data)</b></summary>
+### 3. Start MindMesh
 
 ```bash
-cd frontend
-npm install
-npm run dev
-# Opens http://localhost:3000
+docker compose up --build
 ```
 
-</details>
+Open [http://localhost:3000](http://localhost:3000). The API is available at [http://localhost:8000](http://localhost:8000); interactive API docs are at [http://localhost:8000/docs](http://localhost:8000/docs).
 
-<details>
-<summary><b>Full regression suite</b></summary>
+Stop the stack with `docker compose down`. Add `--volumes` only if you intend to remove local database and application data.
 
-```powershell
-# Backend unit and API tests
+## Development
+
+For local development without Docker, use Python 3.11+ for the API and Node.js 20+ for the frontend.
+
+```bash
+# API
 cd backend
-python -m pytest -q
+python -m venv .venv
+# Activate the virtual environment, then:
+pip install -r requirements.txt
+uvicorn app.main:app --reload
 
-# Lint (backend)
-python -m ruff check app tests
-
-# Frontend type-check + lint + build
+# In a second terminal, from the repository root:
 cd frontend
-npx tsc --noEmit
-npm run lint
-npm run build
-
-# Everything: pytest + API / contract / schema checks
-powershell -File scripts\qa\run_all.ps1
+npm ci
+npm run dev
 ```
 
-</details>
+Keep Qdrant and Ollama running and configure the backend service URLs in `backend/.env`. For contributor expectations and pull request guidance, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-The automated quality checks run backend tests and lint checks, plus frontend
-type-checking, linting, and a production build. See
-[docs/QA_REPORT.md](docs/QA_REPORT.md) for the maintained QA overview.
+## Configuration
 
----
+The committed `backend/.env.example` lists supported backend settings. The frontend reads public build/runtime settings from `frontend/.env.local`. Common settings include:
 
-## 📦 API Overview
+| Variable | Purpose |
+|---|---|
+| `QDRANT_URL` | Qdrant endpoint; defaults to the Compose service. |
+| `OLLAMA_URL` | Ollama endpoint; defaults to the Docker Desktop host gateway for a host-installed Ollama instance. |
+| `LLM_MODEL` | Chat model name. |
+| `EMBEDDING_MODEL` | Embedding model; must match the vector dimension. |
+| `AUTH_ENABLED` | Enables Supabase-backed authentication. |
+| `SUPABASE_URL` | Supabase project URL for the backend. |
+| `SUPABASE_ANON_KEY` | Supabase publishable/anon key for backend auth verification. |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL used by the browser client. |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable/anon key used by the browser client. |
 
-| Module | Endpoints |
-|--------|-----------|
-| 💬 **Chat** | `POST /api/chat`, `GET /api/chat/history` |
-| 🎥 **YouTube** | `POST /api/youtube/ingest`, `GET /api/youtube/{id}` |
-| 📄 **PDF** | `POST /api/pdf/ingest`, `POST /api/pdf/batch` |
-| 📸 **Instagram** | `POST /api/instagram/ingest` |
-| 📚 **Documents** | `POST /api/documents/ingest` |
-| 🎙️ **Audio** | `POST /api/audio/ingest` |
-| 🌐 **Web** | `POST /api/web/ingest` |
-| 🔍 **Search** | `POST /api/search`, `POST /api/search/hybrid` |
-| 🕸️ **Graph** | `GET /api/graph`, `GET /api/graph/nodes/{id}` |
-| ⏰ **Timeline** | `GET /api/timeline` |
-| 📊 **Stats** | `GET /api/stats` |
+Do not put service-role keys, payment secrets, encryption keys, or private provider tokens in variables prefixed with `NEXT_PUBLIC_`.
 
-> 📖 Interactive docs: **http://localhost:8000/docs**
+## Repository layout
 
----
-
-## 🗂 Repository Structure
-
-```
-MindMesh/
-├── .github/workflows/    ✅ GitHub CI and manual cloud build workflows
-├── backend/              ⚙️  FastAPI service
-│   ├── app/
-│   │   ├── api/          REST endpoints (15+ routers, incl. cloud jobs)
-│   │   ├── core/         Config, logging, security, ratelimit, backend_config
-│   │   ├── models/       Pydantic schemas
-│   │   └── services/     Business logic (RAG, Graph, Ingestion, Jobs, LLM)
-│   ├── tests/            Pytest suite
-│   └── requirements.txt
-├── frontend/             🎨 Next.js 15 Dashboard
-│   ├── app/              App Router pages
-│   ├── components/       60+ reusable components
-│   ├── hooks/            Custom React hooks
-│   └── lib/              API client, auth, utilities
-├── android-companion/    📱 Native Kotlin + Jetpack Compose companion
-│   ├── app/              Android application source and resources
-│   ├── scripts/          USB development installer
-│   └── companion.properties.example  Local configuration template
-├── workers/              🧠 Modal serverless AI workers
-├── supabase/migrations/  🗄️  SQL migrations (cloud workers, normalized state)
-├── deploy/               🚀 Deployment configs (dev/prod/cloud + hf-spaces/)
-│   └── hf-spaces/        🤗 Hugging Face Space worker (Docker, port 7860)
-├── scripts/              🛠️  ops scripts (purge_tenant.py, migrate_cloud.py, qa/)
-├── docs/                 📚 Architecture, security, runbooks, QA, screenshots
-├── supabase/             🗄️  Auth, tenancy, commerce, and admin migrations
-├── docker-compose.yml    🐳 Full stack orchestration
-├── website + companion app manual testing.md  Manual release checklist
-└── .gitignore            🔒 Keeps secrets, runtime data, caches, and builds out of Git
+```text
+backend/             FastAPI app, ingestion pipelines, services, and tests
+frontend/            Next.js web application
+android-companion/   Android share companion
+supabase/            SQL schema and migrations for optional Supabase features
+workers/             Optional asynchronous processing worker integrations
+docs/                Architecture, setup, security, and QA documentation
+scripts/             Local maintenance and QA helpers
+.github/workflows/   Continuous integration
 ```
 
-Android APKs, generated Android artifacts, runtime data, local environment
-files, and build caches are deliberately excluded from Git. The current local
-debug APK is kept under `android-companion/artifacts/` for device installation.
+## Documentation
 
-## ⚙️ Configuration
+- [Setup guide](docs/SETUP_GUIDE.md)
+- [Architecture plan](docs/MINDMESH_ARCHITECTURE_PLAN.md)
+- [API schema](docs/openapi.json)
+- [Security report](docs/SECURITY_REPORT.md)
+- [QA report](docs/QA_REPORT.md)
+- [Android companion guide](android-companion/README.md)
 
-Edit **`backend/.env`**:
+## Security
 
-| Category | Variables |
-|----------|-----------|
-| 🤖 AI backend | `GROQ_API_KEY`, `GROQ_MODEL` (default `llama-3.1-8b-instant`), `HF_SPACE_URL` — see [AI Backend Selection](#-ai-backend-selection) |
-| 🤖 Models | `OLLAMA_MODEL`, `EMBEDDING_MODEL` |
-| 🧠 Execution mode | `MINDMESH_EXECUTION_MODE` (`local` default / `modal` required in production) |
-| ✂️ Chunking | `CHUNK_SIZE`, `CHUNK_OVERLAP` |
-| 🕸️ Graph | `ENTITY_EXTRACTION_ENABLED`, `RELATION_EXTRACTION_ENABLED` |
-| 🗣️ Chat grounding | `CHAT_MIN_SCORE` (minimum retrieval score before answering) |
-| 🌐 Frontend | `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` |
-| 🔑 API Keys | YouTube, Instagram, etc. |
-| 🔒 Security | `SSRF_BLOCK_PRIVATE`, `MAX_JSON_BODY_SIZE`, `MAX_MULTIPART_BODY_SIZE`, `RATE_LIMIT_ENABLED`, `RATE_LIMIT_MAX_REQUESTS`, `RATE_LIMIT_WINDOW`, `TRUST_PROXY`, `MAX_CONCURRENT_HEAVY_TASKS`, `MAX_PDF_PAGES`, `ZIP_MAX_UNCOMPRESSED_BYTES`, `ZIP_MAX_RATIO`, `FETCH_MAX_BYTES`, `FETCH_TIMEOUT_SECONDS` |
+Please do not report security vulnerabilities in public issues. See [SECURITY.md](SECURITY.md) for responsible disclosure guidance. Before exposing an instance to other users, review authentication, network access, provider credentials, and data retention settings for your own environment.
 
-> 🧪 Env templates: [`backend/.env.example`](backend/.env.example),
-> [`deploy/.env.production.example`](deploy/.env.production.example),
-> [`deploy/cloud.env.example`](deploy/cloud.env.example)
+## License
 
----
+MindMesh is licensed under the [MIT License](LICENSE). The license permits use, modification, distribution, sublicensing, and sale, subject to preserving the copyright and license notice. Third-party packages, models, and external services remain subject to their own terms and licenses.
 
-## 📚 Documentation
+## Contributing
 
-| 📄 Document | Description |
-|-------------|-------------|
-| [SETUP_GUIDE.md](docs/SETUP_GUIDE.md) | Installation, configuration, first run |
-| [MINDMESH_ARCHITECTURE_PLAN.md](docs/MINDMESH_ARCHITECTURE_PLAN.md) | System design, data flow, pipelines |
-| [QA_REPORT.md](docs/QA_REPORT.md) | 🧪 Full QA report — journeys, findings, fixes, regression suite |
-| [SECURITY_REPORT.md](docs/SECURITY_REPORT.md) | 🔒 Security review — threat model, hardening findings |
-| [AUTHORIZATION_MATRIX.md](docs/AUTHORIZATION_MATRIX.md) | 🔑 Roles, scopes & endpoint permissions |
-| [RUNBOOKS.md](docs/RUNBOOKS.md) | 🚨 Operational procedures & incident response |
-| [SECRET_ROTATION.md](docs/SECRET_ROTATION.md) | 🔁 Key rotation playbook |
-| [NORMALIZATION_PLAN.md](docs/NORMALIZATION_PLAN.md) | 🗃️ State normalization cutover (backfill, dual-write, rollback) |
-| [MODAL_DEPLOYMENT.md](docs/MODAL_DEPLOYMENT.md) | 🧠 Cloud AI workers on Modal + Supabase |
-| [DEPLOYMENT.md](DEPLOYMENT.md) | ☁️ Production VM deployment (Caddy, TLS, backups) |
-| [scripts/qa/](scripts/qa/) | Runnable regression checks |
-
----
+Issues and pull requests are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md) and follow the [Code of Conduct](CODE_OF_CONDUCT.md).
