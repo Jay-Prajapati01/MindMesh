@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     environment: str = "development"
     log_level: str = "INFO"
     api_prefix: str = "/api"
-    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000,https://mind-mesh-topaz.vercel.app"
     data_dir: str = "/app/data"
     mindmesh_execution_mode: str = "local"
     auth_enabled: bool = False
